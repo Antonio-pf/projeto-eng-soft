@@ -1,10 +1,11 @@
 # Documento de Visão — Sistema de Gestão de ONG de Doações
 
 **Equipe:**
-Alexandre Victoriano Ribeiro Ulhoa (2840482423007) —
-Daniel Souza Monteiro de Carvalho (2840482211052) —
-Cintia Marcelo de Oliveira (2840482421017) —
-Antonio Pires Felipe (2840482211003)
+
+- Alexandre Victoriano Ribeiro Ulhoa (2840482423007)
+- Daniel Souza Monteiro de Carvalho (2840482211052)
+- Cintia Marcelo de Oliveira (2840482421017)
+- Antonio Pires Felipe (2840482211003)
 
 **Trilha:** B
 **Origem do problema:** Banco de temas nº 4
