@@ -1,4 +1,4 @@
-# Backlog Priorizado — [Nome do Projeto]
+# Backlog Priorizado — [Conecta Social]
 
 | #   | História                                           | Critérios de aceite              | Prioridade (MoSCoW) | Estimativa | Sprint alvo |
 | --- | -------------------------------------------------- | -------------------------------- | ------------------- | ---------- | ----------- |
