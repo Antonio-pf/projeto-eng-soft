@@ -5,6 +5,7 @@
 - Daniel Souza Monteiro de Carvalho (2840482211052)
 - Cintia Marcelo de Oliveira (2840482421017)
 - Antonio Pires Felipe (2840482211003)
+- Luiz Henrique Neres (2840482423005)
 
 **Trilha:** B — Banco de temas nº 4
 **Data de emissão:** 2026-08-27
@@ -20,24 +21,14 @@
  5 - Usuário Voluntário registrar no sistema as doações realizadas  
  6 - Controle de entrada de doações no estoque
  7 - Controle de saida de doações no estoque para as familias 
- 8 - 
- 9 -
- 10 -
- 11 - 
-
 ---
 
 ## 2. Critérios de pronto do MVP
 
-| Camada | Escolha |
-|---|---|
-| Backend | Django (Python) |
-| Frontend | Django Templates + Tailwind CSS (CDN) + daisyUI (CDN) |
-| Banco de dados | PostgreSQL (Render) |
-| Implantação | Render (serviço web + banco de dados) |
-| Repositório | Monorepo único no GitHub |
-
-Qualquer alteração de tecnologia após a assinatura deste termo exige aprovação explícita do professor.
+- [ ] Voluntário e Aluno conseguem logar com perfis distintos e permissões diferentes
+- [ ] Fluxo completo funciona de ponta a ponta: cadastrar doador -> Cadastrar doação → Selecionar Beneficiário → Atribuir doação → encaminhamento
+- [ ] Painel de relatório que exibe os dados para prestação de contas
+- [ ] Sistema será acessivel via web
 
 ---
 
@@ -55,10 +46,11 @@ Qualquer alteração de tecnologia após a assinatura deste termo exige aprovaç
 
 | Integrante | Papel |
 |---|---|
-| Alexandre Ulhoa | [preencher] |
-| Daniel Carvalho | [preencher] |
-| Cintia Oliveira | [preencher] |
-| Antonio Felipe | [preencher] |
+| Alexandre Ulhoa | Facilitador |
+| Daniel Carvalho | Responsável por dados |
+| Cintia Oliveira | [Responsável por qualidade] |
+| Antonio Felipe | Product Owner | 
+| Luiz Henrique | Facilitador |
 
 ## 5. Aprovação
 

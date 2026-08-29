@@ -6,6 +6,7 @@
 - Daniel Souza Monteiro de Carvalho (2840482211052)
 - Cintia Marcelo de Oliveira (2840482421017)
 - Antonio Pires Felipe (2840482211003)
+- Luiz Henrique Neres (2840482423005)
 
 **Trilha:** B
 **Origem do problema:** Banco de temas nº 4

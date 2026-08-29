@@ -1,6 +1,6 @@
 # Backlog Priorizado — Conecta Social
 
-**Equipe:** Alexandre Ulhoa, Daniel Carvalho, Cintia Oliveira, Antonio Felipe
+**Equipe:** Alexandre Ulhoa, Daniel Carvalho, Cintia Oliveira, Antonio Felipe, Luiz Henrique Neres
 **Legenda de prioridade:** Deve ter · Deveria ter · Poderia ter · Não será feito
 
 ---
@@ -68,10 +68,10 @@
 
 | #  | História | Critérios de aceite | Prioridade | Pontos | Sprint |
 |----|----------|---------------------|------------|--------|--------|
-| 20 | Como Administrador, quero ver um painel com o total de itens em estoque agrupado por categoria, para que eu tenha uma visão geral imediata da situação atual. | - Painel exibe um card por categoria com a soma de saldo de todos os itens da categoria<br>- Itens com saldo ≤ estoque mínimo aparecem numa seção de alertas<br>- Dados refletem as movimentações até o momento do acesso | Deve ter | 5 | 3 |
-| 21 | Como Administrador, quero gerar um relatório de distribuições filtrável por período e por família, para que eu apresente dados de prestação de contas a financiadores. | - Relatório exibe família, item, categoria, quantidade total distribuída e número de distribuições no período<br>- Filtros de data e família funcionam isolados e combinados<br>- Resultado exibido em tabela | Deve ter | 5 | 3 |
-| 22 | Como Administrador, quero ver o histórico de doações por doador com totais por item, para que eu reconheça os maiores contribuidores. | - Relatório agrupa doações por doador, exibindo total de cada item doado<br>- Filtrável por período | Deveria ter | 3 | 3 |
-| 23 | Como Administrador, quero exportar o relatório de distribuições em CSV, para que eu compartilhe os dados com parceiros sem acesso ao sistema. | - Botão "Exportar CSV" gera arquivo com os mesmos dados e filtros aplicados na tela<br>- Arquivo tem cabeçalho com nomes das colunas em português | Poderia ter | 3 | 3 |
+| 20 | Como Voluntário, quero ver um painel com o total de itens em estoque agrupado por categoria, para que eu tenha uma visão geral imediata da situação atual. | - Painel exibe um card por categoria com a soma de saldo de todos os itens da categoria<br>- Itens com saldo ≤ estoque mínimo aparecem numa seção de alertas<br>- Dados refletem as movimentações até o momento do acesso | Deve ter | 5 | 3 |
+| 21 | Como Voluntário, quero gerar um relatório de distribuições filtrável por período e por família, para que eu apresente dados de prestação de contas a financiadores. | - Relatório exibe família, item, categoria, quantidade total distribuída e número de distribuições no período<br>- Filtros de data e família funcionam isolados e combinados<br>- Resultado exibido em tabela | Deve ter | 5 | 3 |
+| 22 | Como Voluntário, quero ver o histórico de doações por doador com totais por item, para que eu reconheça os maiores contribuidores. | - Relatório agrupa doações por doador, exibindo total de cada item doado<br>- Filtrável por período | Deveria ter | 3 | 3 |
+| 23 | Como Voluntário, quero exportar o relatório de distribuições em CSV, para que eu compartilhe os dados com parceiros sem acesso ao sistema. | - Botão "Exportar CSV" gera arquivo com os mesmos dados e filtros aplicados na tela<br>- Arquivo tem cabeçalho com nomes das colunas em português | Poderia ter | 3 | 3 |
 
 ---
 
