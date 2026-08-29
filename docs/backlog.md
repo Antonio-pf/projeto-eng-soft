@@ -84,4 +84,3 @@
 | F3 | Aplicativo mobile nativo | Interface web responsiva é suficiente para o MVP |
 | F4 | Emissão de Nota Fiscal Eletrônica | Integração com SEFAZ fora do escopo técnico |
 | F5 | Integração com APIs de validação (CNPJ, CPF, CEP) | Validação de formato é suficiente para o MVP |
-
