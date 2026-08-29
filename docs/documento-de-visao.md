@@ -1,4 +1,4 @@
-# Documento de Visão — Sistema de Gestão de ONG de Doações
+# Documento de Visão — Conecta Social
 
 **Equipe:**
 
