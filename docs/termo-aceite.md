@@ -13,8 +13,7 @@
 
 ---
 
-**1.  Escopo aceito para o semestre (funcionalidades Must + Should) **
-
+**1.  Escopo aceito para o semestre (funcionalidades Must + Should)**
  1 - Cadastro e autenticação de usuário voluntário e administrador  
  2 - Login (história #1) e Logout (história #2)
  3 - Cadastro de itens pelo administrador
