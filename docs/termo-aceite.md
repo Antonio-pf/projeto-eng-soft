@@ -16,13 +16,13 @@
 **1.  Escopo aceito para o semestre (funcionalidades Must + Should)**
 ---
  1 - Cadastro e autenticação de usuário voluntário e administrador  
- 2 - Login (história #1) e Logout (história #2)
+ 2 - Usuário realiza Login (história #1)
+ 3 - Usuário realiza Logout (história #2) 
+ 4 - Cadastro de itens pelo administrador
  
- 3 - Cadastro de itens pelo administrador
- 
- 4 - Desativação de usuário sem exclusão  
- 5 - Usuário Voluntário registrar no sistema as doações realizadas  
- 6 - Controle de entrada de doações no estoque
+ 5 - Desativação de usuário sem exclusão  
+ 6 - Usuário Voluntário registrar no sistema as doações realizadas  
+ 7 - Controle de entrada de doações no estoque
  
  7 - Controle de saida de doações no estoque para as familias 
 ---
