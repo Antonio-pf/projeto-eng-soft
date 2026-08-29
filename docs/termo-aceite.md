@@ -17,7 +17,9 @@
 ---
  1 - Cadastro e autenticação de usuário voluntário e administrador  
  2 - Usuário realiza Login (história #1)
+ 
  3 - Usuário realiza Logout (história #2) 
+ 
  4 - Cadastro de itens pelo administrador
  
  5 - Desativação de usuário sem exclusão  
