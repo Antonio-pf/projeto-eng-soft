@@ -26,7 +26,8 @@
  6 - Usuário Voluntário registrar no sistema as doações realizadas  
  7 - Controle de entrada de doações no estoque
  
- 8 - Controle de saida de doações no estoque para as familias 
+ 8 - Controle de saida de doações no estoque para as familias
+ 9 - Voluntário gera Relatório para Prestação de Conta (história #20, #21, #22 e #23)
 
 ---
 
