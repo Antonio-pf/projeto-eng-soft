@@ -25,6 +25,7 @@
  5 - Desativação de usuário sem exclusão  
  6 - Usuário Voluntário registrar no sistema as doações realizadas  
  7 - Controle de entrada de doações no estoque
+ 
  8 - Controle de saida de doações no estoque para as familias 
 
 ---
