@@ -22,7 +22,8 @@
  
  4 - Cadastro de itens pelo administrador (história #5)
  
- 5 - Desativação de usuário sem exclusão (história #4) 
+ 5 - Desativação de usuário sem exclusão (história #4)
+ 
  6 - Usuário Voluntário registrar no sistema as doações realizadas  
  7 - Controle de entrada de doações no estoque
  
