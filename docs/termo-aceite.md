@@ -20,7 +20,7 @@
  
  3 - Usuário realiza Logout (história #2) 
  
- 4 - Cadastro de itens pelo administrador (história #5)
+ 4 - Cadastro de itens (história #11) e doador (história #5) pelo administrador 
  
  5 - Desativação de usuário sem exclusão (história #4)
  
