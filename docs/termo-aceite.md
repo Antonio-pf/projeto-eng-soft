@@ -56,7 +56,7 @@
 
 | Integrante | Papel |
 |---|---|
-| Alexandre Ulhoa | Facilitador |
+| Alexandre Ulhoa | Scrum Master |
 | Daniel Carvalho | Responsável por dados |
 | Cintia Oliveira | [Responsável por qualidade] |
 | Antonio Felipe | Product Owner | 
