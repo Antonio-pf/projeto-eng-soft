@@ -4,7 +4,7 @@
 - Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
 - Daniel Souza Monteiro de Carvalho — RA 2840482211052
 - Cintia Marcelo de Oliveira — RA 2840482421017
-- Antonio Pires Felipe — RA 2840482211003
+- Antonio Pires Felipe — RA 2840482211001
 - Luiz Henrique Neres — RA 2840482423005
 
 **Entrega:** E3 — Modelagem de Dados e UML  
