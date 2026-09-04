@@ -35,8 +35,8 @@
 
 ## 2. Critérios de pronto do MVP
 
-- [ ] Voluntário e Aluno conseguem logar com perfis distintos e permissões diferentes
-- [ ] Fluxo completo funciona de ponta a ponta: cadastrar doador -> Cadastrar doação → Selecionar Beneficiário → Atribuir doação → encaminhamento
+- [ ] Voluntário e Administrador conseguem logar com perfis distintos e permissões diferentes
+- [ ] Fluxo completo funciona de ponta a ponta: cadastrar doador -> Cadastrar doação → Selecionar Beneficiário → Atribuir doação → distribuição
 - [ ] Painel de relatório que exibe os dados para prestação de contas
 - [ ] Sistema será acessivel via web
 
@@ -58,7 +58,7 @@
 |---|---|
 | Alexandre Ulhoa | Scrum Master |
 | Daniel Carvalho | Responsável por dados |
-| Cintia Oliveira | [Responsável por qualidade] |
+| Cintia Oliveira | Responsável por qualidade |
 | Antonio Felipe | Product Owner | 
 | Luiz Henrique | Facilitador |
 
