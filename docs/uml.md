@@ -18,6 +18,7 @@ O sistema possui dois perfis de ator. O **Administrador** herda todos os casos d
 
 ### Voluntário
 
+
 ```mermaid
 flowchart LR
   Voluntario((Voluntario))
