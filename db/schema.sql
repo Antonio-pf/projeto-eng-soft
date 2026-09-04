@@ -68,7 +68,7 @@ CREATE TABLE unidade_medida (
 CREATE TABLE item (
     id_item             SERIAL          PRIMARY KEY,
     nome                VARCHAR(150)    NOT NULL,
-    id_categoria        INTEGER         NOT NULL REFERENCES categoria_item(id_categoria_item),
+    id_categoria_item   INTEGER         NOT NULL REFERENCES categoria_item(id_categoria_item),
     id_unidade_medida   INTEGER         NOT NULL REFERENCES unidade_medida(id_unidade_medida),
     estoque_minimo      INTEGER         NOT NULL DEFAULT 0 CHECK (estoque_minimo >= 0),
     criado_em           TIMESTAMP       NOT NULL DEFAULT NOW()
