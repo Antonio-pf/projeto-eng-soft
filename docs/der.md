@@ -180,7 +180,7 @@ O saldo atual **não é armazenado** — é calculado via ORM a partir das tabel
 | id_doador | INTEGER | NOT NULL, FK doador(id_doador) | Doador que realizou a doação |
 | id_item | INTEGER | NOT NULL, FK item(id_item) | Item recebido |
 | id_registrado_por | INTEGER | NOT NULL, FK usuario(id_usuario) | Usuário que registrou a entrada |
-| quantidade | INTEGER | NOT NULL, CHECK > 0 | Quantidade recebida |
+| quantidade | NUMERIC(10,2) | NOT NULL, CHECK > 0 | Quantidade recebida |
 | data | DATE | NOT NULL | Data da doação |
 | cancelado | BOOLEAN | NOT NULL, DEFAULT FALSE | Indica cancelamento (estorno) |
 | criado_em | TIMESTAMP | NOT NULL, DEFAULT NOW() | Data/hora de registro |
@@ -195,7 +195,7 @@ O saldo atual **não é armazenado** — é calculado via ORM a partir das tabel
 | id_familia | INTEGER | NOT NULL, FK familia(id_familia) | Família beneficiada |
 | id_item | INTEGER | NOT NULL, FK item(id_item) | Item distribuído |
 | id_registrado_por | INTEGER | NOT NULL, FK usuario(id_usuario) | Usuário que registrou a saída |
-| quantidade | INTEGER | NOT NULL, CHECK > 0 | Quantidade distribuída |
+| quantidade | NUMERIC(10,2)| NOT NULL, CHECK > 0 | Quantidade distribuída |
 | data | DATE | NOT NULL | Data da distribuição |
 | cancelado | BOOLEAN | NOT NULL, DEFAULT FALSE | Indica cancelamento (estorno) |
 | criado_em | TIMESTAMP | NOT NULL, DEFAULT NOW() | Data/hora de registro |
