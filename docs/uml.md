@@ -131,7 +131,7 @@ classDiagram
   class Item {
     +id_item: int
     +nome: string
-    +id_categoria: int
+    +id_categoria_item: int
     +id_unidade_medida: int
     +estoque_minimo: int
     +criado_em: datetime

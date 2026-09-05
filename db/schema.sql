@@ -70,7 +70,7 @@ CREATE TABLE item (
     nome                VARCHAR(150)    NOT NULL,
     id_categoria_item   INTEGER         NOT NULL REFERENCES categoria_item(id_categoria_item),
     id_unidade_medida   INTEGER         NOT NULL REFERENCES unidade_medida(id_unidade_medida),
-    estoque_minimo      INTEGER         NOT NULL DEFAULT 0 CHECK (estoque_minimo >= 0),
+    estoque_minimo      NUMERIC(10,2)   NOT NULL DEFAULT 0 CHECK (estoque_minimo >= 0),
     criado_em           TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
@@ -121,7 +121,7 @@ CREATE INDEX idx_dist_data             ON distribuicao (data);
 INSERT INTO usuario (nome, email, senha_hash, perfil) VALUES
     ('Admin Sistema',    'admin@conectasocial.org', '!alterar_senha', 'administrador'),
     ('Maria Voluntária', 'maria@conectasocial.org', '!alterar_senha', 'voluntario'),
-    ('João Voluntário',  'joao@conectasocial.org',  '!salterar_senha', 'voluntario');
+    ('João Voluntário',  'joao@conectasocial.org',  '!alterar_senha', 'voluntario');
 
 -- Categorias
 INSERT INTO categoria_item (nome, descricao) VALUES
@@ -142,7 +142,7 @@ INSERT INTO unidade_medida (nome, sigla) VALUES
 -- Itens (id_categoria, id_unidade_medida)
 
 
-INSERT INTO item (nome, id_categoria, id_unidade_medida, estoque_minimo) VALUES
+INSERT INTO item (nome, id_categoria_item, id_unidade_medida, estoque_minimo) VALUES
     ('Arroz 5kg',          1, 1, 10),  -- Alimento, Pacote
     ('Feijão 1kg',         1, 1, 10),  -- Alimento, Pacote
     ('Óleo de soja 900ml', 1, 2,  5),  -- Alimento, Garrafa
@@ -171,7 +171,6 @@ INSERT INTO doacao (id_doador, id_item, id_registrado_por, quantidade, data) VAL
     (2, 1, 2, 50, '2026-09-02'),  -- Bom Preço doa 50 Arroz
     (2, 4, 2, 100,'2026-09-02'),  -- Bom Preço doa 100 Sabonete
     (3, 3, 3, 15, '2026-09-03');  -- Ana doa 15 Óleo
-    
 
 -- Distribuições (saídas de estoque)
 INSERT INTO distribuicao (id_familia, id_item, id_registrado_por, quantidade, data) VALUES

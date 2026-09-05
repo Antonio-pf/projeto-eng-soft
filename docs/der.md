@@ -63,7 +63,7 @@ erDiagram
         varchar nome
         int id_categoria_item FK
         int id_unidade_medida FK
-        int estoque_minimo
+        numeric estoque_minimo
         timestamp criado_em
     }
 
@@ -169,7 +169,7 @@ O saldo atual **não é armazenado** — é calculado via ORM a partir das tabel
 | nome | VARCHAR(150) | NOT NULL | Nome do item (ex.: Arroz 5kg) |
 | id_categoria_item | INTEGER | NOT NULL, FK categoria_item(id_categoria_item) | Categoria do item |
 | id_unidade_medida | INTEGER | NOT NULL, FK unidade_medida(id_unidade_medida) | Unidade de medida do item |
-| estoque_minimo | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Limiar para alerta de saldo baixo |
+| estoque_minimo | NUMERIC(10,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Limiar para alerta de saldo baixo |
 | criado_em | TIMESTAMP | NOT NULL, DEFAULT NOW() | Data/hora de cadastro |
 
 ### Tabela: `doacao`
