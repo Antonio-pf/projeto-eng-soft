@@ -61,7 +61,7 @@ erDiagram
     ITEM {
         int id_item PK
         varchar nome
-        int id_categoria FK
+        int id_categoria_item FK
         int id_unidade_medida FK
         int estoque_minimo
         timestamp criado_em
@@ -72,7 +72,7 @@ erDiagram
         int id_doador FK
         int id_item FK
         int id_registrado_por FK
-        int quantidade
+        dec quantidade
         date data
         boolean cancelado
         timestamp criado_em
@@ -85,7 +85,7 @@ erDiagram
         int id_familia FK
         int id_item FK
         int id_registrado_por FK
-        int quantidade
+        dec quantidade
         date data
         boolean cancelado
         timestamp criado_em
