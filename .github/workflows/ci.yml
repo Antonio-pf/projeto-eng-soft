@@ -51,11 +51,23 @@ jobs:
       - name: Lint
         run: ruff check .
 
+      - name: Check formatting
+        run: ruff format --check .
+
       - name: Django checks
         run: python manage.py check
 
+      - name: Check migrations
+        run: python manage.py makemigrations --check
+
+      - name: Apply migrations
+        run: python manage.py migrate
+
       - name: Tests
         run: python manage.py test
+
+      - name: Build Docker image
+        run: docker build --tag conecta-social:ci .
 
       - name: Validate commit messages
         if: github.event_name == 'pull_request'
