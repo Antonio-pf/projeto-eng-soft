@@ -43,7 +43,20 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate       # Linux/macOS
-   # .venv\Scripts\activate        # Windows PowerShell
+   ```
+
+   No Windows PowerShell:
+
+   ```powershell
+   py -3.12 -m venv .venv
+   .venv\Scripts\Activate.ps1
+   ```
+
+   No Windows `cmd.exe`:
+
+   ```cmd
+   py -3.12 -m venv .venv
+   .venv\Scripts\activate.bat
    ```
 
 3. Instale as dependências:
@@ -55,12 +68,36 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
 4. Configure as variáveis de ambiente obrigatórias. O arquivo `.env.example` contém apenas valores de exemplo e nunca deve receber credenciais reais:
 
+   Linux/macOS (Bash ou Git Bash):
+
    ```bash
    cp .env.example .env
    set -a
    source .env
    set +a
    ```
+
+   No PowerShell, copie o modelo e defina as variáveis na sessão atual:
+
+   ```powershell
+   Copy-Item .env.example .env
+   $env:SECRET_KEY = "chave-local-de-desenvolvimento"
+   $env:DEBUG = "True"
+   $env:ALLOWED_HOSTS = "localhost,127.0.0.1"
+   $env:DATABASE_URL = "postgresql://conecta:conecta@localhost:5432/conectasocial"
+   ```
+
+   No `cmd.exe`, use:
+
+   ```cmd
+   copy .env.example .env
+   set SECRET_KEY=chave-local-de-desenvolvimento
+   set DEBUG=True
+   set ALLOWED_HOSTS=localhost,127.0.0.1
+   set DATABASE_URL=postgresql://conecta:conecta@localhost:5432/conectasocial
+   ```
+
+   Edite o arquivo `.env` para guardar a configuração local, mas mantenha as variáveis definidas no terminal antes de executar o Django. O projeto não lê arquivos `.env` automaticamente.
 
    Edite o `.env`:
 
@@ -91,7 +128,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
 ### Alternativa com Docker
 
-Docker é opcional. Ele cria a aplicação e o PostgreSQL em containers, deixando o ambiente igual para toda a equipe e evitando a instalação local das dependências Python e do banco.
+Docker é opcional e recomendado para quem não é desenvolvedor ou não quer instalar Python e PostgreSQL separadamente. Ele cria a aplicação e o PostgreSQL em containers, deixando o ambiente igual para toda a equipe.
 
 Pré-requisitos adicionais:
 
@@ -103,6 +140,8 @@ Suba os serviços:
 ```bash
 docker compose up --build
 ```
+
+O mesmo comando funciona no PowerShell e no `cmd.exe`. No Windows, abra o Docker Desktop antes de executá-lo.
 
 O container web executa automaticamente `migrate` e `seed` antes de iniciar o servidor. Acesse `http://127.0.0.1:8000`.
 
