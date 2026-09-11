@@ -14,7 +14,7 @@
 
 ## 1. Diagrama de Casos de Uso
 
-O sistema possui dois perfis de ator. O **Administrador** herda todos os casos de uso do **Voluntário** e executa operações exclusivas de gestão.
+O sistema possui dois perfis de ator. O **Voluntário** executa os fluxos operacionais, enquanto o **Administrador** executa operações exclusivas de gestão. O cancelamento é um fluxo opcional que estende o registro de uma doação ou distribuição.
 
 ### Voluntário
 
@@ -62,7 +62,6 @@ flowchart LR
 ```mermaid
 flowchart LR
   Administrador((Administrador))
-  Voluntario((Voluntario))
 
   subgraph excl["Exclusivos do Administrador"]
     UC3[Cadastrar usuário]
@@ -74,10 +73,16 @@ flowchart LR
     UC19[Cancelar movimentação]
   end
 
-  Administrador -.herda.-> Voluntario
+  subgraph mov["Casos de uso base"]
+    UC14[Registrar doação]
+    UC16[Registrar distribuição]
+  end
+
   Administrador --> UC3 & UC4
   Administrador --> UC7 & UC10 & UC11 & UC13
   Administrador --> UC19
+  UC19 -. "<<extend>>" .-> UC14
+  UC19 -. "<<extend>>" .-> UC16
 ```
 
 ---
@@ -131,8 +136,6 @@ classDiagram
   class Item {
     +id_item: int
     +nome: string
-    +id_categoria_item: int
-    +id_unidade_medida: int
     +estoque_minimo: int
     +criado_em: datetime
     +getSaldoAtual() int
@@ -140,9 +143,6 @@ classDiagram
 
   class Doacao {
     +id_doacao: int
-    +id_doador: int
-    +id_item: int
-    +id_registrado_por: int
     +quantidade: int
     +data: date
     +cancelado: bool
@@ -152,9 +152,6 @@ classDiagram
 
   class Distribuicao {
     +id_distribuicao: int
-    +id_familia: int
-    +id_item: int
-    +id_registrado_por: int
     +quantidade: int
     +data: date
     +cancelado: bool
