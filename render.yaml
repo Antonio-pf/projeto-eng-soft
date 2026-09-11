@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: conecta-social
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input
+    startCommand: python manage.py migrate && gunicorn conecta.wsgi:application
+    healthCheckPath: /health/
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: conecta-social.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: conecta-social-db
+          property: connectionString
+
+databases:
+  - name: conecta-social-db
+    databaseName: conectasocial
+    user: conectasocial
+    plan: free

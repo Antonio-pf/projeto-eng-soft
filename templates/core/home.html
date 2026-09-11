@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Início | Conecta Social{% endblock %}
+
+{% block content %}
+<section class="hero rounded-box bg-base-100 shadow-xl">
+    <div class="hero-content max-w-2xl text-center">
+        <div>
+            <p class="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-primary">MVP inicial</p>
+            <h1 class="text-4xl font-bold">Conecta Social</h1>
+            <p class="py-6">Base do sistema de gestão de doações pronta para evoluir.</p>
+            <a class="btn btn-success" href="{% url 'health' %}">Ver MVP inicial</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

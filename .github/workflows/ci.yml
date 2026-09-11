@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: conectasocial
+          POSTGRES_USER: conectasocial
+          POSTGRES_PASSWORD: conectasocial
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U conectasocial -d conectasocial"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SECRET_KEY: ci-only-secret-key
+      DEBUG: "False"
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      DATABASE_URL: postgresql://conectasocial:conectasocial@localhost:5432/conectasocial
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Django checks
+        run: python manage.py check
+
+      - name: Tests
+        run: python manage.py test
+
+      - name: Validate commit messages
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin main --depth=1
+          git log --format=%H origin/main..HEAD | while read -r commit; do
+            git show -s --format=%B "$commit" > /tmp/commit-message
+            python scripts/validate_commit_message.py /tmp/commit-message
+          done
