@@ -118,11 +118,31 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
 5. Crie o banco PostgreSQL local, aplique as migrations e carregue os dados de desenvolvimento:
 
+   Linux/macOS ou Git Bash:
+
    ```bash
    psql -U postgres -c "CREATE DATABASE conectasocial;"
    python manage.py migrate
    python manage.py seed
    ```
+
+   Windows PowerShell:
+
+   ```powershell
+   psql -U postgres -c "CREATE DATABASE conectasocial;"
+   python manage.py migrate
+   python manage.py seed
+   ```
+
+   Windows `cmd.exe`:
+
+   ```cmd
+   psql -U postgres -c "CREATE DATABASE conectasocial;"
+   python manage.py migrate
+   python manage.py seed
+   ```
+
+   Nos comandos acima, o PostgreSQL precisa estar instalado, em execução e disponível no `PATH`. Se `psql` não for reconhecido, adicione a pasta `bin` da instalação do PostgreSQL ao `PATH` ou use o Docker Compose abaixo.
 
    As migrations em `core/migrations/` são a fonte oficial da estrutura do banco. O comando `seed` pode ser executado novamente sem duplicar os dados. A aplicação também possui fallback para `db.sqlite3` quando `DATABASE_URL` não está definida, mas o fluxo documentado usa PostgreSQL.
 
@@ -143,13 +163,19 @@ Pré-requisitos adicionais:
 - Docker Engine 24+
 - Docker Compose v2+
 
-Suba os serviços:
+PowerShell:
 
-```bash
+```powershell
 docker compose up --build
 ```
 
-O mesmo comando funciona no PowerShell e no `cmd.exe`. No Windows, abra o Docker Desktop antes de executá-lo.
+`cmd.exe`:
+
+```cmd
+docker compose up --build
+```
+
+No Windows, abra o Docker Desktop antes de executar o comando. O Compose cria o PostgreSQL e a aplicação; não é necessário executar `psql`, `python manage.py migrate` ou `python manage.py seed` manualmente.
 
 O container web executa automaticamente `migrate` e `seed` antes de iniciar o servidor. Acesse `http://127.0.0.1:8000`.
 
