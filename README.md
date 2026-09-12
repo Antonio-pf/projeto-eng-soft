@@ -246,7 +246,7 @@ pre-commit install
 pre-commit install --hook-type commit-msg
 ```
 
-O CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa Ruff, `manage.py check`, os testes Django e a validação das mensagens de commit em pull requests e pushes para `main`.
+O CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa Ruff, `manage.py check`, os testes Django e a validação das mensagens de commit em pushes para `main`.
 
 ## Protótipo navegável
 
