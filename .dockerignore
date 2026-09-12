@@ -1,0 +1,12 @@
+.git
+.github
+.venv
+.aidlc-rule-details
+.aidlc-docs
+__pycache__
+*.py[cod]
+*.sqlite3
+.env
+staticfiles
+.ruff_cache
+.pre-commit-cache

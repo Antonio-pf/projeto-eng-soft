@@ -1,0 +1,86 @@
+:root {
+    --conecta-deep: #1f6f5f;
+    --conecta-main: #2fa084;
+    --conecta-light: #6fcf97;
+    --conecta-surface: #eeeeee;
+}
+
+[data-theme="conecta"] {
+    color-scheme: light;
+    --p: 161 56% 28%;
+    --pf: 161 56% 24%;
+    --pc: 0 0% 100%;
+    --s: 162 55% 41%;
+    --sf: 162 55% 35%;
+    --sc: 0 0% 100%;
+    --a: 143 49% 62%;
+    --af: 143 49% 55%;
+    --ac: 160 30% 15%;
+    --n: 160 30% 15%;
+    --nf: 160 30% 11%;
+    --nc: 0 0% 100%;
+    --b1: 0 0% 100%;
+    --b2: 0 0% 93%;
+    --b3: 0 0% 88%;
+    --bc: 160 30% 15%;
+    --rounded-box: 1.25rem;
+    --rounded-btn: 0.75rem;
+}
+
+body {
+    background:
+        radial-gradient(circle at 8% 12%, rgb(111 207 151 / 22%), transparent 28rem),
+        linear-gradient(135deg, #f7fbf8 0%, var(--conecta-surface) 100%);
+}
+
+.home-panel {
+    width: min(100%, 68rem);
+    border: 1px solid rgb(31 111 95 / 10%);
+}
+
+.brand-field {
+    min-height: 20rem;
+    overflow: hidden;
+    background: linear-gradient(145deg, var(--conecta-deep), var(--conecta-main));
+}
+
+.brand-field::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, transparent 20%, rgb(111 207 151 / 28%));
+    content: "";
+}
+
+.brand-mark {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    display: grid;
+    width: 10rem;
+    height: 10rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+    transform: rotate(18deg);
+    opacity: 0.9;
+}
+
+.brand-mark span {
+    border-radius: 999px;
+    background: var(--conecta-light);
+}
+
+.brand-mark span:nth-child(2) {
+    margin-top: 2.5rem;
+    background: rgb(238 238 238 / 72%);
+}
+
+.brand-mark span:nth-child(3) {
+    margin-top: 5rem;
+    background: rgb(238 238 238 / 38%);
+}
+
+@media (max-width: 640px) {
+    .brand-field {
+        min-height: 18rem;
+    }
+}

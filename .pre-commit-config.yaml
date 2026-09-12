@@ -1,0 +1,18 @@
+default_language_version:
+  python: python3.12
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: validate-commit-message
+        name: validate Conventional Commit message
+        entry: python scripts/validate_commit_message.py
+        language: python
+        stages: [commit-msg]
+        pass_filenames: true
