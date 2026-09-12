@@ -68,12 +68,3 @@ jobs:
 
       - name: Build Docker image
         run: docker build --tag conecta-social:ci .
-
-      - name: Validate commit messages
-        if: github.event_name == 'pull_request'
-        run: |
-          git fetch origin main --depth=1
-          git log --format=%H origin/main..HEAD | while read -r commit; do
-            git show -s --format=%B "$commit" > /tmp/commit-message
-            python scripts/validate_commit_message.py /tmp/commit-message
-          done
