@@ -68,6 +68,14 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
 4. Configure as variáveis de ambiente obrigatórias. O arquivo `.env.example` contém apenas valores de exemplo e nunca deve receber credenciais reais:
 
+   Gere uma `SECRET_KEY` exclusiva para o ambiente local com o Django:
+
+   ```bash
+   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+   ```
+
+   Copie o valor exibido para `SECRET_KEY` no arquivo `.env`.
+
    Linux/macOS (Bash ou Git Bash):
 
    ```bash
@@ -81,7 +89,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
    ```powershell
    Copy-Item .env.example .env
-   $env:SECRET_KEY = "chave-local-de-desenvolvimento"
+   $env:SECRET_KEY = "<cole-o-valor-gerado-aqui>"
    $env:DEBUG = "True"
    $env:ALLOWED_HOSTS = "localhost,127.0.0.1"
    $env:DATABASE_URL = "postgresql://conecta:conecta@localhost:5432/conectasocial"
@@ -91,7 +99,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
    ```cmd
    copy .env.example .env
-   set SECRET_KEY=chave-local-de-desenvolvimento
+   set SECRET_KEY=<cole-o-valor-gerado-aqui>
    set DEBUG=True
    set ALLOWED_HOSTS=localhost,127.0.0.1
    set DATABASE_URL=postgresql://conecta:conecta@localhost:5432/conectasocial
@@ -103,7 +111,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
    | Variável | Descrição | Exemplo local |
    |---|---|---|
-   | `SECRET_KEY` | Chave usada pelo Django. Gere uma chave exclusiva fora do repositório. | `chave-local-de-desenvolvimento` |
+   | `SECRET_KEY` | Chave usada pelo Django. Gere uma chave exclusiva com o comando acima e mantenha-a fora do repositório. | `django-insecure-<valor-gerado-localmente>` |
    | `DEBUG` | Ativa o modo de desenvolvimento. | `True` |
    | `ALLOWED_HOSTS` | Hosts aceitos pelo Django, separados por vírgula. | `localhost,127.0.0.1` |
    | `DATABASE_URL` | URL de conexão com o PostgreSQL local. | `postgresql://conecta:conecta@localhost:5432/conectasocial` |
