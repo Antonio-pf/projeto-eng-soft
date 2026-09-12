@@ -8,8 +8,6 @@
 - Antonio Pires Felipe — RA 2840482211003
 - Luiz Henrique Neres — RA 2840482423005
 
-> **Nota:** Na Semana 4, o sistema ainda está em implementação — este documento define a *estratégia* e os casos de teste planejados. As evidências de execução (prints, logs de CI) serão adicionadas a partir da E5.
-
 ---
 
 ## 1. Estratégia
@@ -78,14 +76,3 @@ Nenhum PR é aceito na `main` se:
 | CT28 | #22          | Relatório de doações por doador e item                                  | doações de vários doadores no período                                     | Relatório agrupa por doador e item, exibe os totais e permite filtro por período                          | Média      |
 
 ---
-
-## 4. Rastreabilidade resumida
-
-| Módulo             | Casos cobertos       | Sprints alvo |
-|--------------------|---------------------|-------------|
-| Autenticação       | CT01, CT02, CT18    | Sprint 1    |
-| Gestão de usuários | CT03, CT04, CT19    | Sprint 1    |
-| Cadastros básicos  | CT05, CT06, CT07, CT08, CT09, CT10, CT22, CT23, CT24 | Sprint 1 |
-| Movimentações      | CT11, CT12, CT13, CT20, CT25, CT26, CT27 | Sprint 2 |
-| Listagens e Avisos | CT14                | Sprint 2 |
-| Painel e relatórios | CT15, CT16, CT17, CT21, CT28 | Sprint 3 |
