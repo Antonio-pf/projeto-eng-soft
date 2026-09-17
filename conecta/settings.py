@@ -46,6 +46,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.usuario_logado",
             ],
         },
     },
@@ -61,6 +62,10 @@ DATABASES = {
         conn_health_checks=True,
     )
 }
+
+SESSION_COOKIE_AGE = 1800  # 30 min — sessão expira após inatividade (história #1)
+SESSION_SAVE_EVERY_REQUEST = True  # renova a expiração a cada requisição ativa
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

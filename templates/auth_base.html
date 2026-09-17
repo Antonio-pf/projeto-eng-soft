@@ -1,0 +1,22 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-BR" data-theme="conecta">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Conecta Social{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-conecta-form text-base-content">
+    <div class="flex min-h-screen flex-col lg:flex-row">
+        <section class="flex flex-col gap-6 bg-primary px-8 py-12 text-primary-content sm:px-12 lg:w-1/2 lg:px-16 lg:py-16" data-testid="auth-brand-panel">
+            {% block brand %}{% endblock %}
+        </section>
+        <section class="flex flex-1 items-center justify-center bg-conecta-form px-8 py-12 sm:px-12 lg:px-16" data-testid="auth-content-panel">
+            {% block content %}{% endblock %}
+        </section>
+    </div>
+</body>
+</html>

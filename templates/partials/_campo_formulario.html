@@ -1,0 +1,18 @@
+{# Campo de formulário reutilizável: label + widget, com toggle opcional de senha (toggle_senha=True). #}
+<div class="flex w-full flex-col gap-2">
+    <label class="text-xs font-medium text-neutral" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {% if toggle_senha %}
+    <div class="relative">
+        {{ field }}
+        <button type="button"
+                class="absolute inset-y-0 right-4 text-xs font-medium text-conecta-muted"
+                data-testid="login-form-toggle-senha-button"
+                onclick="const i=this.previousElementSibling; const mostrando=i.type==='text'; i.type = mostrando ? 'password' : 'text'; this.textContent = mostrando ? 'Mostrar' : 'Ocultar';">Mostrar</button>
+    </div>
+    {% else %}
+    {{ field }}
+    {% endif %}
+    {% for erro in field.errors %}
+    <p class="text-xs text-error">{{ erro }}</p>
+    {% endfor %}
+</div>

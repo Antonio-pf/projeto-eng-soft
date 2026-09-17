@@ -3,29 +3,53 @@
     --conecta-main: #2fa084;
     --conecta-light: #6fcf97;
     --conecta-surface: #eeeeee;
+    --conecta-quote: #2a7c6b;
+    --conecta-form-bg: #f7f5f0;
+    --conecta-on-dark-muted: #d1e5d9;
+    --conecta-muted: #6d7d78;
 }
+
+.bg-conecta-quote { background: var(--conecta-quote); }
+.bg-conecta-form { background: var(--conecta-form-bg); }
+.text-conecta-on-dark-muted { color: var(--conecta-on-dark-muted); }
+.text-conecta-muted { color: var(--conecta-muted); }
+.text-conecta-light { color: var(--conecta-light); }
 
 [data-theme="conecta"] {
     color-scheme: light;
-    --p: 161 56% 28%;
-    --pf: 161 56% 24%;
-    --pc: 0 0% 100%;
-    --s: 162 55% 41%;
-    --sf: 162 55% 35%;
-    --sc: 0 0% 100%;
-    --a: 143 49% 62%;
-    --af: 143 49% 55%;
-    --ac: 160 30% 15%;
-    --n: 160 30% 15%;
-    --nf: 160 30% 11%;
-    --nc: 0 0% 100%;
-    --b1: 0 0% 100%;
-    --b2: 0 0% 93%;
-    --b3: 0 0% 88%;
-    --bc: 160 30% 15%;
+    /* daisyUI 4.x resolves colors as `var(--fallback-X, oklch(var(--X)/1))`, so
+       --p/--s/--a/--n/etc. must hold raw OKLCH triplets ("L% C H"), not HSL —
+       converted from the Conecta brand hex palette above. */
+    --p: 48.97% 0.08 176.52; /* conecta-deep #1f6f5f */
+    --pc: 100% 0 89.88; /* white */
+    --s: 63.60% 0.1084 172.52; /* conecta-main #2fa084 */
+    --sc: 100% 0 89.88; /* white */
+    --a: 78.05% 0.1226 156.45; /* conecta-light #6fcf97 */
+    --ac: 29.52% 0.0328 169.85; /* dark teal-black */
+    --n: 29.52% 0.0328 169.85; /* dark teal-black */
+    --nc: 100% 0 89.88; /* white */
+    --b1: 100% 0 89.88; /* white */
+    --b2: 94.61% 0 89.88; /* light gray */
+    --b3: 90.67% 0 89.88; /* light gray, darker */
+    --bc: 29.52% 0.0328 169.85; /* dark teal-black */
+    --er: 57.71% 0.2152 27.33; /* error red */
+    --erc: 100% 0 89.88;
+    --wa: 66.58% 0.1574 58.32; /* warning amber */
+    --wac: 29.52% 0.0328 169.85;
+    --su: 62.71% 0.1699 149.21; /* success green */
+    --suc: 100% 0 89.88;
+    --in: 58.76% 0.1389 241.97; /* info blue */
+    --inc: 100% 0 89.88;
     --rounded-box: 1.25rem;
     --rounded-btn: 0.75rem;
 }
+
+/* daisyUI's .btn-* classes resolve their background through an intermediate
+   --btn-color re-wrapped inside oklch(), which only works when --btn-color is
+   itself a raw OKLCH triplet (not the theme's --fallback-* hex safety net, and
+   not left unset). Override it directly per role actually used in this app. */
+.btn-primary { --btn-color: var(--p); }
+.btn-secondary { --btn-color: var(--s); }
 
 body {
     background:
