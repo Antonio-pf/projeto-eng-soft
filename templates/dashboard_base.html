@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-BR" data-theme="conecta">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Conecta Social{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-conecta-form text-base-content">
+    <div class="drawer lg:drawer-open">
+        <input id="sidebar-drawer" type="checkbox" class="drawer-toggle">
+        <div class="drawer-content flex min-h-screen flex-col">
+            <header class="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-4 lg:px-12 lg:py-5" data-testid="dashboard-topbar">
+                <label for="sidebar-drawer" class="btn btn-square btn-ghost lg:hidden" aria-label="Abrir menu" data-testid="dashboard-menu-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </label>
+                <div class="flex flex-col gap-1">
+                    <h1 class="text-xl font-bold text-gray-700 lg:text-[22px]">{% block page_title %}{% endblock %}</h1>
+                    {% block page_subtitle %}{% endblock %}
+                </div>
+            </header>
+            <main class="flex flex-1 flex-col gap-6 bg-conecta-form px-4 py-6 lg:px-12 lg:py-8" data-testid="dashboard-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+        <div class="drawer-side z-30">
+            <label for="sidebar-drawer" aria-label="Fechar menu" class="drawer-overlay"></label>
+            {% include "partials/_sidebar.html" %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Usuários | Conecta Social{% endblock %}
+
+{% block page_title %}Usuários{% endblock %}
+{% block page_subtitle %}<p class="text-sm text-gray-500">Gerencie as permissões de acesso ao Conecta Social</p>{% endblock %}
+
+{% block content %}
+<section class="w-full max-w-[500px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="usuario-form-card">
+    <h2 class="mb-4 text-base font-semibold text-gray-700">Novo Usuário</h2>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" novalidate class="flex flex-col gap-4" data-testid="usuario-form">
+        {% csrf_token %}
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.email %}
+        </div>
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.senha %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.perfil select=True %}
+        </div>
+        <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="usuario-form-submit-button">Salvar</button>
+    </form>
+</section>
+
+<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="usuario-table-card">
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[560px]">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                    <th class="px-4 py-3 font-semibold">Nome</th>
+                    <th class="px-4 py-3 font-semibold">E-mail</th>
+                    <th class="px-4 py-3 font-semibold">Perfil</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200" data-testid="usuario-table-body">
+                {% for usuario in usuarios %}
+                <tr data-testid="usuario-table-row">
+                    <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ usuario.nome }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ usuario.email }}</td>
+                    <td class="px-4 py-4 text-sm">
+                        {% if usuario.perfil == "administrador" %}
+                        <span class="inline-block whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-[13px] font-semibold text-primary">{{ usuario.get_perfil_display }}</span>
+                        {% else %}
+                        <span class="inline-block whitespace-nowrap rounded bg-gray-200 px-2 py-0.5 text-[13px] font-semibold text-gray-600">{{ usuario.get_perfil_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

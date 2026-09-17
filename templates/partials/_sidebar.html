@@ -1,0 +1,55 @@
+{% load static %}
+{# Sidebar de navegação interna: link vira <a> só se a view já existir; os demais ficam com a mesma aparência, porém inertes. #}
+<aside class="flex min-h-full w-[242px] flex-col justify-between bg-primary px-4 pb-7 pt-8" data-testid="sidebar">
+    <div class="flex flex-col gap-6">
+        <p class="text-[22px] font-bold text-white">conecta</p>
+
+        <nav class="flex flex-col gap-1.5" data-testid="sidebar-nav">
+            <a href="{% url 'painel' %}"
+               class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name == 'painel' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+               data-testid="sidebar-link-painel">
+                <img src="{% static 'icons/sidebar/painel.svg' %}" alt="" class="size-4">
+                Painel
+            </a>
+            <span class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] text-accent" data-testid="sidebar-link-itens">
+                <img src="{% static 'icons/sidebar/itens.svg' %}" alt="" class="size-4">
+                Itens e categorias
+            </span>
+            <span class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] text-accent" data-testid="sidebar-link-doadores">
+                <img src="{% static 'icons/sidebar/doadores.svg' %}" alt="" class="size-4">
+                Doadores
+            </span>
+            <span class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] text-accent" data-testid="sidebar-link-familias">
+                <img src="{% static 'icons/sidebar/familias.svg' %}" alt="" class="size-4">
+                Famílias
+            </span>
+            <span class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] text-accent" data-testid="sidebar-link-movimentacoes">
+                <img src="{% static 'icons/sidebar/movimentacoes.svg' %}" alt="" class="size-4">
+                Movimentações
+            </span>
+        </nav>
+
+        {% if usuario_logado.perfil == "administrador" %}
+        <div class="flex flex-col gap-1.5">
+            <p class="pl-3.5 text-[10px] font-bold tracking-[1.4px] text-accent">ADMINISTRAÇÃO</p>
+            <a href="{% url 'usuarios' %}"
+               class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] font-medium {% if request.resolver_match.url_name == 'usuarios' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+               data-testid="sidebar-link-usuarios">
+                <img src="{% static 'icons/sidebar/usuarios.svg' %}" alt="" class="size-4">
+                Usuários
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="flex flex-col gap-3.5 border-t border-white/[0.14] pt-5">
+        <div class="flex flex-col gap-1" data-testid="sidebar-profile-identity">
+            <p class="text-[13px] font-medium text-white">{{ usuario_logado.nome }}</p>
+            <p class="text-[11px] text-[#bad9c9]">{{ usuario_logado.get_perfil_display }}</p>
+        </div>
+        <a href="{% url 'logout' %}" class="flex items-center gap-2 text-[12px] font-medium text-accent" data-testid="sidebar-logout-link">
+            <img src="{% static 'icons/sidebar/logout.svg' %}" alt="" class="size-3.5">
+            Sair
+        </a>
+    </div>
+</aside>

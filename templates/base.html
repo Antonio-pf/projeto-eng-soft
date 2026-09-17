@@ -10,7 +10,20 @@
     <link href="{% static 'css/app.css' %}" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-base-200 text-base-content">
-    <main class="container mx-auto flex min-h-screen items-center justify-center px-6 py-12">
+    <header class="navbar container mx-auto px-6 py-4">
+        <div class="flex-1">
+            <a class="text-lg font-black text-neutral" href="{% url 'home' %}">Conecta Social</a>
+        </div>
+        <div class="flex-none">
+            {% if usuario_logado %}
+                <span class="mr-4 text-sm text-neutral/70">{{ usuario_logado.nome }}</span>
+                <a class="btn btn-ghost btn-sm" href="{% url 'logout' %}" data-testid="navbar-logout-button">Sair</a>
+            {% else %}
+                <a class="btn btn-ghost btn-sm" href="{% url 'login' %}" data-testid="navbar-login-link">Entrar</a>
+            {% endif %}
+        </div>
+    </header>
+    <main class="container mx-auto flex min-h-[calc(100vh-5rem)] items-center justify-center px-6 py-12">
         {% block content %}{% endblock %}
     </main>
 </body>
