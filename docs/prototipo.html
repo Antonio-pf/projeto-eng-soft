@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conecta Social — Protótipo Navegável (E4)</title>
+  <style>
+    :root {
+      --green: #16a34a;
+      --green-light: #dcfce7;
+      --green-dark: #14532d;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --white: #ffffff;
+      --sidebar-w: 230px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--gray-100); color: var(--gray-800); min-height: 100vh; }
+
+    #proto-nav {
+      background: var(--gray-900);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      border-bottom: 2px solid var(--green);
+      position: sticky; top: 0; z-index: 100;
+    }
+    #proto-nav .label { color: var(--gray-400); font-size: 11px; margin-right: 4px; white-space: nowrap; }
+    #proto-nav button {
+      background: var(--gray-700);
+      color: var(--gray-200);
+      border: none;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background .15s;
+    }
+    #proto-nav button:hover { background: var(--gray-500); }
+    #proto-nav button.active { background: var(--green); color: var(--white); }
+
+    .screen { display: none; min-height: calc(100vh - 44px); }
+    .screen.active { display: flex; flex-direction: column; }
+    .app-shell { display: flex; flex: 1; }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--gray-800);
+      color: var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      padding: 18px 16px 12px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--white);
+      border-bottom: 1px solid var(--gray-700);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sidebar-section { padding: 8px 0; }
+    .sidebar-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--gray-500); padding: 6px 16px 2px; }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 0;
+      color: var(--gray-300);
+      font-size: 13px;
+      border-left: 3px solid transparent;
+      text-decoration: none;
+    }
+    .sidebar-item:hover { background: var(--gray-700); }
+    .sidebar-item.active { background: var(--gray-700); border-left-color: var(--green); color: var(--white); }
+    .sidebar-item .icon { font-size: 16px; width: 18px; text-align: center; }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 12px 16px;
+      border-top: 1px solid var(--gray-700);
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+    .sidebar-footer .user { color: var(--gray-200); font-weight: 600; margin-bottom: 4px; }
+    .sidebar-footer .badge { display: inline-block; background: var(--green); color: white; font-size: 10px; padding: 1px 6px; border-radius: 999px; margin-bottom: 6px; }
+    .sidebar-footer .logout-btn { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 12px; padding: 0; }
+
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar { background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-title { font-size: 18px; font-weight: 700; color: var(--gray-800); }
+    .topbar-sub { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
+    .content { padding: 24px; flex: 1; overflow-y: auto; }
+
+    .card { background: var(--white); border-radius: 8px; border: 1px solid var(--gray-200); padding: 20px; margin-bottom: 16px; }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--gray-600); margin-bottom: 16px; text-transform: uppercase; letter-spacing: .06em; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .stat-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 8px; padding: 16px; }
+    .stat-label { font-size: 11px; color: var(--gray-500); margin-bottom: 4px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--gray-800); }
+    .stat-unit { font-size: 11px; color: var(--gray-400); }
+    .stat-card.warn { border-left: 4px solid var(--amber); }
+    .stat-card.good { border-left: 4px solid var(--green); }
+
+    .alert-banner { background: var(--amber-light); border: 1px solid var(--amber); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #92400e; display: flex; align-items: center; gap: 8px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--gray-50); }
+    th { text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--gray-500); border-bottom: 2px solid var(--gray-200); }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+
+    .badge-status { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .badge-admin { background: var(--blue-light); color: var(--blue); }
+    .badge-vol { background: var(--green-light); color: var(--green-dark); }
+    .badge-warn { background: var(--amber-light); color: #92400e; }
+    .badge-ok { background: var(--green-light); color: var(--green-dark); }
+    .badge-inactive { background: var(--gray-100); color: var(--gray-500); }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--green); color: var(--white); }
+    .btn-secondary { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-200); }
+    .btn-danger { background: var(--red-light); color: var(--red); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 4px; }
+    input, select, textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 13px; color: var(--gray-800); background: var(--white); outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 2px #bbf7d0; }
+    .input-hint { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+    .input-error { font-size: 11px; color: var(--red); margin-top: 3px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .filter-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-row .form-group { margin-bottom: 0; flex: 1; min-width: 140px; }
+
+    .saldo-box { background: var(--green-light); border: 1px solid #86efac; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--green-dark); }
+    .saldo-box.danger { background: var(--red-light); border-color: #fca5a5; color: var(--red); }
+
+    /* Login */
+    #screen-login { background: linear-gradient(135deg, var(--green-dark) 0%, #064e3b 100%); align-items: center; justify-content: center; }
+    .login-box { background: var(--white); border-radius: 12px; padding: 40px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .login-logo { text-align: center; margin-bottom: 28px; }
+    .login-error { background: var(--red-light); border: 1px solid #fca5a5; color: var(--red); border-radius: 6px; padding: 8px 12px; font-size: 12px; margin-bottom: 16px; display: none; }
+    .login-error.show { display: block; }
+    .perfil-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+    .perfil-btn { flex: 1; padding: 7px; border-radius: 6px; border: 2px solid var(--gray-200); background: var(--gray-50); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--gray-500); text-align: center; }
+    .perfil-btn.active { border-color: var(--green); color: var(--green-dark); background: var(--green-light); }
+
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-header h2 { font-size: 15px; font-weight: 700; color: var(--gray-700); }
+
+    .dist-saldo-preview { display: none; }
+    .dist-saldo-preview.show { display: block; }
+  </style>
+</head>
+<body>
+
+<nav id="proto-nav">
+  <span class="label">📐 Conecta Social — E4:</span>
+  <button class="active" onclick="show('login')">Login</button>
+  <button onclick="show('painel')">Painel</button>
+  <button onclick="show('itens')">Itens</button>
+  <button onclick="show('doadores')">Doadores</button>
+  <button onclick="show('familias')">Famílias</button>
+  <button onclick="show('doacoes')">Doação</button>
+  <button onclick="show('distribuicao')">Distribuição</button>
+  <button onclick="show('relatorio')">Relatório</button>
+  <button onclick="show('usuarios')">Usuários (Admin)</button>
+</nav>
+
+<!-- 1. LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">
+      <div style="font-size:40px;">🤝</div>
+      <h1 style="font-size:22px; font-weight:800; color:var(--gray-800); margin-top:8px;">Conecta Social</h1>
+      <p style="font-size:12px; color:var(--gray-400);">Gestão de ONGs</p>
+    </div>
+    <div class="perfil-toggle">
+      <div class="perfil-btn active" id="btn-adm" onclick="selectPerfil('adm')">👤 Admin</div>
+      <div class="perfil-btn" id="btn-vol" onclick="selectPerfil('vol')">🙋 Voluntário</div>
+    </div>
+    <div id="login-error" class="login-error">Credenciais inválidas.</div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="login-email" value="admin@conectasocial.org" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-senha" value="••••••••" />
+    </div>
+    <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:4px;" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- 2. PAINEL -->
+<div id="screen-painel" class="screen">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🤝</span> Conecta Social</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Principal</div>
+        <div class="sidebar-item active" onclick="show('painel')"><span class="icon">📊</span> Painel</div>
+        <div class="sidebar-item" onclick="show('itens')"><span class="icon">📦</span> Itens</div>
+        <div class="sidebar-item" onclick="show('doadores')"><span class="icon">🙌</span> Doadores</div>
+        <div class="sidebar-item" onclick="show('familias')"><span class="icon">🏠</span> Famílias</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Movimentações</div>
+        <div class="sidebar-item" onclick="show('doacoes')"><span class="icon">⬇️</span> Nova Doação</div>
+        <div class="sidebar-item" onclick="show('distribuicao')"><span class="icon">⬆️</span> Nova Distribuição</div>
+        <div class="sidebar-item" onclick="show('relatorio')"><span class="icon">📄</span> Relatórios</div>
+      </div>
+      <div class="sidebar-section adm-only">
+        <div class="sidebar-label">Administração</div>
+        <div class="sidebar-item" onclick="show('usuarios')"><span class="icon">👥</span> Usuários</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user user-name-display">Admin Sistema</div>
+        <div class="badge badge-display">Administrador</div>
+        <button class="logout-btn" onclick="show('login')">⟵ Sair</button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div class="topbar-title">Painel Geral</div><div class="topbar-sub">Situação atual do estoque</div></div>
+      </div>
+      <div class="content">
+        <div class="alert-banner">⚠️ <strong>1 item</strong> abaixo do estoque mínimo.</div>
+        <div class="stat-grid">
+          <div class="stat-card good"><div class="stat-label">Alimentos</div><div class="stat-value">62</div><div class="stat-unit">pacotes/garrafas</div></div>
+          <div class="stat-card warn"><div class="stat-label">Higiene</div><div class="stat-value">90</div><div class="stat-unit">uni · ⚠️ 1 em alerta</div></div>
+          <div class="stat-card good"><div class="stat-label">Limpeza</div><div class="stat-value">0</div><div class="stat-unit">uni</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚠️ Itens abaixo do estoque mínimo</div>
+          <table>
+            <thead><tr><th>Item</th><th>Categoria</th><th>Saldo</th><th>Mínimo</th><th>Ação</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Sabonete</strong></td><td>Higiene</td><td style="color:var(--amber); font-weight:700;">90 uni</td><td>20 uni</td><td><button class="btn btn-secondary btn-sm" onclick="show('doacoes')">Receber</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. ITENS -->
+<div id="screen-itens" class="screen">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🤝</span> Conecta Social</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Principal</div>
+        <div class="sidebar-item" onclick="show('painel')"><span class="icon">📊</span> Painel</div>
+        <div class="sidebar-item active"><span class="icon">📦</span> Itens</div>
+        <div class="sidebar-item" onclick="show('doadores')"><span class="icon">🙌</span> Doadores</div>
+        <div class="sidebar-item" onclick="show('familias')"><span class="icon">🏠</span> Famílias</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Movimentações</div>
+        <div class="sidebar-item" onclick="show('doacoes')"><span class="icon">⬇️</span> Nova Doação</div>
+        <div class="sidebar-item" onclick="show('distribuicao')"><span class="icon">⬆️</span> Nova Distribuição</div>
+        <div class="sidebar-item" onclick="show('relatorio')"><span class="icon">📄</span> Relatórios</div>
+      </div>
+      <div class="sidebar-section adm-only">
+        <div class="sidebar-label">Administração</div>
+        <div class="sidebar-item" onclick="show('usuarios')"><span class="icon">👥</span> Usuários</div>
+      </div>
+      <div class="sidebar-footer"><div class="user user-name-display">Admin Sistema</div><div class="badge badge-display">Administrador</div><button class="logout-btn" onclick="show('login')">⟵ Sair</button></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div class="topbar-title">Itens e Categorias</div></div>
+        <div class="adm-only-btn"><button class="btn btn-primary btn-sm">+ Categoria</button> <button class="btn btn-primary btn-sm">+ Item</button></div>
+      </div>
+      <div class="content">
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table>
+            <thead><tr><th>Item</th><th>Categoria</th><th>Unidade</th><th>Saldo</th><th>Min</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Arroz 5kg</strong></td><td>Alimento</td><td>pct</td><td>62</td><td>10</td><td><span class="badge-status badge-ok">OK</span></td><td><button class="btn btn-secondary btn-sm">Editar</button></td></tr>
+              <tr><td><strong>Feijão 1kg</strong></td><td>Alimento</td><td>pct</td><td>17</td><td>10</td><td><span class="badge-status badge-ok">OK</span></td><td><button class="btn btn-secondary btn-sm">Editar</button></td></tr>
+              <tr><td><strong>Óleo de soja 900ml</strong></td><td>Alimento</td><td>grf</td><td>15</td><td>5</td><td><span class="badge-status badge-ok">OK</span></td><td><button class="btn btn-secondary btn-sm">Editar</button></td></tr>
+              <tr><td><strong>Sabonete</strong></td><td>Higiene</td><td>uni</td><td>90</td><td>20</td><td><span class="badge-status badge-ok">OK</span></td><td><button class="btn btn-secondary btn-sm">Editar</button></td></tr>
+              <tr><td><strong>Pasta de dente</strong></td><td>Higiene</td><td>uni</td><td>0</td><td>15</td><td><span class="badge-status badge-warn">⚠️ Alerta</span></td><td><button class="btn btn-secondary btn-sm">Editar</button></td></tr>
+              <tr><td><strong>Detergente 500ml</strong></td><td>Limpeza</td><td>uni</td><td>0</td><td>10</td><td><span class="badge-status badge-warn">⚠️ Alerta</span></td><td><button class="btn btn-secondary btn-sm">Editar</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. DOADORES -->
+<div id="screen-doadores" class="screen">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🤝</span> Conecta Social</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Principal</div>
+        <div class="sidebar-item" onclick="show('painel')"><span class="icon">📊</span> Painel</div>
+        <div class="sidebar-item" onclick="show('itens')"><span class="icon">📦</span> Itens</div>
+        <div class="sidebar-item active"><span class="icon">🙌</span> Doadores</div>
+        <div class="sidebar-item" onclick="show('familias')"><span class="icon">🏠</span> Famílias</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Movimentações</div>
+        <div class="sidebar-item" onclick="show('doacoes')"><span class="icon">⬇️</span> Nova Doação</div>
+        <div class="sidebar-item" onclick="show('distribuicao')"><span class="icon">⬆️</span> Nova Distribuição</div>
+        <div class="sidebar-item" onclick="show('relatorio')"><span class="icon">📄</span> Relatórios</div>
+      </div>
+      <div class="sidebar-section adm-only">
+        <div class="sidebar-label">Administração</div>
+        <div class="sidebar-item" onclick="show('usuarios')"><span class="icon">👥</span> Usuários</div>
+      </div>
+      <div class="sidebar-footer"><div class="user user-name-display">Admin Sistema</div><div class="badge badge-display">Administrador</div><button class="logout-btn" onclick="show('login')">⟵ Sair</button></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div class="topbar-title">Doadores</div></div>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="card-title">Novo Doador</div>
+          <div class="form-row">
+            <div class="form-group"><label>Nome *</label><input type="text" placeholder="Nome" /></div>
+            <div class="form-group"><label>CPF/CNPJ *</label><input type="text" placeholder="Apenas formato válido" /></div>
+          </div>
+          <button class="btn btn-primary">Salvar doador</button>
+        </div>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table>
+            <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Email</th></tr></thead>
+            <tbody>
+              <tr><td>Carlos Mendonça</td><td>123.456.789-00</td><td>(11) 99001-1234</td><td>carlos@email.com</td></tr>
+              <tr><td>Supermercado Bom Preço</td><td>12.345.678/0001-99</td><td>(11) 3200-5678</td><td>doacoes@bompreco.com.br</td></tr>
+              <tr><td>Ana Paula Ramos</td><td>987.654.321-00</td><td>(11) 97654-3210</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. FAMÍLIAS -->
+<div id="screen-familias" class="screen">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🤝</span> Conecta Social</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Principal</div>
+        <div class="sidebar-item" onclick="show('painel')"><span class="icon">📊</span> Painel</div>
+        <div class="sidebar-item" onclick="show('itens')"><span class="icon">📦</span> Itens</div>
+        <div class="sidebar-item" onclick="show('doadores')"><span class="icon">🙌</span> Doadores</div>
+        <div class="sidebar-item active"><span class="icon">🏠</span> Famílias</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Movimentações</div>
+        <div class="sidebar-item" onclick="show('doacoes')"><span class="icon">⬇️</span> Nova Doação</div>
+        <div class="sidebar-item" onclick="show('distribuicao')"><span class="icon">⬆️</span> Nova Distribuição</div>
+        <div class="sidebar-item" onclick="show('relatorio')"><span class="icon">📄</span> Relatórios</div>
+      </div>
+      <div class="sidebar-section adm-only">
+        <div class="sidebar-label">Administração</div>
+        <div class="sidebar-item" onclick="show('usuarios')"><span class="icon">👥</span> Usuários</div>
+      </div>
+      <div class="sidebar-footer"><div class="user user-name-display">Admin Sistema</div><div class="badge badge-display">Administrador</div><button class="logout-btn" onclick="show('login')">⟵ Sair</button></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div><div class="topbar-title">Famílias Beneficiadas</div></div>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="card-title">Nova Família</div>
+          <div class="form-row">
+            <div class="form-group"><label>Responsável *</label><input type="text" placeholder="Nome" /></div>
+            <div class="form-group"><label>Membros *</label><input type="number" min="1" value="1" /></div>
+          </div>
+          <div class="form-group"><label>Endereço *</label><input type="text" placeholder="Endereço completo" /></div>
+          <button class="btn btn-primary">Salvar família</button>
+        </div>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table>
+            <thead><tr><th>Responsável</th><th>Endereço</th><th>Telefone</th><th>Membros</th></tr></thead>
+            <tbody>
+              <tr><td>Josefa Santos</td><td>Rua das Flores 45, Bairro Esperança</td><td>(11) 98765-0001</td><td>4</td></tr>
+              <tr><td>Roberto Lima</td><td>Av. Principal 200, Apto 3, Bairro Centro</td><td>(11) 98765-0002</td><td>6</td></tr>
+              <tr><td>Maria das Dores</td><td>Rua Boa Vista 12, Bairro São Pedro</td><td>—</td><td>3</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. DOAÇÃO -->
+<div id="screen-doacoes" class="screen">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🤝</span> Conecta Social</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Principal</div>
+        <div class="sidebar-item" onclick="show('painel')"><span class="icon">📊</span> Painel</div>
+        <div class="sidebar-item" onclick="show('itens')"><span class="icon">📦</span> Itens</div>
+        <div class="sidebar-item" onclick="show('doadores')"><span class="icon">🙌</span> Doadores</div>
+        <div class="sidebar-item" onclick="show('familias')"><span class="icon">🏠</span> Famílias</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Movimentações</div>
+        <div class="sidebar-item active"><span class="icon">⬇️</span> Nova Doação</div>
+        <div class="sidebar-item" onclick="show('distribuicao')"><span class="icon">⬆️</span> Nova Distribuição</div>
+        <div class="sidebar-item" onclick="show('relatorio')"><span class="icon">📄</span> Relatórios</div>
+      </div>
+      <div class="sidebar-section adm-only">
+        <div class="sidebar-label">Administração</div>
+        <div class="sidebar-item" onclick="show('usuarios')"><span class="icon">👥</span> Usuários</div>
+      </div>
+      <div class="sidebar-footer"><div class="user user-name-display">Admin Sistema</div><div class="badge badge-display">Administrador</div><button class="logout-btn" onclick="show('login')">⟵ Sair</button></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><div><div class="topbar-title">Registrar Doação</div></div></div>
+      <div class="content">
+        <div class="card" style="max-width:560px;">
+          <div class="form-group"><label>Doador *</label><select><option>Carlos Mendonça</option><option>Supermercado Bom Preço</option></select></div>
+          <div class="form-group"><label>Item *</label><select onchange="updateSaldoDoacao(this)"><option value="62">Arroz 5kg (62)</option><option value="90">Sabonete (90)</option></select></div>
+          <div class="saldo-box" id="saldo-doacao">Após doação será: <strong id="saldo-doacao-result">67</strong></div>
+          <div class="form-row">
+            <div class="form-group"><label>Qtd *</label><input type="number" value="5" min="1" oninput="calcSaldoDoacao(this)" /></div>
+            <div class="form-group"><label>Data</label><input type="date" value="2026-09-09" /></div>
+          </div>
+          <button class="btn btn-primary">Registrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. DISTRIBUIÇÃO -->
+<div id="screen-distribuicao" class="screen">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🤝</span> Conecta Social</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Principal</div>
+        <div class="sidebar-item" onclick="show('painel')"><span class="icon">📊</span> Painel</div>
+        <div class="sidebar-item" onclick="show('itens')"><span class="icon">📦</span> Itens</div>
+        <div class="sidebar-item" onclick="show('doadores')"><span class="icon">🙌</span> Doadores</div>
+        <div class="sidebar-item" onclick="show('familias')"><span class="icon">🏠</span> Famílias</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Movimentações</div>
+        <div class="sidebar-item" onclick="show('doacoes')"><span class="icon">⬇️</span> Nova Doação</div>
+        <div class="sidebar-item active"><span class="icon">⬆️</span> Nova Distribuição</div>
+        <div class="sidebar-item" onclick="show('relatorio')"><span class="icon">📄</span> Relatórios</div>
+      </div>
+      <div class="sidebar-section adm-only">
+        <div class="sidebar-label">Administração</div>
+        <div class="sidebar-item" onclick="show('usuarios')"><span class="icon">👥</span> Usuários</div>
+      </div>
+      <div class="sidebar-footer"><div class="user user-name-display">Admin Sistema</div><div class="badge badge-display">Administrador</div><button class="logout-btn" onclick="show('login')">⟵ Sair</button></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><div><div class="topbar-title">Registrar Distribuição</div></div></div>
+      <div class="content">
+        <div class="card" style="max-width:560px;">
+          <div class="form-group"><label>Família *</label><select><option>Josefa Santos</option><option>Roberto Lima</option></select></div>
+          <div class="form-group"><label>Item *</label><select onchange="updateSaldoDist(this)"><option value="62">Arroz 5kg (saldo: 62)</option><option value="0">Pasta de dente (saldo: 0)</option></select></div>
+          <div class="saldo-box dist-saldo-preview show" id="dist-saldo-ok">Saldo disponível.</div>
+          <div class="saldo-box danger dist-saldo-preview" id="dist-saldo-err" style="display:none;">⛔ <strong>Saldo insuficiente:</strong> disponível <strong id="dist-disp">0</strong>, solicitado <strong id="dist-sol">1</strong>.</div>
+          <div class="form-row">
+            <div class="form-group"><label>Qtd *</label><input type="number" id="dist-qtd" value="1" min="1" oninput="checkSaldo()" /></div>
+            <div class="form-group"><label>Data</label><input type="date" value="2026-09-09" /></div>
+          </div>
+          <button class="btn btn-primary" id="dist-btn-save">Registrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. RELATÓRIO -->
+<div id="screen-relatorio" class="screen">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🤝</span> Conecta Social</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Principal</div>
+        <div class="sidebar-item" onclick="show('painel')"><span class="icon">📊</span> Painel</div>
+        <div class="sidebar-item" onclick="show('itens')"><span class="icon">📦</span> Itens</div>
+        <div class="sidebar-item" onclick="show('doadores')"><span class="icon">🙌</span> Doadores</div>
+        <div class="sidebar-item" onclick="show('familias')"><span class="icon">🏠</span> Famílias</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Movimentações</div>
+        <div class="sidebar-item" onclick="show('doacoes')"><span class="icon">⬇️</span> Nova Doação</div>
+        <div class="sidebar-item" onclick="show('distribuicao')"><span class="icon">⬆️</span> Nova Distribuição</div>
+        <div class="sidebar-item active"><span class="icon">📄</span> Relatórios</div>
+      </div>
+      <div class="sidebar-section adm-only">
+        <div class="sidebar-label">Administração</div>
+        <div class="sidebar-item" onclick="show('usuarios')"><span class="icon">👥</span> Usuários</div>
+      </div>
+      <div class="sidebar-footer"><div class="user user-name-display">Admin Sistema</div><div class="badge badge-display">Administrador</div><button class="logout-btn" onclick="show('login')">⟵ Sair</button></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><div><div class="topbar-title">Relatórios</div></div></div>
+      <div class="content"><div class="card">Simulação de Relatório...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 9. USUÁRIOS -->
+<div id="screen-usuarios" class="screen">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><span>🤝</span> Conecta Social</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Principal</div>
+        <div class="sidebar-item" onclick="show('painel')"><span class="icon">📊</span> Painel</div>
+        <div class="sidebar-item" onclick="show('itens')"><span class="icon">📦</span> Itens</div>
+        <div class="sidebar-item" onclick="show('doadores')"><span class="icon">🙌</span> Doadores</div>
+        <div class="sidebar-item" onclick="show('familias')"><span class="icon">🏠</span> Famílias</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Movimentações</div>
+        <div class="sidebar-item" onclick="show('doacoes')"><span class="icon">⬇️</span> Nova Doação</div>
+        <div class="sidebar-item" onclick="show('distribuicao')"><span class="icon">⬆️</span> Nova Distribuição</div>
+        <div class="sidebar-item" onclick="show('relatorio')"><span class="icon">📄</span> Relatórios</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Administração</div>
+        <div class="sidebar-item active"><span class="icon">👥</span> Usuários</div>
+      </div>
+      <div class="sidebar-footer"><div class="user user-name-display">Admin Sistema</div><div class="badge badge-display">Administrador</div><button class="logout-btn" onclick="show('login')">⟵ Sair</button></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><div><div class="topbar-title">Usuários</div></div></div>
+      <div class="content">
+        <div class="card" style="max-width:500px;">
+          <div class="card-title">Novo Usuário</div>
+          <div class="form-row"><div class="form-group"><label>Email</label><input type="email"/></div><div class="form-group"><label>Perfil</label><select><option>Voluntário</option><option>Administrador</option></select></div></div>
+          <button class="btn btn-primary">Salvar</button>
+        </div>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table>
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th></tr></thead>
+            <tbody>
+              <tr><td>Admin Sistema</td><td>admin@conectasocial.org</td><td>Administrador</td></tr>
+              <tr><td>Maria Voluntária</td><td>maria@conectasocial.org</td><td>Voluntário</td></tr>
+              <tr><td>João Voluntário</td><td>joao@conectasocial.org</td><td>Voluntário</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const screens = ['login','painel','itens','doadores','familias','doacoes','distribuicao','relatorio','usuarios'];
+  let currentPerfil = 'adm';
+
+  function show(id) {
+    screens.forEach(s => document.getElementById('screen-' + s).classList.remove('active'));
+    document.querySelectorAll('#proto-nav button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+  }
+
+  function selectPerfil(p) {
+    currentPerfil = p;
+    document.getElementById('btn-adm').classList.toggle('active', p === 'adm');
+    document.getElementById('btn-vol').classList.toggle('active', p === 'vol');
+  }
+
+  function doLogin() {
+    const isAdm = currentPerfil === 'adm';
+    document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdm ? 'block' : 'none');
+    document.querySelectorAll('.adm-only-btn').forEach(el => el.style.display = isAdm ? 'block' : 'none');
+    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = isAdm ? 'Admin Sistema' : 'Maria Voluntária');
+    document.querySelectorAll('.badge-display').forEach(el => {
+      el.textContent = isAdm ? 'Administrador' : 'Voluntário';
+      el.style.background = isAdm ? 'var(--green)' : 'var(--blue)';
+    });
+    show('painel');
+  }
+
+  /* doação — saldo preview */
+  let saldoAtualDoacao = 62;
+  function updateSaldoDoacao(sel) { saldoAtualDoacao = parseInt(sel.value) || 0; calcSaldoDoacao(document.querySelector('#screen-doacoes input[type=number]')); }
+  function calcSaldoDoacao(inp) { document.getElementById('saldo-doacao-result').textContent = saldoAtualDoacao + (parseInt(inp.value) || 0); }
+
+  /* distribuição — saldo check */
+  let saldoAtualDist = 62;
+  function updateSaldoDist(sel) { saldoAtualDist = parseInt(sel.value) || 0; checkSaldo(); }
+  function checkSaldo() {
+    const qtd = parseInt(document.getElementById('dist-qtd').value) || 0;
+    const ok = document.getElementById('dist-saldo-ok'), err = document.getElementById('dist-saldo-err'), btn = document.getElementById('dist-btn-save');
+    if (qtd > saldoAtualDist) {
+      ok.style.display = 'none'; err.style.display = 'flex';
+      document.getElementById('dist-disp').textContent = saldoAtualDist; document.getElementById('dist-sol').textContent = qtd;
+      btn.disabled = true; btn.style.opacity = '.4';
+    } else {
+      ok.style.display = 'block'; err.style.display = 'none';
+      btn.disabled = false; btn.style.opacity = '1';
+    }
+  }
+</script>
+</body>
+</html>

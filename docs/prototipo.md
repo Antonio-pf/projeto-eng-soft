@@ -1,8 +1,10 @@
 # Roteiro do Protótipo Navegável — Conecta Social
 
-**Link do protótipo:** [Acessar no Figma](https://www.figma.com/design/TyUOya1fWIhDOESS57yEqy/Conecta-Social?node-id=1669-162202&p=f&t=z0O0tMPE2I0BZdd2-0)  
+**Link do protótipo:** [Acessar no Figma](https://www.figma.com/design/YChrqTf5IiwA9skwfSP8O7/Conecta-Social--Copy-?node-id=1669-162202)
 
-**Link do preview:** [Acessar preview](https://www.figma.com/proto/TyUOya1fWIhDOESS57yEqy/Conecta-Social?node-id=1669-162202&t=LiVfjMFQpvpUStJO-1)
+**Link do preview (navegável):** [Acessar preview](https://www.figma.com/proto/YChrqTf5IiwA9skwfSP8O7/Conecta-Social--Copy-?node-id=2603-15&starting-point-node-id=2603-15)
+
+
 
 ## Integrantes
 
@@ -24,7 +26,7 @@ As telas abaixo foram conferidas no arquivo do Figma. A coluna **Evidência no l
 | Itens e Categorias (`itens`) | Administrador e Voluntário; criação: Administrador | #10, #11, #12 | Lista de itens com categoria, unidade, saldo, estoque mínimo e status; ações de categoria, item e edição. | Administrador `2603:126`; variante Voluntário `2669:2`. |
 | Doadores (`doadores`) | Voluntário | #5, #6 | Cadastro de doador e consulta da lista de doadores. | Administrador `2603:258`; variante Voluntário `2669:142`. |
 | Famílias (`familias`) | Voluntário | #8, #9 | Cadastro de família e consulta da lista de famílias. | Administrador `2603:344`; variante Voluntário `2669:236`. |
-| Registrar Doação (`doacoes`) | Voluntário | #14 | Seleção de doador e item, quantidade, data e confirmação da entrada no estoque. | Administrador `2603:555`; variante Voluntário `2669:334`. |
+| Registrar Doação (`doacoes-voluntario`) | Voluntário | #14 | Seleção de doador e item, quantidade, data e confirmação da entrada no estoque. | Frame `2669:334`. Não há tela equivalente para Administrador no protótipo — o Administrador acessa o registro de doação pelo mesmo fluxo operacional do Voluntário. |
 | Registrar Distribuição (`distribuicao`) | Voluntário | #16 | Seleção de família e item, quantidade, data, saldo disponível e validação de saldo insuficiente. | Administrador `2603:641`; variante Voluntário `2669:421`. |
 | Relatório (`relatorio`) | Voluntário | #21 | Filtros de período e família, tabela de distribuições e exportação dos dados. | Administrador `2603:727`; variante Voluntário `2669:508`. |
 | Gestão de Usuários (`usuarios`) | Administrador | #3 | Cadastro de usuário com nome, e-mail, senha e perfil; listagem e controle de acesso. | Frame `2603:793`; área exclusiva de Administração. |
@@ -52,11 +54,13 @@ As variantes com sufixo `-voluntario` são versões de navegação e permissão 
 
 **Resultado:** as 14 histórias Must possuem uma tela correspondente no layout. A cobertura dos critérios de aceite depende da execução dos fluxos clicáveis no modo **Prototype**
 
-## Fluxos navegáveis a validar
+## Fluxos navegáveis implementados
 
-- **Comum:** Login → Painel → Sair → Login.
-- **Voluntário:** Login → Painel → Itens → Doadores → Famílias → Doação → Distribuição → Relatórios → Sair.
-- **Administrador:** Login → Painel → Itens → Doadores → Famílias → Doação → Distribuição → Relatórios → Usuários → Sair.
+O protótipo é clicável no modo **Prototype** do Figma (conexões configuradas com `ON_CLICK` → `NAVIGATE` em todos os itens do menu lateral, no botão **Sair** e nos botões de ação principais de cada tela). Pontos de entrada (`flow starting points`): **Início — Administrador** (`login`) e **Início — Voluntário** (`login-voluntario`).
 
-Validar o switch do login, as transições e as permissões. **Usuários** e **Administração** aparecem apenas para Administrador; o Voluntário usa suas variantes de tela e vê **Maria Voluntária**.
+- **Comum:** Login → **Entrar no Conecta** → Painel → (menu lateral: Itens e categorias, Doadores, Famílias, Movimentações) → **Sair** → Login.
+- **Administrador:** Login → Painel → **+ Nova movimentação** → Distribuição → **Registrar** → Relatório. O menu lateral leva a qualquer tela (Painel, Itens e categorias, Doadores, Famílias, Movimentações → Distribuição, Usuários) a partir de qualquer ponto do fluxo.
+- **Voluntário:** Login (voluntário) → Painel → **Receber** (item abaixo do mínimo) → Registrar Doação → **Registrar** → Registrar Distribuição → **Registrar** → Relatório. O menu lateral do Voluntário não exibe **Administração/Usuários**, conforme a restrição de acesso da história #3.
+
+Cada tela mantém o próprio item do menu lateral marcado como ativo; clicar num item já ativo permanece na mesma tela (sem link, por ser a página atual).
 
