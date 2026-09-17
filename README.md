@@ -195,6 +195,18 @@ docker compose down -v
 
 O deploy atual continua usando o ambiente Python nativo configurado em `render.yaml`. O `Dockerfile` fica disponível para uma futura mudança do Render para deploy por container.
 
+## Usuários de teste
+
+O comando `seed` (rodado automaticamente pelo Docker, ou manualmente no passo 5 da instalação local) cria estes usuários — mesma senha pra todos, `alterar-senha`:
+
+| E-mail | Perfil |
+|---|---|
+| `admin@conectasocial.org` | Administrador |
+| `maria@conectasocial.org` | Voluntário |
+| `joao@conectasocial.org` | Voluntário |
+
+Acesse `http://127.0.0.1:8000/login/` (ou `http://localhost:8000/login/` no Docker) com qualquer um deles.
+
 ## Estrutura do repositório
 
 ```text
