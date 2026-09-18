@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from core.decorators import admin_obrigatorio, login_obrigatorio
 from core.forms import LoginForm, UsuarioForm
@@ -66,3 +67,16 @@ def usuarios_view(request):
 
     usuarios = Usuario.objects.order_by("id_usuario")
     return render(request, "core/usuarios.html", {"form": form, "usuarios": usuarios})
+
+
+@login_obrigatorio
+@admin_obrigatorio
+@require_POST
+def usuario_alternar_status_view(request, id_usuario):
+    if id_usuario == request.user.id_usuario:
+        return redirect("usuarios")
+
+    usuario = get_object_or_404(Usuario, id_usuario=id_usuario)
+    usuario.ativo = not usuario.ativo
+    usuario.save(update_fields=["ativo"])
+    return redirect("usuarios")

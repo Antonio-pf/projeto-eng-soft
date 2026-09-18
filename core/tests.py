@@ -230,3 +230,105 @@ class UsuariosViewTests(TestCase):
         response = self.client.get(reverse("usuarios"))
 
         self.assertEqual(response.status_code, 403)
+
+
+class UsuarioAlternarStatusViewTests(TestCase):
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Admin Sistema",
+            email="admin@conectasocial.org",
+            password=make_password("alterar-senha"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.voluntario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("alterar-senha"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+
+    def _login(self, usuario, senha="alterar-senha"):
+        self.client.post(
+            reverse("login"),
+            {"email": usuario.email, "senha": senha},
+        )
+
+    def test_admin_desativa_usuario(self):
+        self._login(self.admin)
+
+        response = self.client.post(
+            reverse("usuario_alternar_status", args=[self.voluntario.id_usuario])
+        )
+
+        self.assertRedirects(response, reverse("usuarios"))
+        self.voluntario.refresh_from_db()
+        self.assertFalse(self.voluntario.ativo)
+
+    def test_admin_reativa_usuario(self):
+        self.voluntario.ativo = False
+        self.voluntario.save()
+        self._login(self.admin)
+
+        self.client.post(reverse("usuario_alternar_status", args=[self.voluntario.id_usuario]))
+
+        self.voluntario.refresh_from_db()
+        self.assertTrue(self.voluntario.ativo)
+
+    def test_usuario_desativado_nao_consegue_fazer_login(self):
+        self._login(self.admin)
+        self.client.post(reverse("usuario_alternar_status", args=[self.voluntario.id_usuario]))
+        self.client.get(reverse("logout"))
+
+        response = self.client.post(
+            reverse("login"),
+            {"email": self.voluntario.email, "senha": "alterar-senha"},
+        )
+
+        self.assertContains(response, "E-mail ou senha inválidos.")
+
+    def test_usuario_desativado_com_sessao_ativa_perde_acesso(self):
+        self._login(self.voluntario)
+
+        self.voluntario.ativo = False
+        self.voluntario.save()
+
+        response = self.client.get(reverse("painel"))
+
+        self.assertRedirects(response, reverse("login"))
+
+    def test_admin_nao_consegue_desativar_a_si_mesmo(self):
+        self._login(self.admin)
+
+        self.client.post(reverse("usuario_alternar_status", args=[self.admin.id_usuario]))
+
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.ativo)
+
+    def test_voluntario_nao_pode_alternar_status(self):
+        self._login(self.voluntario)
+
+        response = self.client.post(
+            reverse("usuario_alternar_status", args=[self.admin.id_usuario])
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_get_nao_e_permitido(self):
+        self._login(self.admin)
+
+        response = self.client.get(
+            reverse("usuario_alternar_status", args=[self.voluntario.id_usuario])
+        )
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_listagem_distingue_ativos_e_inativos(self):
+        self._login(self.admin)
+        self.client.post(reverse("usuario_alternar_status", args=[self.voluntario.id_usuario]))
+
+        response = self.client.get(reverse("usuarios"))
+
+        self.assertContains(response, "Inativo")
+        self.assertContains(response, "Ativo")
