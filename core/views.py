@@ -1,8 +1,8 @@
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-from core.auth import autenticar
 from core.decorators import admin_obrigatorio, login_obrigatorio
 from core.forms import LoginForm, UsuarioForm
 from core.models import Usuario
@@ -17,17 +17,20 @@ def health(request):
 
 
 def login_view(request):
-    if request.session.get("id_usuario"):
+    if request.user.is_authenticated:
         return redirect("painel")
 
     erro = None
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
-            usuario = autenticar(form.cleaned_data["email"], form.cleaned_data["senha"])
+            usuario = authenticate(
+                request,
+                email=form.cleaned_data["email"],
+                password=form.cleaned_data["senha"],
+            )
             if usuario is not None:
-                request.session["id_usuario"] = usuario.id_usuario
-                request.session["usuario_perfil"] = usuario.perfil
+                login(request, usuario)
                 return redirect("painel")
             erro = "E-mail ou senha inválidos."
     else:
@@ -37,7 +40,7 @@ def login_view(request):
 
 
 def logout_view(request):
-    request.session.flush()
+    logout(request)
     return redirect("login")
 
 
@@ -52,10 +55,10 @@ def usuarios_view(request):
     if request.method == "POST":
         form = UsuarioForm(request.POST)
         if form.is_valid():
-            Usuario.objects.create(
+            Usuario.objects.create_user(
                 nome=form.cleaned_data["nome"],
                 email=form.cleaned_data["email"],
-                senha_hash=make_password(form.cleaned_data["senha"]),
+                password=form.cleaned_data["senha"],
                 perfil=form.cleaned_data["perfil"],
             )
             return redirect("usuarios")
@@ -64,3 +67,16 @@ def usuarios_view(request):
 
     usuarios = Usuario.objects.order_by("id_usuario")
     return render(request, "core/usuarios.html", {"form": form, "usuarios": usuarios})
+
+
+@login_obrigatorio
+@admin_obrigatorio
+@require_POST
+def usuario_alternar_status_view(request, id_usuario):
+    if id_usuario == request.user.id_usuario:
+        return redirect("usuarios")
+
+    usuario = get_object_or_404(Usuario, id_usuario=id_usuario)
+    usuario.ativo = not usuario.ativo
+    usuario.save(update_fields=["ativo"])
+    return redirect("usuarios")

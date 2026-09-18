@@ -31,7 +31,7 @@ class Command(BaseCommand):
                 defaults={
                     "nome": nome,
                     "perfil": perfil,
-                    "senha_hash": make_password("alterar-senha"),
+                    "password": make_password("alterar-senha"),
                     "ativo": True,
                 },
             )

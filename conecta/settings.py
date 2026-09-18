@@ -52,6 +52,9 @@ TEMPLATES = [
     },
 ]
 
+AUTH_USER_MODEL = "core.Usuario"
+LOGIN_URL = "login"
+
 WSGI_APPLICATION = "conecta.wsgi.application"
 ASGI_APPLICATION = "conecta.asgi.application"
 

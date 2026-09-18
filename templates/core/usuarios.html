@@ -35,11 +35,13 @@
                     <th class="px-4 py-3 font-semibold">Nome</th>
                     <th class="px-4 py-3 font-semibold">E-mail</th>
                     <th class="px-4 py-3 font-semibold">Perfil</th>
+                    <th class="px-4 py-3 font-semibold">Status</th>
+                    <th class="px-4 py-3 font-semibold">Ações</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200" data-testid="usuario-table-body">
                 {% for usuario in usuarios %}
-                <tr data-testid="usuario-table-row">
+                <tr data-testid="usuario-table-row" class="{% if not usuario.ativo %}opacity-60{% endif %}">
                     <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ usuario.nome }}</td>
                     <td class="px-4 py-4 text-sm text-gray-500">{{ usuario.email }}</td>
                     <td class="px-4 py-4 text-sm">
@@ -47,6 +49,27 @@
                         <span class="inline-block whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-[13px] font-semibold text-primary">{{ usuario.get_perfil_display }}</span>
                         {% else %}
                         <span class="inline-block whitespace-nowrap rounded bg-gray-200 px-2 py-0.5 text-[13px] font-semibold text-gray-600">{{ usuario.get_perfil_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4 text-sm">
+                        {% if usuario.ativo %}
+                        <span class="inline-block whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-[13px] font-semibold text-primary" data-testid="usuario-status-badge">Ativo</span>
+                        {% else %}
+                        <span class="inline-block whitespace-nowrap rounded bg-gray-200 px-2 py-0.5 text-[13px] font-semibold text-gray-500" data-testid="usuario-status-badge">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4 text-sm">
+                        {% if usuario.id_usuario == usuario_logado.id_usuario %}
+                        <span class="text-xs text-gray-400">—</span>
+                        {% else %}
+                        <form method="post" action="{% url 'usuario_alternar_status' usuario.id_usuario %}">
+                            {% csrf_token %}
+                            {% if usuario.ativo %}
+                            <button type="submit" class="btn btn-outline btn-error btn-xs" data-testid="usuario-desativar-button">Desativar</button>
+                            {% else %}
+                            <button type="submit" class="btn btn-outline btn-xs" data-testid="usuario-ativar-button">Ativar</button>
+                            {% endif %}
+                        </form>
                         {% endif %}
                     </td>
                 </tr>

@@ -9,4 +9,9 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("painel/", views.painel_view, name="painel"),
     path("usuarios/", views.usuarios_view, name="usuarios"),
+    path(
+        "usuarios/<int:id_usuario>/status/",
+        views.usuario_alternar_status_view,
+        name="usuario_alternar_status",
+    ),
 ]

@@ -1,8 +1,35 @@
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.core.validators import MinValueValidator
 from django.db import models
 
 
-class Usuario(models.Model):
+class UsuarioManager(BaseUserManager):
+    def _criar_usuario(self, email, nome, perfil, password, **extra_fields):
+        if not email:
+            raise ValueError("O e-mail é obrigatório.")
+        usuario = self.model(
+            email=self.normalize_email(email), nome=nome, perfil=perfil, **extra_fields
+        )
+        usuario.set_password(password)
+        usuario.save(using=self._db)
+        return usuario
+
+    def create_user(self, email, nome, password=None, perfil=None, **extra_fields):
+        return self._criar_usuario(
+            email, nome, perfil or Usuario.Perfil.VOLUNTARIO, password, **extra_fields
+        )
+
+    def create_superuser(self, email, nome, password=None, **extra_fields):
+        # Necessário pra `createsuperuser`; não dá acesso a /admin/ (ver Usuario.is_staff).
+        return self._criar_usuario(
+            email, nome, Usuario.Perfil.ADMINISTRADOR, password, **extra_fields
+        )
+
+
+class Usuario(AbstractBaseUser):
+    # Fora do schema do DER; o signal que gravaria aqui é desligado em core/apps.py.
+    last_login = None
+
     class Perfil(models.TextChoices):
         ADMINISTRADOR = "administrador", "Administrador"
         VOLUNTARIO = "voluntario", "Voluntário"
@@ -10,10 +37,16 @@ class Usuario(models.Model):
     id_usuario = models.BigAutoField(primary_key=True)
     nome = models.CharField(max_length=150)
     email = models.EmailField(max_length=255, unique=True)
-    senha_hash = models.CharField(max_length=255)
+    # Nome Python exigido pelo Django; grava na coluna já documentada no DER via db_column.
+    password = models.CharField(max_length=255, db_column="senha_hash")
     perfil = models.CharField(max_length=15, choices=Perfil.choices)
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    objects = UsuarioManager()
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["nome"]
 
     class Meta:
         db_table = "usuario"
@@ -22,6 +55,15 @@ class Usuario(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def is_active(self):
+        return self.ativo
+
+    @property
+    def is_staff(self):
+        # Sempre False: sem PermissionsMixin, ligar a `perfil` trocaria um 500 por outro em /admin/.
+        return False
 
 
 class Doador(models.Model):
