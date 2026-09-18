@@ -20,20 +20,14 @@ class UsuarioManager(BaseUserManager):
         )
 
     def create_superuser(self, email, nome, password=None, **extra_fields):
-        # Existe pra `manage.py createsuperuser` funcionar (o comando exige
-        # esse método no manager). Aqui ele só cria um Usuario com
-        # perfil=ADMINISTRADOR (acesso a /usuarios/ via admin_obrigatorio) —
-        # NÃO dá acesso a /admin/, que fica desligado de propósito
-        # (ver Usuario.is_staff).
+        # Necessário pra `createsuperuser`; não dá acesso a /admin/ (ver Usuario.is_staff).
         return self._criar_usuario(
             email, nome, Usuario.Perfil.ADMINISTRADOR, password, **extra_fields
         )
 
 
 class Usuario(AbstractBaseUser):
-    # Removido: last_login (campo padrão do AbstractBaseUser que não faz parte
-    # do schema documentado no DER — ver core/apps.py, que desliga o signal
-    # que gravaria nele).
+    # Fora do schema do DER; o signal que gravaria aqui é desligado em core/apps.py.
     last_login = None
 
     class Perfil(models.TextChoices):
@@ -43,9 +37,7 @@ class Usuario(AbstractBaseUser):
     id_usuario = models.BigAutoField(primary_key=True)
     nome = models.CharField(max_length=150)
     email = models.EmailField(max_length=255, unique=True)
-    # Mantém o nome de campo "password" que o Django espera em vários pontos
-    # (createsuperuser, has_usable_password, forms de troca de senha), mas
-    # grava na coluna já documentada no DER via db_column — nenhum schema muda.
+    # Nome Python exigido pelo Django; grava na coluna já documentada no DER via db_column.
     password = models.CharField(max_length=255, db_column="senha_hash")
     perfil = models.CharField(max_length=15, choices=Perfil.choices)
     ativo = models.BooleanField(default=True)
@@ -70,14 +62,7 @@ class Usuario(AbstractBaseUser):
 
     @property
     def is_staff(self):
-        # Sempre False, de propósito: /admin/ não tem nenhum model registrado
-        # pra este app (sem core/admin.py) e Usuario não implementa
-        # PermissionsMixin (decisão registrada nas perguntas preparatórias —
-        # controle de acesso é o perfil + admin_obrigatorio, não Group/Permission).
-        # Ligar isso a `perfil` só trocaria um 500 (AttributeError em
-        # has_module_perms, exigido pelo Group que django.contrib.auth.admin
-        # registra sozinho) por outro. Manter False fixo deixa /admin/ morto e
-        # inofensivo pra qualquer usuário, igual era antes da migração.
+        # Sempre False: sem PermissionsMixin, ligar a `perfil` trocaria um 500 por outro em /admin/.
         return False
 
 

@@ -8,9 +8,7 @@ from core.models import Usuario
 
 
 def login_obrigatorio(view_func):
-    # request.user já reflete `ativo` a cada requisição (ver Usuario.is_active
-    # em core/models.py), então um usuário desativado perde acesso automaticamente.
-    # redirect_field_name=None: mantém o redirect simples pro /login/, sem ?next=.
+    # Wrapper sobre login_required; usuário desativado perde acesso automático (Usuario.is_active).
     return login_required(view_func, login_url="login", redirect_field_name=None)
 
 
