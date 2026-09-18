@@ -1,8 +1,41 @@
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.core.validators import MinValueValidator
 from django.db import models
 
 
-class Usuario(models.Model):
+class UsuarioManager(BaseUserManager):
+    def _criar_usuario(self, email, nome, perfil, password, **extra_fields):
+        if not email:
+            raise ValueError("O e-mail é obrigatório.")
+        usuario = self.model(
+            email=self.normalize_email(email), nome=nome, perfil=perfil, **extra_fields
+        )
+        usuario.set_password(password)
+        usuario.save(using=self._db)
+        return usuario
+
+    def create_user(self, email, nome, password=None, perfil=None, **extra_fields):
+        return self._criar_usuario(
+            email, nome, perfil or Usuario.Perfil.VOLUNTARIO, password, **extra_fields
+        )
+
+    def create_superuser(self, email, nome, password=None, **extra_fields):
+        # Existe pra `manage.py createsuperuser` funcionar (o comando exige
+        # esse método no manager). Aqui ele só cria um Usuario com
+        # perfil=ADMINISTRADOR (acesso a /usuarios/ via admin_obrigatorio) —
+        # NÃO dá acesso a /admin/, que fica desligado de propósito
+        # (ver Usuario.is_staff).
+        return self._criar_usuario(
+            email, nome, Usuario.Perfil.ADMINISTRADOR, password, **extra_fields
+        )
+
+
+class Usuario(AbstractBaseUser):
+    # Removido: last_login (campo padrão do AbstractBaseUser que não faz parte
+    # do schema documentado no DER — ver core/apps.py, que desliga o signal
+    # que gravaria nele).
+    last_login = None
+
     class Perfil(models.TextChoices):
         ADMINISTRADOR = "administrador", "Administrador"
         VOLUNTARIO = "voluntario", "Voluntário"
@@ -10,10 +43,18 @@ class Usuario(models.Model):
     id_usuario = models.BigAutoField(primary_key=True)
     nome = models.CharField(max_length=150)
     email = models.EmailField(max_length=255, unique=True)
-    senha_hash = models.CharField(max_length=255)
+    # Mantém o nome de campo "password" que o Django espera em vários pontos
+    # (createsuperuser, has_usable_password, forms de troca de senha), mas
+    # grava na coluna já documentada no DER via db_column — nenhum schema muda.
+    password = models.CharField(max_length=255, db_column="senha_hash")
     perfil = models.CharField(max_length=15, choices=Perfil.choices)
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    objects = UsuarioManager()
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["nome"]
 
     class Meta:
         db_table = "usuario"
@@ -22,6 +63,22 @@ class Usuario(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def is_active(self):
+        return self.ativo
+
+    @property
+    def is_staff(self):
+        # Sempre False, de propósito: /admin/ não tem nenhum model registrado
+        # pra este app (sem core/admin.py) e Usuario não implementa
+        # PermissionsMixin (decisão registrada nas perguntas preparatórias —
+        # controle de acesso é o perfil + admin_obrigatorio, não Group/Permission).
+        # Ligar isso a `perfil` só trocaria um 500 (AttributeError em
+        # has_module_perms, exigido pelo Group que django.contrib.auth.admin
+        # registra sozinho) por outro. Manter False fixo deixa /admin/ morto e
+        # inofensivo pra qualquer usuário, igual era antes da migração.
+        return False
 
 
 class Doador(models.Model):

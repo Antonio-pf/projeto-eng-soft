@@ -1,8 +1,8 @@
+from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
 from django.test import TestCase
 from django.urls import reverse
 
-from core.auth import autenticar
 from core.forms import UsuarioForm
 from core.models import Usuario
 
@@ -26,27 +26,27 @@ class AutenticarTests(TestCase):
         self.usuario = Usuario.objects.create(
             nome="Maria Voluntária",
             email="maria@conectasocial.org",
-            senha_hash=make_password("senha-correta"),
+            password=make_password("senha-correta"),
             perfil=Usuario.Perfil.VOLUNTARIO,
             ativo=True,
         )
 
     def test_credenciais_validas_retornam_usuario(self):
-        resultado = autenticar("maria@conectasocial.org", "senha-correta")
+        resultado = authenticate(email="maria@conectasocial.org", password="senha-correta")
 
         self.assertEqual(resultado, self.usuario)
 
     def test_senha_errada_retorna_none(self):
-        self.assertIsNone(autenticar("maria@conectasocial.org", "senha-errada"))
+        self.assertIsNone(authenticate(email="maria@conectasocial.org", password="senha-errada"))
 
     def test_email_inexistente_retorna_none(self):
-        self.assertIsNone(autenticar("ninguem@conectasocial.org", "senha-correta"))
+        self.assertIsNone(authenticate(email="ninguem@conectasocial.org", password="senha-correta"))
 
     def test_usuario_inativo_retorna_none(self):
         self.usuario.ativo = False
         self.usuario.save()
 
-        self.assertIsNone(autenticar("maria@conectasocial.org", "senha-correta"))
+        self.assertIsNone(authenticate(email="maria@conectasocial.org", password="senha-correta"))
 
 
 class LoginLogoutViewTests(TestCase):
@@ -54,7 +54,7 @@ class LoginLogoutViewTests(TestCase):
         self.usuario = Usuario.objects.create(
             nome="Maria Voluntária",
             email="maria@conectasocial.org",
-            senha_hash=make_password("senha-correta"),
+            password=make_password("senha-correta"),
             perfil=Usuario.Perfil.VOLUNTARIO,
             ativo=True,
         )
@@ -66,7 +66,7 @@ class LoginLogoutViewTests(TestCase):
         )
 
         self.assertRedirects(response, reverse("painel"))
-        self.assertEqual(self.client.session["id_usuario"], self.usuario.id_usuario)
+        self.assertEqual(int(self.client.session[SESSION_KEY]), self.usuario.id_usuario)
 
     def test_login_invalido_mostra_erro_generico_e_nao_autentica(self):
         response = self.client.post(
@@ -76,7 +76,7 @@ class LoginLogoutViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "E-mail ou senha inválidos.")
-        self.assertNotIn("id_usuario", self.client.session)
+        self.assertNotIn(SESSION_KEY, self.client.session)
 
     def test_painel_sem_sessao_redireciona_para_login(self):
         response = self.client.get(reverse("painel"))
@@ -92,7 +92,7 @@ class LoginLogoutViewTests(TestCase):
         response = self.client.get(reverse("logout"))
 
         self.assertRedirects(response, reverse("login"))
-        self.assertNotIn("id_usuario", self.client.session)
+        self.assertNotIn(SESSION_KEY, self.client.session)
 
         response = self.client.get(reverse("painel"))
         self.assertRedirects(response, reverse("login"))
@@ -103,7 +103,7 @@ class UsuarioFormTests(TestCase):
         Usuario.objects.create(
             nome="Maria Voluntária",
             email="maria@conectasocial.org",
-            senha_hash=make_password("alterar-senha"),
+            password=make_password("alterar-senha"),
             perfil=Usuario.Perfil.VOLUNTARIO,
             ativo=True,
         )
@@ -141,14 +141,14 @@ class UsuariosViewTests(TestCase):
         self.admin = Usuario.objects.create(
             nome="Admin Sistema",
             email="admin@conectasocial.org",
-            senha_hash=make_password("alterar-senha"),
+            password=make_password("alterar-senha"),
             perfil=Usuario.Perfil.ADMINISTRADOR,
             ativo=True,
         )
         self.voluntario = Usuario.objects.create(
             nome="Maria Voluntária",
             email="maria@conectasocial.org",
-            senha_hash=make_password("alterar-senha"),
+            password=make_password("alterar-senha"),
             perfil=Usuario.Perfil.VOLUNTARIO,
             ativo=True,
         )
@@ -186,8 +186,8 @@ class UsuariosViewTests(TestCase):
 
         self.assertRedirects(response, reverse("usuarios"))
         novo_usuario = Usuario.objects.get(email="joao@conectasocial.org")
-        self.assertTrue(novo_usuario.senha_hash.startswith("pbkdf2_"))
-        self.assertNotEqual(novo_usuario.senha_hash, "uma-senha-bem-forte-123")
+        self.assertTrue(novo_usuario.password.startswith("pbkdf2_"))
+        self.assertNotEqual(novo_usuario.password, "uma-senha-bem-forte-123")
 
         response_lista = self.client.get(reverse("usuarios"))
         self.assertContains(response_lista, "João Voluntário")
