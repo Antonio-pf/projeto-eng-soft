@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from core.decorators import admin_obrigatorio, login_obrigatorio
-from core.forms import LoginForm, UsuarioForm
+from core.forms import DoadorForm, LoginForm, UsuarioForm
 from core.models import Usuario
 
 
@@ -80,3 +80,21 @@ def usuario_alternar_status_view(request, id_usuario):
     usuario.ativo = not usuario.ativo
     usuario.save(update_fields=["ativo"])
     return redirect("usuarios")
+
+
+@login_obrigatorio
+def doadores_view(request):
+    if request.method == "POST":
+        form = DoadorForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect("doadores")
+    else:
+        form = DoadorForm()
+
+    return render(
+        request,
+        "core/doadores.html",
+        {"form": form},
+    )
