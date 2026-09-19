@@ -123,10 +123,7 @@ class DoadorForm(forms.ModelForm):
                         r"\d{3}\.\d{3}\.\d{3}-\d{2}|"
                         r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})"
                     ),
-                    "title": (
-                        "Informe um CPF com 11 números "
-                        "ou CNPJ com 14 números."
-                    ),
+                    "title": ("Informe um CPF com 11 números ou CNPJ com 14 números."),
                     "data-testid": "doador-form-cpf-cnpj-input",
                 }
             ),
@@ -136,9 +133,7 @@ class DoadorForm(forms.ModelForm):
                     "placeholder": "(00)00000-0000",
                     "inputmode": "numeric",
                     "maxlength": "14",
-                    "pattern": (
-                        r"(?:\d{10,11}|\(\d{2}\)\d{4,5}-\d{4})"
-                    ),
+                    "pattern": (r"(?:\d{10,11}|\(\d{2}\)\d{4,5}-\d{4})"),
                     "title": "Informe o telefone com DDD.",
                     "data-testid": "doador-form-telefone-input",
                 }
@@ -164,24 +159,16 @@ class DoadorForm(forms.ModelForm):
         numeros = re.sub(r"\D", "", documento_informado)
 
         if len(numeros) == 11:
-            documento = (
-                f"{numeros[:3]}.{numeros[3:6]}."
-                f"{numeros[6:9]}-{numeros[9:]}"
-            )
+            documento = f"{numeros[:3]}.{numeros[3:6]}.{numeros[6:9]}-{numeros[9:]}"
         elif len(numeros) == 14:
             documento = (
-                f"{numeros[:2]}.{numeros[2:5]}."
-                f"{numeros[5:8]}/{numeros[8:12]}-{numeros[12:]}"
+                f"{numeros[:2]}.{numeros[2:5]}.{numeros[5:8]}/{numeros[8:12]}-{numeros[12:]}"
             )
         else:
-            raise forms.ValidationError(
-                "Informe um CPF com 11 números ou CNPJ com 14 números."
-            )
+            raise forms.ValidationError("Informe um CPF com 11 números ou CNPJ com 14 números.")
 
         if Doador.objects.filter(cpf_cnpj=documento).exists():
-            raise forms.ValidationError(
-                "Este CPF/CNPJ já está cadastrado."
-            )
+            raise forms.ValidationError("Este CPF/CNPJ já está cadastrado.")
 
         return documento
 
@@ -199,6 +186,4 @@ class DoadorForm(forms.ModelForm):
         if len(numeros) == 10:
             return f"({numeros[:2]}){numeros[2:6]}-{numeros[6:]}"
 
-        raise forms.ValidationError(
-            "Informe um telefone válido com DDD."
-        )
+        raise forms.ValidationError("Informe um telefone válido com DDD.")

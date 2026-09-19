@@ -81,6 +81,7 @@ def usuario_alternar_status_view(request, id_usuario):
     usuario.save(update_fields=["ativo"])
     return redirect("usuarios")
 
+
 @login_obrigatorio
 def doadores_view(request):
     if request.method == "POST":
