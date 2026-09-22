@@ -1,21 +1,20 @@
-<<<<<<< HEAD
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from core.decorators import admin_obrigatorio, login_obrigatorio
-from core.forms import LoginForm, UsuarioForm
-from core.models import Usuario
-=======
-from django.contrib import messages
-from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-
-from .forms import CategoriaItemForm, DoadorForm, FamiliaForm, ItemForm
-from .models import CategoriaItem, Doador, Familia, Item
->>>>>>> ef7ff43 (feat(core): implementa cadastros, listagens e testes para doadores, famílias, categorias e itens)
+from core.forms import (
+    CategoriaItemForm,
+    DoadorForm,
+    FamiliaForm,
+    ItemForm,
+    LoginForm,
+    UsuarioForm,
+)
+from core.models import CategoriaItem, Doador, Familia, Item, Usuario
 
 
 def home(request):
@@ -26,7 +25,11 @@ def health(request):
     return JsonResponse({"status": "ok"})
 
 
-<<<<<<< HEAD
+# ---------------------------------------------------------------------------
+# Autenticação
+# ---------------------------------------------------------------------------
+
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect("painel")
@@ -60,6 +63,11 @@ def painel_view(request):
     return render(request, "core/painel.html")
 
 
+# ---------------------------------------------------------------------------
+# Gestão de usuários (Admin)
+# ---------------------------------------------------------------------------
+
+
 @login_obrigatorio
 @admin_obrigatorio
 def usuarios_view(request):
@@ -91,19 +99,28 @@ def usuario_alternar_status_view(request, id_usuario):
     usuario.ativo = not usuario.ativo
     usuario.save(update_fields=["ativo"])
     return redirect("usuarios")
-=======
+
+
+# ---------------------------------------------------------------------------
+# Doadores (#5, #6, #7)
+# ---------------------------------------------------------------------------
+
+
+@login_obrigatorio
 def doador_create(request):
     if request.method == "POST":
         form = DoadorForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Doador cadastrado com sucesso!")
-            return redirect("home")
+            return redirect("doador_list")
     else:
         form = DoadorForm()
     return render(request, "core/doador_form.html", {"form": form})
 
 
+@login_obrigatorio
+@admin_obrigatorio
 def doador_update(request, pk):
     doador = get_object_or_404(Doador, pk=pk)
     if request.method == "POST":
@@ -117,6 +134,7 @@ def doador_update(request, pk):
     return render(request, "core/doador_form.html", {"form": form, "editing": True})
 
 
+@login_obrigatorio
 def doador_list(request):
     query = request.GET.get("q", "").strip()
     doadores_list = Doador.objects.all().order_by("-criado_em")
@@ -134,6 +152,12 @@ def doador_list(request):
     )
 
 
+# ---------------------------------------------------------------------------
+# Famílias (#8, #9)
+# ---------------------------------------------------------------------------
+
+
+@login_obrigatorio
 def familia_create(request):
     if request.method == "POST":
         form = FamiliaForm(request.POST)
@@ -146,6 +170,7 @@ def familia_create(request):
     return render(request, "core/familia_form.html", {"form": form})
 
 
+@login_obrigatorio
 def familia_list(request):
     query = request.GET.get("q", "").strip()
     familias_list = Familia.objects.all().order_by("-criado_em")
@@ -163,6 +188,13 @@ def familia_list(request):
     )
 
 
+# ---------------------------------------------------------------------------
+# Categorias (#10)
+# ---------------------------------------------------------------------------
+
+
+@login_obrigatorio
+@admin_obrigatorio
 def categoria_create(request):
     if request.method == "POST":
         form = CategoriaItemForm(request.POST)
@@ -175,6 +207,8 @@ def categoria_create(request):
     return render(request, "core/categoria_form.html", {"form": form})
 
 
+@login_obrigatorio
+@admin_obrigatorio
 def categoria_update(request, pk):
     categoria = get_object_or_404(CategoriaItem, pk=pk)
     if request.method == "POST":
@@ -188,6 +222,7 @@ def categoria_update(request, pk):
     return render(request, "core/categoria_form.html", {"form": form, "editing": True})
 
 
+@login_obrigatorio
 def categoria_list(request):
     query = request.GET.get("q", "").strip()
     categorias_list = CategoriaItem.objects.all().order_by("nome")
@@ -205,6 +240,13 @@ def categoria_list(request):
     )
 
 
+# ---------------------------------------------------------------------------
+# Itens (#11, #12, #13)
+# ---------------------------------------------------------------------------
+
+
+@login_obrigatorio
+@admin_obrigatorio
 def item_create(request):
     if request.method == "POST":
         form = ItemForm(request.POST)
@@ -217,6 +259,8 @@ def item_create(request):
     return render(request, "core/item_form.html", {"form": form})
 
 
+@login_obrigatorio
+@admin_obrigatorio
 def item_update(request, pk):
     item = get_object_or_404(Item, pk=pk)
     if request.method == "POST":
@@ -230,6 +274,7 @@ def item_update(request, pk):
     return render(request, "core/item_form.html", {"form": form, "editing": True})
 
 
+@login_obrigatorio
 def item_list(request):
     query = request.GET.get("q", "").strip()
     itens_list = Item.objects.select_related("categoria", "unidade_medida").all().order_by("nome")
@@ -245,4 +290,3 @@ def item_list(request):
         "core/item_list.html",
         {"page_obj": page_obj, "query": query},
     )
->>>>>>> ef7ff43 (feat(core): implementa cadastros, listagens e testes para doadores, famílias, categorias e itens)
