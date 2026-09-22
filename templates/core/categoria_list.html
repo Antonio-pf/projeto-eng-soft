@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Categorias - Conecta Social{% endblock %}
+
+{% block content %}
+<div class="card w-full max-w-4xl bg-base-100 shadow-xl">
+    <div class="card-body">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+            <h2 class="card-title text-2xl font-bold">Categorias de Itens</h2>
+            <div class="flex gap-2 flex-wrap">
+                <a href="{% url 'categoria_create' %}" class="btn btn-primary">Nova Categoria</a>
+                <a href="{% url 'item_list' %}" class="btn btn-secondary">Itens</a>
+                <a href="{% url 'home' %}" class="btn btn-ghost">Início</a>
+            </div>
+        </div>
+
+        <form method="get" class="flex gap-2 mb-6">
+            <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nome..." class="input input-bordered w-full" />
+            <button type="submit" class="btn btn-neutral">Buscar</button>
+            {% if query %}
+                <a href="{% url 'categoria_list' %}" class="btn btn-ghost">Limpar</a>
+            {% endif %}
+        </form>
+
+        {% if page_obj %}
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in page_obj %}
+                            <tr>
+                                <td class="font-semibold">{{ categoria.nome }}</td>
+                                <td>{{ categoria.descricao|default:"-" }}</td>
+                                <td>
+                                    <a href="{% url 'categoria_update' categoria.pk %}" class="btn btn-sm btn-outline btn-primary">Editar</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.has_other_pages %}
+                <div class="flex justify-center mt-6">
+                    <div class="join">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">«</a>
+                        {% else %}
+                            <button class="join-item btn btn-disabled">«</button>
+                        {% endif %}
+
+                        <button class="join-item btn">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">»</a>
+                        {% else %}
+                            <button class="join-item btn btn-disabled">»</button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info">
+                <span>Nenhuma categoria encontrada.</span>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if editing %}Editar Categoria{% else %}Cadastrar Categoria{% endif %} - Conecta Social{% endblock %}
+
+{% block content %}
+<div class="card w-full max-w-lg bg-base-100 shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title text-2xl font-bold mb-4">{% if editing %}Editar Categoria{% else %}Cadastrar Categoria{% endif %}</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-4">
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-error text-sm">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">{{ field.label }}</span>
+                        {% if field.field.required %}
+                            <span class="label-text-alt text-error">*Obrigatório</span>
+                        {% else %}
+                            <span class="label-text-alt text-gray-500">Opcional</span>
+                        {% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ field.errors.0 }}</span>
+                        </label>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="card-actions justify-end mt-6">
+                <a href="{% url 'categoria_list' %}" class="btn btn-ghost">Cancelar</a>
+                <button type="submit" class="btn btn-primary">{% if editing %}Salvar Alterações{% else %}Salvar Categoria{% endif %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

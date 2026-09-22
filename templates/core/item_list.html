@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Itens - Conecta Social{% endblock %}
+
+{% block content %}
+<div class="card w-full max-w-5xl bg-base-100 shadow-xl">
+    <div class="card-body">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+            <h2 class="card-title text-2xl font-bold">Estoque de Itens</h2>
+            <div class="flex gap-2 flex-wrap">
+                <a href="{% url 'item_create' %}" class="btn btn-primary">Novo Item</a>
+                <a href="{% url 'categoria_list' %}" class="btn btn-secondary">Categorias</a>
+                <a href="{% url 'home' %}" class="btn btn-ghost">Início</a>
+            </div>
+        </div>
+
+        <form method="get" class="flex gap-2 mb-6">
+            <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nome do item..." class="input input-bordered w-full" />
+            <button type="submit" class="btn btn-neutral">Buscar</button>
+            {% if query %}
+                <a href="{% url 'item_list' %}" class="btn btn-ghost">Limpar</a>
+            {% endif %}
+        </form>
+
+        {% if page_obj %}
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Categoria</th>
+                            <th>Unidade</th>
+                            <th>Saldo Atual</th>
+                            <th>Estoque Mínimo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in page_obj %}
+                            <tr {% if item.abaixo_estoque_minimo %}class="bg-error/10"{% endif %}>
+                                <td class="font-semibold">
+                                    {{ item.nome }}
+                                    {% if item.abaixo_estoque_minimo %}
+                                        <span class="badge badge-error badge-sm ml-2">Baixo Estoque</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.categoria.nome }}</td>
+                                <td>{{ item.unidade_medida.sigla }} ({{ item.unidade_medida.nome }})</td>
+                                <td class="font-bold {% if item.abaixo_estoque_minimo %}text-error{% endif %}">
+                                    {{ item.saldo_atual }}
+                                </td>
+                                <td>{{ item.estoque_minimo }}</td>
+                                <td>
+                                    <a href="{% url 'item_update' item.pk %}" class="btn btn-sm btn-outline btn-primary">Editar</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.has_other_pages %}
+                <div class="flex justify-center mt-6">
+                    <div class="join">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">«</a>
+                        {% else %}
+                            <button class="join-item btn btn-disabled">«</button>
+                        {% endif %}
+
+                        <button class="join-item btn">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">»</a>
+                        {% else %}
+                            <button class="join-item btn btn-disabled">»</button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info">
+                <span>Nenhum item encontrado.</span>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
