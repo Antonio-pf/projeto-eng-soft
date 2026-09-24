@@ -16,3 +16,6 @@ staticfiles/
 
 # Configurações locais do VS Code
 .vscode/
+
+.aidlc-rule-details
+./CLAUDE.md

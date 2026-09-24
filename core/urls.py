@@ -25,4 +25,5 @@ urlpatterns = [
     path("itens/", views.item_list, name="item_list"),
     path("itens/novo/", views.item_create, name="item_create"),
     path("itens/<int:pk>/editar/", views.item_update, name="item_update"),
+    path("doacoes/nova/", views.doacao_create, name="doacao_create"),
 ]

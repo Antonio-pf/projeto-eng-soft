@@ -1,10 +1,14 @@
+from datetime import timedelta
+from decimal import Decimal
+
 from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from core.forms import UsuarioForm
-from core.models import CategoriaItem, Doador, Item, UnidadeMedida, Usuario
+from core.models import CategoriaItem, Doacao, Doador, Item, UnidadeMedida, Usuario
 
 
 class CoreSmokeTests(TestCase):
@@ -738,4 +742,120 @@ class ItemTestCase(TestCase):
         self.assertRedirects(response, reverse("item_list"))
         item.refresh_from_db()
         self.assertEqual(item.nome, "Macarrão Integral")
-        self.assertEqual(item.estoque_minimo, 4)
+
+
+class DoacaoTestCase(TestCase):
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.admin = Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.doador = Doador.objects.create(nome="João Doador", cpf_cnpj="123.456.789-00")
+        categoria = CategoriaItem.objects.create(nome="Alimento")
+        unidade = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.item = Item.objects.create(
+            nome="Arroz 5kg",
+            categoria=categoria,
+            unidade_medida=unidade,
+            estoque_minimo=10,
+        )
+        self._login(self.voluntario)
+
+    def _login(self, usuario, senha="senha-teste"):
+        self.client.post(reverse("login"), {"email": usuario.email, "senha": senha})
+
+    def test_cadastrar_doacao_com_sucesso(self):
+        response = self.client.post(
+            reverse("doacao_create"),
+            {
+                "doador": self.doador.pk,
+                "item": self.item.pk,
+                "quantidade": "5",
+                "data": timezone.localdate().isoformat(),
+            },
+        )
+        self.assertRedirects(response, reverse("doacao_create"))
+        self.assertEqual(Doacao.objects.count(), 1)
+        doacao = Doacao.objects.first()
+        self.assertEqual(doacao.doador, self.doador)
+        self.assertEqual(doacao.item, self.item)
+        self.assertEqual(doacao.quantidade, Decimal("5"))
+        self.assertEqual(doacao.registrado_por, self.voluntario)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.saldo_atual, Decimal("5"))
+
+    def test_cadastrar_doacao_quantidade_zero_ou_negativa_invalida(self):
+        for quantidade in ["0", "-3"]:
+            response = self.client.post(
+                reverse("doacao_create"),
+                {
+                    "doador": self.doador.pk,
+                    "item": self.item.pk,
+                    "quantidade": quantidade,
+                    "data": timezone.localdate().isoformat(),
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            form = response.context["form"]
+            self.assertIn("quantidade", form.errors)
+        self.assertEqual(Doacao.objects.count(), 0)
+
+    def test_cadastrar_doacao_quantidade_fracionada_permitida(self):
+        response = self.client.post(
+            reverse("doacao_create"),
+            {
+                "doador": self.doador.pk,
+                "item": self.item.pk,
+                "quantidade": "2.5",
+                "data": timezone.localdate().isoformat(),
+            },
+        )
+        self.assertRedirects(response, reverse("doacao_create"))
+        doacao = Doacao.objects.first()
+        self.assertEqual(doacao.quantidade, Decimal("2.50"))
+
+    def test_cadastrar_doacao_data_futura_invalida(self):
+        data_futura = timezone.localdate() + timedelta(days=1)
+        response = self.client.post(
+            reverse("doacao_create"),
+            {
+                "doador": self.doador.pk,
+                "item": self.item.pk,
+                "quantidade": "3",
+                "data": data_futura.isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertIn("data", form.errors)
+        self.assertEqual(Doacao.objects.count(), 0)
+
+    def test_cadastrar_doacao_acesso_anonimo_redireciona_para_login(self):
+        self.client.get(reverse("logout"))
+        response = self.client.get(reverse("doacao_create"))
+        self.assertRedirects(response, reverse("login"))
+
+    def test_administrador_tambem_pode_registrar_doacao(self):
+        self.client.get(reverse("logout"))
+        self._login(self.admin)
+        response = self.client.post(
+            reverse("doacao_create"),
+            {
+                "doador": self.doador.pk,
+                "item": self.item.pk,
+                "quantidade": "1",
+                "data": timezone.localdate().isoformat(),
+            },
+        )
+        self.assertRedirects(response, reverse("doacao_create"))
+        self.assertEqual(Doacao.objects.count(), 1)

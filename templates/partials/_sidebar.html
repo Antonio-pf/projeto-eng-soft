@@ -29,10 +29,12 @@
                 <img src="{% static 'icons/sidebar/familias.svg' %}" alt="" class="size-4">
                 Famílias
             </a>
-            <span class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] text-accent" data-testid="sidebar-link-movimentacoes">
+            <a href="{% url 'doacao_create' %}"
+               class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name == 'doacao_create' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+               data-testid="sidebar-link-movimentacoes">
                 <img src="{% static 'icons/sidebar/movimentacoes.svg' %}" alt="" class="size-4">
                 Movimentações
-            </span>
+            </a>
         </nav>
 
         {% if usuario_logado.perfil == "administrador" %}
