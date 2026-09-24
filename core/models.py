@@ -150,8 +150,18 @@ class Item(models.Model):
 
     @property
     def saldo_atual(self):
-        total_doacoes = self.doacao_set.filter(cancelado=False).aggregate(total=models.Sum('quantidade'))['total'] or 0
-        total_distribuicoes = self.distribuicao_set.filter(cancelado=False).aggregate(total=models.Sum('quantidade'))['total'] or 0
+        total_doacoes = (
+            self.doacao_set.filter(cancelado=False).aggregate(total=models.Sum("quantidade"))[
+                "total"
+            ]
+            or 0
+        )
+        total_distribuicoes = (
+            self.distribuicao_set.filter(cancelado=False).aggregate(total=models.Sum("quantidade"))[
+                "total"
+            ]
+            or 0
+        )
         return total_doacoes - total_distribuicoes
 
     @property
