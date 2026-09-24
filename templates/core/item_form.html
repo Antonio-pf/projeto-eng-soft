@@ -1,59 +1,38 @@
-{% extends 'base.html' %}
+{% extends "dashboard_base.html" %}
 
-{% block title %}{% if editing %}Editar Item{% else %}Cadastrar Item{% endif %} - Conecta Social{% endblock %}
+{% block title %}{% if editing %}Editar Item{% else %}Cadastrar Item{% endif %} | Conecta Social{% endblock %}
+
+{% block page_title %}{% if editing %}Editar Item{% else %}Novo Item{% endif %}{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Cadastre os itens controlados no estoque</p>
+{% endblock %}
 
 {% block content %}
-<div class="card w-full max-w-lg bg-base-100 shadow-xl">
-    <div class="card-body">
-        <h2 class="card-title text-2xl font-bold mb-4">{% if editing %}Editar Item{% else %}Cadastrar Item{% endif %}</h2>
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} mb-4">
-                    <span>{{ message }}</span>
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        {% if editing and item %}
-            <div class="alert alert-info mb-4 text-sm">
-                <span>Saldo Atual: <strong>{{ item.saldo_atual }}</strong> (O saldo atual não pode ser editado diretamente).</span>
-            </div>
-        {% endif %}
-
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            
-            {% if form.non_field_errors %}
-                <div class="alert alert-error text-sm">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-
-            {% for field in form %}
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">{{ field.label }}</span>
-                        {% if field.field.required %}
-                            <span class="label-text-alt text-error">*Obrigatório</span>
-                        {% else %}
-                            <span class="label-text-alt text-gray-500">Opcional</span>
-                        {% endif %}
-                    </label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <label class="label">
-                            <span class="label-text-alt text-error">{{ field.errors.0 }}</span>
-                        </label>
-                    {% endif %}
-                </div>
-            {% endfor %}
-
-            <div class="card-actions justify-end mt-6">
-                <a href="{% url 'item_list' %}" class="btn btn-ghost">Cancelar</a>
-                <button type="submit" class="btn btn-primary">{% if editing %}Salvar Alterações{% else %}Salvar Item{% endif %}</button>
-            </div>
-        </form>
+<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="item-form-card">
+    {% if editing and item %}
+    <div class="alert alert-info mb-4 text-sm">
+        <span>Saldo Atual: <strong>{{ item.saldo_atual }}</strong> (o saldo não pode ser editado diretamente).</span>
     </div>
-</div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" class="flex flex-col gap-4" data-testid="item-form">
+        {% csrf_token %}
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.categoria select=True %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.unidade_medida select=True %}
+        </div>
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.estoque_minimo %}
+        <div class="flex gap-3">
+            <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="item-form-submit-button">
+                {% if editing %}Salvar alterações{% else %}Salvar item{% endif %}
+            </button>
+            <a href="{% url 'item_list' %}" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold">Cancelar</a>
+        </div>
+    </form>
+</section>
 {% endblock %}

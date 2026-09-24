@@ -1,77 +1,106 @@
-{% extends 'base.html' %}
+{% extends "dashboard_base.html" %}
 
-{% block title %}Lista de Doadores - Conecta Social{% endblock %}
+{% block title %}Doadores | Conecta Social{% endblock %}
+
+{% block page_title %}Doadores{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Cadastre os doadores responsáveis pelas doações recebidas</p>
+{% endblock %}
 
 {% block content %}
-<div class="card w-full max-w-4xl bg-base-100 shadow-xl">
-    <div class="card-body">
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-            <h2 class="card-title text-2xl font-bold">Doadores Cadastrados</h2>
-            <div class="flex gap-2 flex-wrap">
-                <a href="{% url 'doador_create' %}" class="btn btn-primary">Novo Doador</a>
-                <a href="{% url 'familia_list' %}" class="btn btn-secondary">Famílias</a>
-                <a href="{% url 'home' %}" class="btn btn-ghost">Início</a>
-            </div>
+<section
+    class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6"
+    data-testid="doador-form-card"
+>
+    <h2 class="mb-4 text-base font-semibold text-gray-700">Novo Doador</h2>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'doador_create' %}" class="flex flex-col gap-4" data-testid="doador-form">
+        {% csrf_token %}
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.cpf_cnpj %}
         </div>
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.telefone %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.email %}
+        </div>
+        <p class="text-xs text-gray-500">Os campos de telefone e e-mail são opcionais.</p>
+        <button
+            type="submit"
+            class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold"
+            data-testid="doador-form-submit-button"
+        >
+            Salvar doador
+        </button>
+    </form>
+</section>
 
-        <form method="get" class="flex gap-2 mb-6">
-            <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nome..." class="input input-bordered w-full" />
-            <button type="submit" class="btn btn-neutral">Buscar</button>
-            {% if query %}
-                <a href="{% url 'doador_list' %}" class="btn btn-ghost">Limpar</a>
-            {% endif %}
-        </form>
-
-        {% if page_obj %}
-            <div class="overflow-x-auto">
-                <table class="table table-zebra w-full">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>CPF/CNPJ</th>
-                            <th>Data de Cadastro</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for doador in page_obj %}
-                            <tr>
-                                <td class="font-semibold">{{ doador.nome }}</td>
-                                <td>{{ doador.cpf_cnpj }}</td>
-                                <td>{{ doador.criado_em|date:"d/m/Y H:i" }}</td>
-                                <td>
-                                    <a href="{% url 'doador_update' doador.pk %}" class="btn btn-sm btn-outline btn-primary">Editar</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {% if page_obj.has_other_pages %}
-                <div class="flex justify-center mt-6">
-                    <div class="join">
-                        {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">«</a>
-                        {% else %}
-                            <button class="join-item btn btn-disabled">«</button>
-                        {% endif %}
-
-                        <button class="join-item btn">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
-
-                        {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">»</a>
-                        {% else %}
-                            <button class="join-item btn btn-disabled">»</button>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
-        {% else %}
-            <div class="alert alert-info">
-                <span>Nenhum doador encontrado.</span>
-            </div>
+<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="doador-table-card">
+    <form method="get" class="mb-4 flex gap-2">
+        <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            placeholder="Buscar por nome..."
+            class="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 placeholder:text-gray-400"
+        >
+        <button type="submit" class="btn btn-secondary rounded-md px-4 text-sm font-semibold">Buscar</button>
+        {% if query %}
+        <a href="{% url 'doador_list' %}" class="btn btn-ghost rounded-md px-4 text-sm font-semibold">Limpar</a>
         {% endif %}
+    </form>
+
+    {% if page_obj %}
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[640px]">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                    <th class="px-4 py-3 font-semibold">Nome</th>
+                    <th class="px-4 py-3 font-semibold">CPF/CNPJ</th>
+                    <th class="px-4 py-3 font-semibold">Telefone</th>
+                    <th class="px-4 py-3 font-semibold">E-mail</th>
+                    <th class="px-4 py-3 font-semibold">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200" data-testid="doador-table-body">
+                {% for doador in page_obj %}
+                <tr data-testid="doador-table-row">
+                    <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ doador.nome }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ doador.cpf_cnpj }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ doador.telefone|default:"-" }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ doador.email|default:"-" }}</td>
+                    <td class="px-4 py-4 text-sm">
+                        <a href="{% url 'doador_update' doador.pk %}" class="btn btn-outline btn-xs">Editar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <div class="join">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn btn-sm">«</a>
+            {% else %}
+            <button class="join-item btn btn-sm btn-disabled">«</button>
+            {% endif %}
+            <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn btn-sm">»</a>
+            {% else %}
+            <button class="join-item btn btn-sm btn-disabled">»</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="text-sm text-gray-500">Nenhum doador encontrado.</p>
+    {% endif %}
+</section>
 {% endblock %}

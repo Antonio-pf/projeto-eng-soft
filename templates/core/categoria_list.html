@@ -1,75 +1,76 @@
-{% extends 'base.html' %}
+{% extends "dashboard_base.html" %}
 
-{% block title %}Lista de Categorias - Conecta Social{% endblock %}
+{% block title %}Categorias | Conecta Social{% endblock %}
+
+{% block page_title %}Categorias de Itens{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Gerencie as categorias usadas para organizar os itens</p>
+{% endblock %}
 
 {% block content %}
-<div class="card w-full max-w-4xl bg-base-100 shadow-xl">
-    <div class="card-body">
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-            <h2 class="card-title text-2xl font-bold">Categorias de Itens</h2>
-            <div class="flex gap-2 flex-wrap">
-                <a href="{% url 'categoria_create' %}" class="btn btn-primary">Nova Categoria</a>
-                <a href="{% url 'item_list' %}" class="btn btn-secondary">Itens</a>
-                <a href="{% url 'home' %}" class="btn btn-ghost">Início</a>
-            </div>
-        </div>
-
-        <form method="get" class="flex gap-2 mb-6">
-            <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nome..." class="input input-bordered w-full" />
-            <button type="submit" class="btn btn-neutral">Buscar</button>
-            {% if query %}
-                <a href="{% url 'categoria_list' %}" class="btn btn-ghost">Limpar</a>
-            {% endif %}
-        </form>
-
-        {% if page_obj %}
-            <div class="overflow-x-auto">
-                <table class="table table-zebra w-full">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Descrição</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for categoria in page_obj %}
-                            <tr>
-                                <td class="font-semibold">{{ categoria.nome }}</td>
-                                <td>{{ categoria.descricao|default:"-" }}</td>
-                                <td>
-                                    <a href="{% url 'categoria_update' categoria.pk %}" class="btn btn-sm btn-outline btn-primary">Editar</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {% if page_obj.has_other_pages %}
-                <div class="flex justify-center mt-6">
-                    <div class="join">
-                        {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">«</a>
-                        {% else %}
-                            <button class="join-item btn btn-disabled">«</button>
-                        {% endif %}
-
-                        <button class="join-item btn">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
-
-                        {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">»</a>
-                        {% else %}
-                            <button class="join-item btn btn-disabled">»</button>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
-        {% else %}
-            <div class="alert alert-info">
-                <span>Nenhuma categoria encontrada.</span>
-            </div>
-        {% endif %}
-    </div>
+<div class="flex justify-end gap-2">
+    <a href="{% url 'item_list' %}" class="btn btn-outline btn-sm rounded-md">Itens</a>
+    <a href="{% url 'categoria_create' %}" class="btn btn-secondary btn-sm rounded-md" data-testid="categoria-list-nova-link">+ Categoria</a>
 </div>
+
+<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="categoria-table-card">
+    <form method="get" class="mb-4 flex gap-2">
+        <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            placeholder="Buscar por nome..."
+            class="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 placeholder:text-gray-400"
+        >
+        <button type="submit" class="btn btn-secondary rounded-md px-4 text-sm font-semibold">Buscar</button>
+        {% if query %}
+        <a href="{% url 'categoria_list' %}" class="btn btn-ghost rounded-md px-4 text-sm font-semibold">Limpar</a>
+        {% endif %}
+    </form>
+
+    {% if page_obj %}
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[560px]">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                    <th class="px-4 py-3 font-semibold">Nome</th>
+                    <th class="px-4 py-3 font-semibold">Descrição</th>
+                    <th class="px-4 py-3 font-semibold">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200" data-testid="categoria-table-body">
+                {% for categoria in page_obj %}
+                <tr data-testid="categoria-table-row">
+                    <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ categoria.nome }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ categoria.descricao|default:"-" }}</td>
+                    <td class="px-4 py-4 text-sm">
+                        <a href="{% url 'categoria_update' categoria.pk %}" class="btn btn-outline btn-xs">Editar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <div class="join">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn btn-sm">«</a>
+            {% else %}
+            <button class="join-item btn btn-sm btn-disabled">«</button>
+            {% endif %}
+            <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn btn-sm">»</a>
+            {% else %}
+            <button class="join-item btn btn-sm btn-disabled">»</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="text-sm text-gray-500">Nenhuma categoria encontrada.</p>
+    {% endif %}
+</section>
 {% endblock %}

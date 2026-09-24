@@ -148,7 +148,7 @@ def doador_list(request):
     return render(
         request,
         "core/doador_list.html",
-        {"page_obj": page_obj, "query": query},
+        {"page_obj": page_obj, "query": query, "form": DoadorForm()},
     )
 
 
@@ -184,7 +184,7 @@ def familia_list(request):
     return render(
         request,
         "core/familia_list.html",
-        {"page_obj": page_obj, "query": query},
+        {"page_obj": page_obj, "query": query, "form": FamiliaForm()},
     )
 
 
