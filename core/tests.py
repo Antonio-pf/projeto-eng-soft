@@ -437,7 +437,7 @@ class DoadorTestCase(TestCase):
 
     def test_paginacao_doadores(self):
         for i in range(25):
-            cpf = f"111.111.11{i:02d}-11" if i < 10 else f"111.111.1{i:02d}/0001-11"
+            cpf = f"111.111.11{i:02d}-11" if i < 10 else f"11.{i:03d}.111/0001-11"
             Doador.objects.create(nome=f"Doador {i:02d}", cpf_cnpj=cpf)
 
         response = self.client.get(reverse("doador_list"))
