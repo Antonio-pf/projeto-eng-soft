@@ -1,0 +1,122 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Doadores | Conecta Social{% endblock %}
+
+{% block page_title %}Doadores{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">
+    Cadastre os doadores responsáveis pelas doações recebidas
+</p>
+{% endblock %}
+
+{% block content %}
+<section
+    class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6"
+    data-testid="doador-form-card"
+>
+    <h2 class="mb-4 text-base font-semibold text-gray-700">
+        Novo Doador
+    </h2>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4 text-sm">
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <form
+        method="post"
+        class="flex flex-col gap-4"
+        data-testid="doador-form"
+    >
+        {% csrf_token %}
+
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.cpf_cnpj %}
+        </div>
+
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.telefone %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.email %}
+        </div>
+
+        <p class="text-xs text-gray-500">
+            Os campos de telefone e e-mail são opcionais.
+        </p>
+
+        <button
+            type="submit"
+            class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold"
+            data-testid="doador-form-submit-button"
+        >
+            Salvar
+        </button>
+    </form>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const campoDocumento = document.querySelector(
+            '[data-testid="doador-form-cpf-cnpj-input"]'
+        );
+
+        const campoTelefone = document.querySelector(
+            '[data-testid="doador-form-telefone-input"]'
+        );
+
+        if (campoDocumento) {
+            campoDocumento.addEventListener("focus", function () {
+                this.value = this.value.replace(/\D/g, "");
+            });
+
+            campoDocumento.addEventListener("input", function () {
+                this.value = this.value.replace(/\D/g, "").slice(0, 14);
+            });
+
+            campoDocumento.addEventListener("blur", function () {
+                const numeros = this.value.replace(/\D/g, "");
+
+                if (numeros.length === 11) {
+                    this.value = numeros.replace(
+                        /(\d{3})(\d{3})(\d{3})(\d{2})/,
+                        "$1.$2.$3-$4"
+                    );
+                } else if (numeros.length === 14) {
+                    this.value = numeros.replace(
+                        /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+                        "$1.$2.$3/$4-$5"
+                    );
+                }
+            });
+        }
+
+        if (campoTelefone) {
+            campoTelefone.addEventListener("focus", function () {
+                this.value = this.value.replace(/\D/g, "");
+            });
+
+            campoTelefone.addEventListener("input", function () {
+                this.value = this.value.replace(/\D/g, "").slice(0, 11);
+            });
+
+            campoTelefone.addEventListener("blur", function () {
+                const numeros = this.value.replace(/\D/g, "");
+
+                if (numeros.length === 11) {
+                    this.value = numeros.replace(
+                        /(\d{2})(\d{5})(\d{4})/,
+                        "($1)$2-$3"
+                    );
+                } else if (numeros.length === 10) {
+                    this.value = numeros.replace(
+                        /(\d{2})(\d{4})(\d{4})/,
+                        "($1)$2-$3"
+                    );
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

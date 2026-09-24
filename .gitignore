@@ -1,6 +1,18 @@
-
-.env
-.venv/
-*.sqlite3
+# Cache do Python
 __pycache__/
-*/__pycache__/
+*.py[cod]
+
+# Ambiente virtual
+.venv/
+
+# Configurações locais
+.env
+
+# Banco de dados local
+db.sqlite3
+
+# Arquivos estáticos gerados
+staticfiles/
+
+# Configurações locais do VS Code
+.vscode/

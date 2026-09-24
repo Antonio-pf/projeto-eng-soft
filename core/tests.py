@@ -2,11 +2,9 @@ from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
 from django.test import TestCase
 from django.urls import reverse
-from core.models import CategoriaItem, Doador, Item, UnidadeMedida
-from core.forms import DoadorForm
 
 from core.forms import UsuarioForm
-from core.models import Usuario
+from core.models import CategoriaItem, Doador, Item, UnidadeMedida, Usuario
 
 
 class CoreSmokeTests(TestCase):
@@ -23,7 +21,6 @@ class CoreSmokeTests(TestCase):
         self.assertJSONEqual(response.content, {"status": "ok"})
 
 
-<<<<<<< HEAD
 class AutenticarTests(TestCase):
     def setUp(self):
         self.usuario = Usuario.objects.create(
@@ -335,8 +332,22 @@ class UsuarioAlternarStatusViewTests(TestCase):
 
         self.assertContains(response, "Inativo")
         self.assertContains(response, "Ativo")
-=======
+
+
 class DoadorTestCase(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Voluntário Teste",
+            email="vol@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "vol@conectasocial.org", "senha": "senha-teste"},
+        )
+
     def test_cadastrar_doador_com_sucesso(self):
         response = self.client.post(
             reverse("doador_create"),
@@ -347,7 +358,7 @@ class DoadorTestCase(TestCase):
                 "email": "joao@example.com",
             },
         )
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("doador_list"))
         self.assertEqual(Doador.objects.count(), 1)
         doador = Doador.objects.first()
         self.assertEqual(doador.nome, "João da Silva")
@@ -363,7 +374,7 @@ class DoadorTestCase(TestCase):
                 "email": "",
             },
         )
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("doador_list"))
         self.assertEqual(Doador.objects.count(), 1)
         doador = Doador.objects.first()
         self.assertEqual(doador.nome, "Maria Souza")
@@ -375,7 +386,7 @@ class DoadorTestCase(TestCase):
             reverse("doador_create"),
             {
                 "nome": "Teste Formato",
-                "cpf_cnpj": "12345678901",
+                "cpf_cnpj": "123456789",
                 "telefone": "",
                 "email": "",
             },
@@ -426,9 +437,9 @@ class DoadorTestCase(TestCase):
 
     def test_paginacao_doadores(self):
         for i in range(25):
-            cpf = f"111.111.11{i:02d}-11" if i < 10 else f"111.111.1{i:02d}/0001-11"
+            cpf = f"111.111.11{i:02d}-11" if i < 10 else f"11.{i:03d}.111/0001-11"
             Doador.objects.create(nome=f"Doador {i:02d}", cpf_cnpj=cpf)
-        
+
         response = self.client.get(reverse("doador_list"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["page_obj"]), 20)
@@ -441,6 +452,17 @@ class DoadorTestCase(TestCase):
 
 class DoadorUpdateTestCase(TestCase):
     def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "admin@conectasocial.org", "senha": "senha-teste"},
+        )
         self.doador1 = Doador.objects.create(
             nome="Doador Um",
             cpf_cnpj="111.111.111-11",
@@ -474,7 +496,7 @@ class DoadorUpdateTestCase(TestCase):
         self.assertRedirects(response, reverse("doador_list"))
         self.doador1.refresh_from_db()
         self.assertEqual(self.doador1.nome, "Doador Um Atualizado")
-        self.assertEqual(self.doador1.telefone, "(11) 9999-9999")
+        self.assertEqual(self.doador1.telefone, "(11)9999-9999")
 
     def test_doador_edit_duplicate_cpf_cnpj(self):
         response = self.client.post(
@@ -493,6 +515,19 @@ class DoadorUpdateTestCase(TestCase):
 
 
 class FamiliaTestCase(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Voluntário Teste",
+            email="vol@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "vol@conectasocial.org", "senha": "senha-teste"},
+        )
+
     def test_cadastrar_familia_com_sucesso(self):
         response = self.client.post(
             reverse("familia_create"),
@@ -505,6 +540,7 @@ class FamiliaTestCase(TestCase):
         )
         self.assertRedirects(response, reverse("familia_list"))
         from core.models import Familia
+
         self.assertEqual(Familia.objects.count(), 1)
         familia = Familia.objects.first()
         self.assertEqual(familia.nome_responsavel, "Família Silva")
@@ -522,6 +558,7 @@ class FamiliaTestCase(TestCase):
         )
         self.assertRedirects(response, reverse("familia_list"))
         from core.models import Familia
+
         self.assertEqual(Familia.objects.count(), 1)
         familia = Familia.objects.first()
         self.assertEqual(familia.telefone, "")
@@ -543,6 +580,7 @@ class FamiliaTestCase(TestCase):
 
     def test_listar_e_buscar_familias(self):
         from core.models import Familia
+
         Familia.objects.create(nome_responsavel="João da Silva", endereco="Rua 1", num_membros=3)
         Familia.objects.create(nome_responsavel="Maria Santos", endereco="Rua 2", num_membros=2)
 
@@ -558,6 +596,19 @@ class FamiliaTestCase(TestCase):
 
 
 class CategoriaTestCase(TestCase):
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "admin@conectasocial.org", "senha": "senha-teste"},
+        )
+
     def test_cadastrar_categoria_com_sucesso(self):
         response = self.client.post(
             reverse("categoria_create"),
@@ -609,6 +660,17 @@ class CategoriaTestCase(TestCase):
 
 class ItemTestCase(TestCase):
     def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "admin@conectasocial.org", "senha": "senha-teste"},
+        )
         self.categoria = CategoriaItem.objects.create(nome="Alimento")
         self.unidade = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
 
@@ -645,7 +707,7 @@ class ItemTestCase(TestCase):
         self.assertIn("estoque_minimo", form.errors)
 
     def test_listar_itens_com_saldo_e_destaque(self):
-        item1 = Item.objects.create(
+        Item.objects.create(
             nome="Arroz",
             categoria=self.categoria,
             unidade_medida=self.unidade,
@@ -677,6 +739,3 @@ class ItemTestCase(TestCase):
         item.refresh_from_db()
         self.assertEqual(item.nome, "Macarrão Integral")
         self.assertEqual(item.estoque_minimo, 4)
-
-
->>>>>>> ef7ff43 (feat(core): implementa cadastros, listagens e testes para doadores, famílias, categorias e itens)

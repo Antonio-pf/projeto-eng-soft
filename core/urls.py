@@ -5,7 +5,6 @@ from . import views
 urlpatterns = [
     path("", views.home, name="home"),
     path("health/", views.health, name="health"),
-<<<<<<< HEAD
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("painel/", views.painel_view, name="painel"),
@@ -15,7 +14,6 @@ urlpatterns = [
         views.usuario_alternar_status_view,
         name="usuario_alternar_status",
     ),
-=======
     path("doadores/", views.doador_list, name="doador_list"),
     path("doadores/novo/", views.doador_create, name="doador_create"),
     path("doadores/<int:pk>/editar/", views.doador_update, name="doador_update"),
@@ -27,5 +25,4 @@ urlpatterns = [
     path("itens/", views.item_list, name="item_list"),
     path("itens/novo/", views.item_create, name="item_create"),
     path("itens/<int:pk>/editar/", views.item_update, name="item_update"),
->>>>>>> ef7ff43 (feat(core): implementa cadastros, listagens e testes para doadores, famílias, categorias e itens)
 ]

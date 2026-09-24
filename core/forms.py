@@ -1,8 +1,9 @@
-<<<<<<< HEAD
+import re
+
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 
-from core.models import Usuario
+from core.models import CategoriaItem, Doador, Familia, Item, Usuario
 
 _INPUT_CLASS = (
     "input input-bordered h-12 w-full rounded-[10px] bg-white placeholder:text-conecta-muted"
@@ -12,6 +13,7 @@ _CARD_INPUT_CLASS = (
     "w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 "
     "placeholder:text-gray-400"
 )
+
 _CARD_SELECT_CLASS = f"{_CARD_INPUT_CLASS} appearance-none pr-9"
 
 
@@ -85,32 +87,66 @@ class UsuarioForm(forms.Form):
 
     def clean_email(self):
         email = self.cleaned_data["email"]
+
         if Usuario.objects.filter(email=email).exists():
             raise forms.ValidationError("Este e-mail já está cadastrado.")
+
         return email
 
     def clean_senha(self):
         senha = self.cleaned_data["senha"]
         validate_password(senha)
         return senha
-=======
-import re
-from django import forms
-from .models import CategoriaItem, Doador, Familia, Item, UnidadeMedida
 
 
 class DoadorForm(forms.ModelForm):
     class Meta:
         model = Doador
         fields = ["nome", "cpf_cnpj", "telefone", "email"]
+
         widgets = {
-            "nome": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nome completo"}),
-            "cpf_cnpj": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "000.000.000-00", "id": "id_cpf_cnpj"}
+            "nome": forms.TextInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "placeholder": "Nome do doador",
+                    "data-testid": "doador-form-nome-input",
+                }
             ),
-            "telefone": forms.TextInput(attrs={"class": "form-control", "placeholder": "(00) 00000-0000"}),
-            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "email@exemplo.com"}),
+            "cpf_cnpj": forms.TextInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "placeholder": "Digite o CPF ou CNPJ",
+                    "inputmode": "numeric",
+                    "maxlength": "18",
+                    "pattern": (
+                        r"(?:\d{11}|\d{14}|"
+                        r"\d{3}\.\d{3}\.\d{3}-\d{2}|"
+                        r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})"
+                    ),
+                    "title": ("Informe um CPF com 11 números ou CNPJ com 14 números."),
+                    "data-testid": "doador-form-cpf-cnpj-input",
+                }
+            ),
+            "telefone": forms.TextInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "placeholder": "(00)00000-0000",
+                    "inputmode": "numeric",
+                    "maxlength": "14",
+                    "pattern": (r"(?:\d{10,11}|\(\d{2}\)\d{4,5}-\d{4})"),
+                    "title": "Informe o telefone com DDD.",
+                    "data-testid": "doador-form-telefone-input",
+                }
+            ),
+            "email": forms.EmailInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "placeholder": "doador@email.com",
+                    "data-testid": "doador-form-email-input",
+                }
+            ),
         }
+
         labels = {
             "nome": "Nome",
             "cpf_cnpj": "CPF/CNPJ",
@@ -119,23 +155,41 @@ class DoadorForm(forms.ModelForm):
         }
 
     def clean_cpf_cnpj(self):
-        cpf_cnpj = self.cleaned_data.get("cpf_cnpj", "").strip()
-        
-        # Regex for CPF format: XXX.XXX.XXX-XX or CNPJ format: XX.XXX.XXX/XXXX-XX
-        cpf_pattern = re.compile(r"^\d{3}\.\d{3}\.\d{3}-\d{2}$")
-        cnpj_pattern = re.compile(r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$")
-        
-        if not cpf_pattern.match(cpf_cnpj) and not cnpj_pattern.match(cpf_cnpj):
-            raise forms.ValidationError("Formato inválido. Utilize o formato XXX.XXX.XXX-XX para CPF ou XX.XXX.XXX/XXXX-XX para CNPJ.")
-            
-        # Check for duplication
-        qs = Doador.objects.filter(cpf_cnpj=cpf_cnpj)
+        documento_informado = self.cleaned_data["cpf_cnpj"].strip()
+        numeros = re.sub(r"\D", "", documento_informado)
+
+        if len(numeros) == 11:
+            documento = f"{numeros[:3]}.{numeros[3:6]}.{numeros[6:9]}-{numeros[9:]}"
+        elif len(numeros) == 14:
+            documento = (
+                f"{numeros[:2]}.{numeros[2:5]}.{numeros[5:8]}/{numeros[8:12]}-{numeros[12:]}"
+            )
+        else:
+            raise forms.ValidationError("Informe um CPF com 11 números ou CNPJ com 14 números.")
+
+        qs = Doador.objects.filter(cpf_cnpj=documento)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise forms.ValidationError("Este CPF/CNPJ já está cadastrado no sistema.")
-                
-        return cpf_cnpj
+            raise forms.ValidationError("Este CPF/CNPJ já está cadastrado.")
+
+        return documento
+
+    def clean_telefone(self):
+        telefone_informado = self.cleaned_data["telefone"].strip()
+
+        if not telefone_informado:
+            return ""
+
+        numeros = re.sub(r"\D", "", telefone_informado)
+
+        if len(numeros) == 11:
+            return f"({numeros[:2]}){numeros[2:7]}-{numeros[7:]}"
+
+        if len(numeros) == 10:
+            return f"({numeros[:2]}){numeros[2:6]}-{numeros[6:]}"
+
+        raise forms.ValidationError("Informe um telefone válido com DDD.")
 
 
 class FamiliaForm(forms.ModelForm):
@@ -143,10 +197,16 @@ class FamiliaForm(forms.ModelForm):
         model = Familia
         fields = ["nome_responsavel", "endereco", "telefone", "num_membros"]
         widgets = {
-            "nome_responsavel": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nome do responsável"}),
-            "endereco": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Endereço completo"}),
-            "telefone": forms.TextInput(attrs={"class": "form-control", "placeholder": "(00) 00000-0000"}),
-            "num_membros": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+            "nome_responsavel": forms.TextInput(
+                attrs={"class": _CARD_INPUT_CLASS, "placeholder": "Nome do responsável"}
+            ),
+            "endereco": forms.Textarea(
+                attrs={"class": _CARD_INPUT_CLASS, "rows": 3, "placeholder": "Endereço completo"}
+            ),
+            "telefone": forms.TextInput(
+                attrs={"class": _CARD_INPUT_CLASS, "placeholder": "(00) 00000-0000"}
+            ),
+            "num_membros": forms.NumberInput(attrs={"class": _CARD_INPUT_CLASS, "min": "1"}),
         }
         labels = {
             "nome_responsavel": "Nome do Responsável",
@@ -161,8 +221,15 @@ class CategoriaItemForm(forms.ModelForm):
         model = CategoriaItem
         fields = ["nome", "descricao"]
         widgets = {
-            "nome": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nome da categoria (ex: Alimento)"}),
-            "descricao": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Descrição opcional"}),
+            "nome": forms.TextInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "placeholder": "Nome da categoria (ex: Alimento)",
+                }
+            ),
+            "descricao": forms.Textarea(
+                attrs={"class": _CARD_INPUT_CLASS, "rows": 3, "placeholder": "Descrição opcional"}
+            ),
         }
         labels = {
             "nome": "Nome da Categoria",
@@ -184,10 +251,15 @@ class ItemForm(forms.ModelForm):
         model = Item
         fields = ["nome", "categoria", "unidade_medida", "estoque_minimo"]
         widgets = {
-            "nome": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nome do item (ex: Arroz 5kg)"}),
-            "categoria": forms.Select(attrs={"class": "form-control"}),
-            "unidade_medida": forms.Select(attrs={"class": "form-control"}),
-            "estoque_minimo": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+            "nome": forms.TextInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "placeholder": "Nome do item (ex: Arroz 5kg)",
+                }
+            ),
+            "categoria": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
+            "unidade_medida": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
+            "estoque_minimo": forms.NumberInput(attrs={"class": _CARD_INPUT_CLASS, "min": "0"}),
         }
         labels = {
             "nome": "Nome do Item",
@@ -199,6 +271,7 @@ class ItemForm(forms.ModelForm):
     def clean_estoque_minimo(self):
         valor = self.cleaned_data.get("estoque_minimo")
         if valor is not None and valor < 0:
-            raise forms.ValidationError("O estoque mínimo deve ser um número inteiro maior ou igual a zero.")
+            raise forms.ValidationError(
+                "O estoque mínimo deve ser um número inteiro maior ou igual a zero."
+            )
         return valor
->>>>>>> ef7ff43 (feat(core): implementa cadastros, listagens e testes para doadores, famílias, categorias e itens)
