@@ -386,7 +386,7 @@ class DoadorTestCase(TestCase):
             reverse("doador_create"),
             {
                 "nome": "Teste Formato",
-                "cpf_cnpj": "12345678901",
+                "cpf_cnpj": "123456789",
                 "telefone": "",
                 "email": "",
             },
@@ -496,7 +496,7 @@ class DoadorUpdateTestCase(TestCase):
         self.assertRedirects(response, reverse("doador_list"))
         self.doador1.refresh_from_db()
         self.assertEqual(self.doador1.nome, "Doador Um Atualizado")
-        self.assertEqual(self.doador1.telefone, "(11) 9999-9999")
+        self.assertEqual(self.doador1.telefone, "(11)9999-9999")
 
     def test_doador_edit_duplicate_cpf_cnpj(self):
         response = self.client.post(

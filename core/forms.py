@@ -167,7 +167,10 @@ class DoadorForm(forms.ModelForm):
         else:
             raise forms.ValidationError("Informe um CPF com 11 números ou CNPJ com 14 números.")
 
-        if Doador.objects.filter(cpf_cnpj=documento).exists():
+        qs = Doador.objects.filter(cpf_cnpj=documento)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
             raise forms.ValidationError("Este CPF/CNPJ já está cadastrado.")
 
         return documento
