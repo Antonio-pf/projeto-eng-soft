@@ -2,8 +2,9 @@ import re
 
 from django import forms
 from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 
-from core.models import CategoriaItem, Doador, Familia, Item, Usuario
+from core.models import CategoriaItem, Doacao, Doador, Familia, Item, Usuario
 
 _INPUT_CLASS = (
     "input input-bordered h-12 w-full rounded-[10px] bg-white placeholder:text-conecta-muted"
@@ -275,3 +276,62 @@ class ItemForm(forms.ModelForm):
                 "O estoque mínimo deve ser um número inteiro maior ou igual a zero."
             )
         return valor
+
+
+class DoacaoForm(forms.ModelForm):
+    class Meta:
+        model = Doacao
+        fields = ["doador", "item", "quantidade", "data"]
+        widgets = {
+            "doador": forms.Select(
+                attrs={
+                    "class": _CARD_SELECT_CLASS,
+                    "data-testid": "doacao-form-doador-select",
+                }
+            ),
+            "item": forms.Select(
+                attrs={
+                    "class": _CARD_SELECT_CLASS,
+                    "data-testid": "doacao-form-item-select",
+                }
+            ),
+            "quantidade": forms.NumberInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "step": "0.01",
+                    "min": "0.01",
+                    "placeholder": "Quantidade doada",
+                    "data-testid": "doacao-form-quantidade-input",
+                }
+            ),
+            "data": forms.DateInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "type": "date",
+                    "data-testid": "doacao-form-data-input",
+                }
+            ),
+        }
+        labels = {
+            "doador": "Doador",
+            "item": "Item",
+            "quantidade": "Quantidade",
+            "data": "Data",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound and not self.initial.get("data"):
+            self.initial["data"] = timezone.localdate()
+
+    def clean_quantidade(self):
+        quantidade = self.cleaned_data.get("quantidade")
+        if quantidade is not None and quantidade <= 0:
+            raise forms.ValidationError("A quantidade deve ser maior que zero.")
+        return quantidade
+
+    def clean_data(self):
+        data = self.cleaned_data.get("data")
+        if data is not None and data > timezone.localdate():
+            raise forms.ValidationError("A data não pode ser no futuro.")
+        return data

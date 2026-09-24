@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from core.decorators import admin_obrigatorio, login_obrigatorio
 from core.forms import (
     CategoriaItemForm,
+    DoacaoForm,
     DoadorForm,
     FamiliaForm,
     ItemForm,
@@ -290,3 +291,23 @@ def item_list(request):
         "core/item_list.html",
         {"page_obj": page_obj, "query": query},
     )
+
+
+# ---------------------------------------------------------------------------
+# Doações
+# ---------------------------------------------------------------------------
+
+
+@login_obrigatorio
+def doacao_create(request):
+    if request.method == "POST":
+        form = DoacaoForm(request.POST)
+        if form.is_valid():
+            doacao = form.save(commit=False)
+            doacao.registrado_por = request.user
+            doacao.save()
+            messages.success(request, "Doação registrada com sucesso!")
+            return redirect("doacao_create")
+    else:
+        form = DoacaoForm()
+    return render(request, "core/doacao_form.html", {"form": form})
