@@ -133,9 +133,7 @@ class Item(models.Model):
     nome = models.CharField(max_length=150)
     categoria = models.ForeignKey(CategoriaItem, on_delete=models.PROTECT)
     unidade_medida = models.ForeignKey(UnidadeMedida, on_delete=models.PROTECT)
-    estoque_minimo = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
+    estoque_minimo = models.PositiveIntegerField(
         default=0,
         validators=[MinValueValidator(0)],
     )
@@ -149,6 +147,16 @@ class Item(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def saldo_atual(self):
+        total_doacoes = self.doacao_set.filter(cancelado=False).aggregate(total=models.Sum('quantidade'))['total'] or 0
+        total_distribuicoes = self.distribuicao_set.filter(cancelado=False).aggregate(total=models.Sum('quantidade'))['total'] or 0
+        return total_doacoes - total_distribuicoes
+
+    @property
+    def abaixo_estoque_minimo(self):
+        return self.saldo_atual <= self.estoque_minimo
 
 
 class Doacao(models.Model):

@@ -3,7 +3,7 @@ import re
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 
-from core.models import Doador, Usuario
+from core.models import CategoriaItem, Doador, Familia, Item, Usuario
 
 _INPUT_CLASS = (
     "input input-bordered h-12 w-full rounded-[10px] bg-white placeholder:text-conecta-muted"
@@ -187,3 +187,88 @@ class DoadorForm(forms.ModelForm):
             return f"({numeros[:2]}){numeros[2:6]}-{numeros[6:]}"
 
         raise forms.ValidationError("Informe um telefone válido com DDD.")
+
+
+class FamiliaForm(forms.ModelForm):
+    class Meta:
+        model = Familia
+        fields = ["nome_responsavel", "endereco", "telefone", "num_membros"]
+        widgets = {
+            "nome_responsavel": forms.TextInput(
+                attrs={"class": _CARD_INPUT_CLASS, "placeholder": "Nome do responsável"}
+            ),
+            "endereco": forms.Textarea(
+                attrs={"class": _CARD_INPUT_CLASS, "rows": 3, "placeholder": "Endereço completo"}
+            ),
+            "telefone": forms.TextInput(
+                attrs={"class": _CARD_INPUT_CLASS, "placeholder": "(00) 00000-0000"}
+            ),
+            "num_membros": forms.NumberInput(attrs={"class": _CARD_INPUT_CLASS, "min": "1"}),
+        }
+        labels = {
+            "nome_responsavel": "Nome do Responsável",
+            "endereco": "Endereço",
+            "telefone": "Telefone",
+            "num_membros": "Número de Membros",
+        }
+
+
+class CategoriaItemForm(forms.ModelForm):
+    class Meta:
+        model = CategoriaItem
+        fields = ["nome", "descricao"]
+        widgets = {
+            "nome": forms.TextInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "placeholder": "Nome da categoria (ex: Alimento)",
+                }
+            ),
+            "descricao": forms.Textarea(
+                attrs={"class": _CARD_INPUT_CLASS, "rows": 3, "placeholder": "Descrição opcional"}
+            ),
+        }
+        labels = {
+            "nome": "Nome da Categoria",
+            "descricao": "Descrição",
+        }
+
+    def clean_nome(self):
+        nome = self.cleaned_data.get("nome", "").strip()
+        qs = CategoriaItem.objects.filter(nome__iexact=nome)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Já existe uma categoria cadastrada com este nome.")
+        return nome
+
+
+class ItemForm(forms.ModelForm):
+    class Meta:
+        model = Item
+        fields = ["nome", "categoria", "unidade_medida", "estoque_minimo"]
+        widgets = {
+            "nome": forms.TextInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "placeholder": "Nome do item (ex: Arroz 5kg)",
+                }
+            ),
+            "categoria": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
+            "unidade_medida": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
+            "estoque_minimo": forms.NumberInput(attrs={"class": _CARD_INPUT_CLASS, "min": "0"}),
+        }
+        labels = {
+            "nome": "Nome do Item",
+            "categoria": "Categoria",
+            "unidade_medida": "Unidade de Medida",
+            "estoque_minimo": "Estoque Mínimo",
+        }
+
+    def clean_estoque_minimo(self):
+        valor = self.cleaned_data.get("estoque_minimo")
+        if valor is not None and valor < 0:
+            raise forms.ValidationError(
+                "O estoque mínimo deve ser um número inteiro maior ou igual a zero."
+            )
+        return valor

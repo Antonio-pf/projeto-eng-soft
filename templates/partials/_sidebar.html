@@ -15,8 +15,8 @@
                 <img src="{% static 'icons/sidebar/itens.svg' %}" alt="" class="size-4">
                 Itens e categorias
             </span>
-            <a href="{% url 'doadores' %}"
-                class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name == 'doadores' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+            <a href="{% url 'doador_list' %}"
+                class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name == 'doador_list' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
                 data-testid="sidebar-link-doadores">
                 <img src="{% static 'icons/sidebar/doadores.svg' %}" alt="" class="size-4">
                 Doadores
