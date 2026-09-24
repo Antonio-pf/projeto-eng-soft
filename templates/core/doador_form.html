@@ -1,53 +1,34 @@
-{% extends 'base.html' %}
+{% extends "dashboard_base.html" %}
 
-{% block title %}{% if editing %}Editar Doador{% else %}Cadastrar Doador{% endif %} - Conecta Social{% endblock %}
+{% block title %}Editar Doador | Conecta Social{% endblock %}
+
+{% block page_title %}Editar Doador{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Atualize os dados do doador cadastrado</p>
+{% endblock %}
 
 {% block content %}
-<div class="card w-full max-w-lg bg-base-100 shadow-xl">
-    <div class="card-body">
-        <h2 class="card-title text-2xl font-bold mb-4">{% if editing %}Editar Doador{% else %}Cadastrar Doador{% endif %}</h2>
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} mb-4">
-                    <span>{{ message }}</span>
-                </div>
-            {% endfor %}
-        {% endif %}
+<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="doador-form-card">
+    {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
 
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            
-            {% if form.non_field_errors %}
-                <div class="alert alert-error text-sm">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-
-            {% for field in form %}
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">{{ field.label }}</span>
-                        {% if field.field.required %}
-                            <span class="label-text-alt text-error">*Obrigatório</span>
-                        {% else %}
-                            <span class="label-text-alt text-gray-500">Opcional</span>
-                        {% endif %}
-                    </label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <label class="label">
-                            <span class="label-text-alt text-error">{{ field.errors.0 }}</span>
-                        </label>
-                    {% endif %}
-                </div>
-            {% endfor %}
-
-            <div class="card-actions justify-end mt-6">
-                <a href="{% url 'doador_list' %}" class="btn btn-ghost">Cancelar</a>
-                <button type="submit" class="btn btn-primary">{% if editing %}Salvar Alterações{% else %}Salvar Doador{% endif %}</button>
-            </div>
-        </form>
-    </div>
-</div>
+    <form method="post" class="flex flex-col gap-4" data-testid="doador-form">
+        {% csrf_token %}
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.cpf_cnpj %}
+        </div>
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.telefone %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.email %}
+        </div>
+        <div class="flex gap-3">
+            <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="doador-form-submit-button">
+                Salvar alterações
+            </button>
+            <a href="{% url 'doador_list' %}" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold">Cancelar</a>
+        </div>
+    </form>
+</section>
 {% endblock %}

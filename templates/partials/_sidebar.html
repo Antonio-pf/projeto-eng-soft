@@ -11,20 +11,24 @@
                 <img src="{% static 'icons/sidebar/painel.svg' %}" alt="" class="size-4">
                 Painel
             </a>
-            <span class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] text-accent" data-testid="sidebar-link-itens">
+            <a href="{% url 'item_list' %}"
+               class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name in 'item_list,item_create,item_update,categoria_list,categoria_create,categoria_update' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+               data-testid="sidebar-link-itens">
                 <img src="{% static 'icons/sidebar/itens.svg' %}" alt="" class="size-4">
                 Itens e categorias
-            </span>
+            </a>
             <a href="{% url 'doador_list' %}"
-                class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name == 'doador_list' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+                class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name in 'doador_list,doador_create,doador_update' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
                 data-testid="sidebar-link-doadores">
                 <img src="{% static 'icons/sidebar/doadores.svg' %}" alt="" class="size-4">
                 Doadores
             </a>
-            <span class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] text-accent" data-testid="sidebar-link-familias">
+            <a href="{% url 'familia_list' %}"
+               class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name in 'familia_list,familia_create' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+               data-testid="sidebar-link-familias">
                 <img src="{% static 'icons/sidebar/familias.svg' %}" alt="" class="size-4">
                 Famílias
-            </span>
+            </a>
             <span class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] text-accent" data-testid="sidebar-link-movimentacoes">
                 <img src="{% static 'icons/sidebar/movimentacoes.svg' %}" alt="" class="size-4">
                 Movimentações

@@ -1,77 +1,93 @@
-{% extends 'base.html' %}
+{% extends "dashboard_base.html" %}
 
-{% block title %}Lista de Famílias - Conecta Social{% endblock %}
+{% block title %}Famílias | Conecta Social{% endblock %}
+
+{% block page_title %}Famílias Beneficiadas{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Cadastre as famílias atendidas pela rede</p>
+{% endblock %}
 
 {% block content %}
-<div class="card w-full max-w-4xl bg-base-100 shadow-xl">
-    <div class="card-body">
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-            <h2 class="card-title text-2xl font-bold">Famílias Cadastradas</h2>
-            <div class="flex gap-2 flex-wrap">
-                <a href="{% url 'familia_create' %}" class="btn btn-primary">Nova Família</a>
-                <a href="{% url 'doador_list' %}" class="btn btn-neutral">Doadores</a>
-                <a href="{% url 'home' %}" class="btn btn-ghost">Início</a>
-            </div>
+<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="familia-form-card">
+    <h2 class="mb-4 text-base font-semibold text-gray-700">Nova Família</h2>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'familia_create' %}" class="flex flex-col gap-4" data-testid="familia-form">
+        {% csrf_token %}
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.nome_responsavel %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.num_membros %}
         </div>
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.endereco %}
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.telefone %}
+        <p class="text-xs text-gray-500">O campo de telefone é opcional.</p>
+        <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="familia-form-submit-button">
+            Salvar família
+        </button>
+    </form>
+</section>
 
-        <form method="get" class="flex gap-2 mb-6">
-            <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nome do responsável..." class="input input-bordered w-full" />
-            <button type="submit" class="btn btn-neutral">Buscar</button>
-            {% if query %}
-                <a href="{% url 'familia_list' %}" class="btn btn-ghost">Limpar</a>
-            {% endif %}
-        </form>
-
-        {% if page_obj %}
-            <div class="overflow-x-auto">
-                <table class="table table-zebra w-full">
-                    <thead>
-                        <tr>
-                            <th>Responsável</th>
-                            <th>Endereço</th>
-                            <th>Nº Membros</th>
-                            <th>Telefone</th>
-                            <th>Data de Cadastro</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for familia in page_obj %}
-                            <tr>
-                                <td class="font-semibold">{{ familia.nome_responsavel }}</td>
-                                <td>{{ familia.endereco }}</td>
-                                <td>{{ familia.num_membros }}</td>
-                                <td>{{ familia.telefone|default:"-" }}</td>
-                                <td>{{ familia.criado_em|date:"d/m/Y H:i" }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {% if page_obj.has_other_pages %}
-                <div class="flex justify-center mt-6">
-                    <div class="join">
-                        {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">«</a>
-                        {% else %}
-                            <button class="join-item btn btn-disabled">«</button>
-                        {% endif %}
-
-                        <button class="join-item btn">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
-
-                        {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn">»</a>
-                        {% else %}
-                            <button class="join-item btn btn-disabled">»</button>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
-        {% else %}
-            <div class="alert alert-info">
-                <span>Nenhuma família encontrada.</span>
-            </div>
+<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="familia-table-card">
+    <form method="get" class="mb-4 flex gap-2">
+        <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            placeholder="Buscar por responsável..."
+            class="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 placeholder:text-gray-400"
+        >
+        <button type="submit" class="btn btn-secondary rounded-md px-4 text-sm font-semibold">Buscar</button>
+        {% if query %}
+        <a href="{% url 'familia_list' %}" class="btn btn-ghost rounded-md px-4 text-sm font-semibold">Limpar</a>
         {% endif %}
+    </form>
+
+    {% if page_obj %}
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[640px]">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                    <th class="px-4 py-3 font-semibold">Responsável</th>
+                    <th class="px-4 py-3 font-semibold">Endereço</th>
+                    <th class="px-4 py-3 font-semibold">Telefone</th>
+                    <th class="px-4 py-3 font-semibold">Membros</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200" data-testid="familia-table-body">
+                {% for familia in page_obj %}
+                <tr data-testid="familia-table-row">
+                    <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ familia.nome_responsavel }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ familia.endereco }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ familia.telefone|default:"-" }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ familia.num_membros }} membros</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <div class="join">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn btn-sm">«</a>
+            {% else %}
+            <button class="join-item btn btn-sm btn-disabled">«</button>
+            {% endif %}
+            <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn btn-sm">»</a>
+            {% else %}
+            <button class="join-item btn btn-sm btn-disabled">»</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="text-sm text-gray-500">Nenhuma família encontrada.</p>
+    {% endif %}
+</section>
 {% endblock %}
