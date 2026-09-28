@@ -23,9 +23,11 @@
 
 ## 3. PRs de colegas que revisei
 
-Não houve PRs de colegas abertos durante a Sprint 1 (11/09–18/09). Apesar disso, ajudei em
-conjunto na edição de arquivos para preparar os artefatos de documentação da
-sprint.
+| PR | Autor | Comentário resumido |
+|---|---|---|
+| PR #30 — Feature/historia 5 cadastro doador | Daniel Carvalho | Revisei e aprovei o cadastro de doador (história #5); sem observações adicionais apenas alguns conflitos de arquivos, aprovado direto. |
+| PR #31 — Feature/setup projeto (CRUD doador/família/categoria/item) | Luiz Henrique Neres | Revisão informal/local: entrei na branch, testei e conferi que estava tudo ok antes de ir pra main. Sem aprovação formal registrada no GitHub — o próprio Luiz abriu e mesclou o PR. |
+
 
 ## 4. Dificuldades e o que aprendi
 
