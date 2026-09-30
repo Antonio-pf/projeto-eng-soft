@@ -1,0 +1,58 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Nova Distribuição | Conecta Social{% endblock %}
+
+{% block page_title %}Nova Distribuição{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Registre uma distribuição vinculando família, item e quantidade</p>
+{% endblock %}
+
+{% block content %}
+<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="distribuicao-form-card">
+    {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {{ itens_saldo|json_script:"distribuicao-itens-saldo" }}
+
+    <form method="post" class="flex flex-col gap-4" data-testid="distribuicao-form">
+        {% csrf_token %}
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.familia select=True %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.item select=True %}
+        </div>
+        <div id="distribuicao-form-saldo-info" data-testid="distribuicao-form-saldo-info" class="hidden rounded-lg bg-green-100 px-4 py-3 text-sm font-semibold text-primary"></div>
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.quantidade %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.data %}
+        </div>
+        <div class="flex gap-3">
+            <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="distribuicao-form-submit-button">
+                Registrar distribuição
+            </button>
+            <a href="{% url 'item_list' %}" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold">Cancelar</a>
+        </div>
+    </form>
+</section>
+
+<script>
+    (function () {
+        var itensSaldo = JSON.parse(document.getElementById("distribuicao-itens-saldo").textContent);
+        var itemSelect = document.querySelector('[data-testid="distribuicao-form-item-select"]');
+        var saldoInfo = document.getElementById("distribuicao-form-saldo-info");
+
+        function atualizarSaldoInfo() {
+            var dados = itensSaldo[itemSelect.value];
+            if (dados) {
+                saldoInfo.textContent = "Saldo disponível: " + dados.saldo + " " + dados.unidade;
+                saldoInfo.classList.remove("hidden");
+            } else {
+                saldoInfo.classList.add("hidden");
+            }
+        }
+
+        itemSelect.addEventListener("change", atualizarSaldoInfo);
+        atualizarSaldoInfo();
+    })();
+</script>
+{% endblock %}

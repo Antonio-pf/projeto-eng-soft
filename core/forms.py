@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 
-from core.models import CategoriaItem, Doacao, Doador, Familia, Item, Usuario
+from core.models import CategoriaItem, Distribuicao, Doacao, Doador, Familia, Item, Usuario
 
 _INPUT_CLASS = (
     "input input-bordered h-12 w-full rounded-[10px] bg-white placeholder:text-conecta-muted"
@@ -335,3 +335,84 @@ class DoacaoForm(forms.ModelForm):
         if data is not None and data > timezone.localdate():
             raise forms.ValidationError("A data não pode ser no futuro.")
         return data
+
+
+class _ItemComSaldoChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return f"{obj.nome} saldo: {obj.saldo_atual:.2f}"
+
+
+class DistribuicaoForm(forms.ModelForm):
+    item = _ItemComSaldoChoiceField(
+        queryset=Item.objects.select_related("unidade_medida").all(),
+        label="Item",
+        widget=forms.Select(
+            attrs={
+                "class": _CARD_SELECT_CLASS,
+                "data-testid": "distribuicao-form-item-select",
+            }
+        ),
+    )
+
+    class Meta:
+        model = Distribuicao
+        fields = ["familia", "item", "quantidade", "data"]
+        widgets = {
+            "familia": forms.Select(
+                attrs={
+                    "class": _CARD_SELECT_CLASS,
+                    "data-testid": "distribuicao-form-familia-select",
+                }
+            ),
+            "quantidade": forms.NumberInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "step": "0.01",
+                    "min": "0.01",
+                    "placeholder": "Quantidade distribuída",
+                    "data-testid": "distribuicao-form-quantidade-input",
+                }
+            ),
+            "data": forms.DateInput(
+                attrs={
+                    "class": _CARD_INPUT_CLASS,
+                    "type": "date",
+                    "data-testid": "distribuicao-form-data-input",
+                }
+            ),
+        }
+        labels = {
+            "familia": "Família",
+            "quantidade": "Quantidade",
+            "data": "Data",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound and not self.initial.get("data"):
+            self.initial["data"] = timezone.localdate()
+
+    def clean_quantidade(self):
+        quantidade = self.cleaned_data.get("quantidade")
+        if quantidade is not None and quantidade <= 0:
+            raise forms.ValidationError("A quantidade deve ser maior que zero.")
+        return quantidade
+
+    def clean_data(self):
+        data = self.cleaned_data.get("data")
+        if data is not None and data > timezone.localdate():
+            raise forms.ValidationError("A data não pode ser no futuro.")
+        return data
+
+    def clean(self):
+        cleaned_data = super().clean()
+        item = cleaned_data.get("item")
+        quantidade = cleaned_data.get("quantidade")
+        if item is not None and quantidade is not None:
+            saldo_atual = item.saldo_atual
+            if quantidade > saldo_atual:
+                raise forms.ValidationError(
+                    f"Saldo insuficiente: disponível {saldo_atual:.2f}, "
+                    f"solicitado {quantidade:.2f}."
+                )
+        return cleaned_data

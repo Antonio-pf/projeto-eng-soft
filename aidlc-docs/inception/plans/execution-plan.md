@@ -1,30 +1,28 @@
-# Execution Plan — História #14 (Registrar Doação)
+# Execution Plan — História #17 (Ver Saldo Disponível no Formulário de Distribuição)
 
 ## Detailed Analysis Summary
 
 ### Transformation Scope (Brownfield)
-- **Transformation Type**: Single component change (dentro do app `core` já existente)
-- **Primary Changes**: Adicionar `DoacaoForm` (core/forms.py), views `doacao_create` (core/views.py), rota `doacoes/nova/` (core/urls.py), template `doacao_form.html`, ativar link "Movimentações" na sidebar, botão "+ Doação" em `item_list.html`, testes em `core/tests.py`.
-- **Related Components**: Nenhum além de `core` — `Doacao` já é modelo migrado, `Item.saldo_atual` já resolve o cálculo de saldo.
+- **Transformation Type**: Single component change (dentro do app `core` já existente), puramente de apresentação
+- **Primary Changes**: Ajustar view `distribuicao_create` (contexto extra `itens_saldo`), `DistribuicaoForm` (label do campo `item` com saldo inline), template `distribuicao_form.html` (Info-Box + script), conforme layout do Figma
+- **Related Components**: Nenhum além de `core` — reaproveita `Item.saldo_atual` já existente
 
 ### Change Impact Assessment
-- **User-facing changes**: Sim — novo formulário "Nova Doação", link ativo no menu, botão de atalho em Itens.
-- **Structural changes**: Não — nenhuma mudança de arquitetura.
-- **Data model changes**: Não — `Doacao` e seus campos já existem e já estão migrados (0001_initial); nenhuma nova migração necessária.
-- **API changes**: Sim, menor — uma nova rota web (`doacoes/nova/` → `doacao_create`), seguindo exatamente o padrão das rotas de criação já existentes.
-- **NFR impact**: Menor — cobertura das regras aplicáveis de Security Baseline (validação de input, controle de acesso, tratamento de erros, auditabilidade) já mapeada em `requirements.md`; nenhuma decisão de tech stack nova.
+- **User-facing changes**: Sim — melhoria visual/informativa na tela "Nova Distribuição" já existente (história #16)
+- **Structural changes**: Não
+- **Data model changes**: Não
+- **API changes**: Não — mesma rota `distribuicoes/nova/`, sem endpoint novo (decisão de requirements.md: sem AJAX)
+- **NFR impact**: Mínimo — XSS mitigado pelo uso do `json_script` nativo do Django
 
 ### Component Relationships
 - **Primary Component**: `core` (app Django)
-- **Infrastructure Components**: Nenhum
-- **Shared Components**: `Doacao`, `Item`, `Doador`, `Usuario` (models já existentes, reutilizados sem alteração)
-- **Dependent Components**: `templates/partials/_sidebar.html` (ativação de link), `templates/core/item_list.html` (novo botão de atalho)
-- **Supporting Components**: `core/decorators.py` (`login_obrigatorio`, reutilizado sem alteração)
+- **Shared Components**: `Item` (já existente, sem alteração de schema)
+- **Dependent Components**: `templates/core/distribuicao_form.html` (história #16, ajustado nesta história)
 
 ### Risk Assessment
-- **Risk Level**: Low — mudança isolada, segue padrão de CRUD já usado 4x no projeto (Doador, Família, Categoria, Item), sem alteração de schema.
-- **Rollback Complexity**: Easy — reverter o commit remove form/view/url/template novos; model e migração pré-existentes não são tocados.
-- **Testing Complexity**: Simple — mesmo padrão de `DoadorTestCase`/`ItemTestCase` já presente em `core/tests.py`.
+- **Risk Level**: Low — mudança de apresentação isolada, sem tocar em persistência/validação de negócio
+- **Rollback Complexity**: Easy — reverter o commit remove a alteração; nada de schema envolvido
+- **Testing Complexity**: Simple — testes de contexto de view/HTML; interação JS validada manualmente
 
 ## Workflow Visualization
 
@@ -34,7 +32,7 @@ flowchart TD
 
     subgraph INCEPTION["INCEPTION PHASE"]
         WD["Workspace Detection<br/><b>COMPLETED</b>"]
-        RE["Reverse Engineering<br/><b>COMPLETED</b>"]
+        RE["Reverse Engineering<br/><b>SKIPPED</b>"]
         RA["Requirements Analysis<br/><b>COMPLETED</b>"]
         US["User Stories<br/><b>SKIPPED</b>"]
         WP["Workflow Planning<br/><b>IN PROGRESS</b>"]
@@ -60,7 +58,7 @@ flowchart TD
     CG --> BT --> OPS --> End(["Complete"])
 
     style WD fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style RE fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style RE fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
     style RA fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style US fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
     style WP fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
@@ -79,53 +77,41 @@ flowchart TD
     linkStyle default stroke:#333,stroke-width:2px
 ```
 
-### Text Alternative
-```
-INCEPTION: Workspace Detection (DONE) -> Reverse Engineering (DONE) ->
-           Requirements Analysis (DONE) -> User Stories (SKIPPED) ->
-           Workflow Planning (IN PROGRESS) -> Application Design (SKIP) ->
-           Units Generation (SKIP)
-CONSTRUCTION: Functional Design (SKIP) -> NFR Requirements (SKIP) ->
-              NFR Design (SKIP) -> Infrastructure Design (SKIP) ->
-              Code Generation (EXECUTE) -> Build and Test (EXECUTE)
-OPERATIONS: Operations (PLACEHOLDER)
-```
-
 ## Phases to Execute
 
 ### INCEPTION PHASE
-- [x] Workspace Detection (COMPLETED)
-- [x] Reverse Engineering (COMPLETED)
-- [x] Requirements Analysis (COMPLETED)
-- [x] User Stories (SKIPPED — backlog.md #14 já é uma história de usuário completa com critérios de aceite; requirements.md já a referencia)
+- [x] Workspace Detection (COMPLETED — reaproveitado)
+- [x] Reverse Engineering (SKIPPED — artefatos já existentes)
+- [x] Requirements Analysis (COMPLETED, com referência de design do Figma)
+- [x] User Stories (SKIPPED — backlog #17 já é história completa com critérios de aceite)
 - [x] Execution Plan (IN PROGRESS)
 - [ ] Application Design — **SKIP**
-  - **Rationale**: Nenhum componente/serviço novo; `Doacao` já existe como model. A mudança fica inteiramente dentro dos limites do app `core` já existente, reutilizando o mesmo padrão de Form/View/URL/Template de Doador/Família/Item.
+  - **Rationale**: Nenhum componente novo; ajuste de apresentação sobre a tela `distribuicao_create` já existente (história #16).
 - [ ] Units Generation — **SKIP**
-  - **Rationale**: Implementação simples e direta, um único pacote (`core`), sem necessidade de decompor em múltiplas unidades de trabalho.
+  - **Rationale**: Implementação simples e direta, um único pacote (`core`).
 
 ### CONSTRUCTION PHASE
 - [ ] Functional Design — **SKIP**
-  - **Rationale**: Sem lógica de negócio nova a projetar — `Item.saldo_atual` já calcula o saldo via agregação; a validação do form (quantidade > 0, data ≤ hoje) é trivial e segue exatamente o padrão de `clean_<campo>` já usado em `DoadorForm`/`ItemForm`.
+  - **Rationale**: Sem lógica de negócio nova — apenas leitura de `Item.saldo_atual` já existente e exibição.
 - [ ] NFR Requirements — **SKIP**
-  - **Rationale**: Stack tecnológica já definida (Django/PostgreSQL), sem novas escolhas de tecnologia. As regras aplicáveis de Security/Resiliency Baseline já foram mapeadas e escopadas em `requirements.md` (tabelas de compliance) — não há nova decisão de NFR a tomar, apenas implementar seguindo os padrões já existentes no código (forms com validação, decorators de acesso).
+  - **Rationale**: Única consideração de NFR (XSS) já resolvida pelo uso do `json_script` nativo do Django, documentada em requirements.md.
 - [ ] NFR Design — **SKIP**
-  - **Rationale**: Consequência do skip de NFR Requirements — não há padrão de NFR novo a incorporar além do que já existe no projeto.
+  - **Rationale**: Consequência do skip de NFR Requirements.
 - [ ] Infrastructure Design — **SKIP**
-  - **Rationale**: Nenhuma mudança de infraestrutura; aplicação continua rodando no mesmo processo Django/Gunicorn já configurado.
+  - **Rationale**: Nenhuma mudança de infraestrutura.
 - [ ] Code Generation — **EXECUTE (ALWAYS)**
-  - **Rationale**: Implementação do form, view, URL, template e testes.
+  - **Rationale**: Implementação da view, form, template e testes.
 - [ ] Build and Test — **EXECUTE (ALWAYS)**
-  - **Rationale**: Rodar migrations (nenhuma nova esperada), testes automatizados (`manage.py test`) e lint (`ruff`).
+  - **Rationale**: Rodar `ruff`, `manage.py test`; validação manual do comportamento do JS.
 
 ### OPERATIONS PHASE
 - [ ] Operations — PLACEHOLDER
 
 ## Estimated Timeline
-- **Total Phases Executed**: 2 (Code Generation, Build and Test) + Requirements/Reverse Engineering já concluídas
-- **Estimated Duration**: Sessão única (feature pequena, ~5 pontos no backlog)
+- **Total Phases Executed**: 2 (Code Generation, Build and Test) + Requirements já concluída
+- **Estimated Duration**: Sessão única (feature pequena, ~3 pontos no backlog)
 
 ## Success Criteria
-- **Primary Goal**: Voluntário/Administrador consegue registrar uma doação (doador + item + quantidade + data) e o saldo do item reflete o acréscimo imediatamente.
-- **Key Deliverables**: `DoacaoForm`, view `doacao_create`, rota `doacoes/nova/`, template `doacao_form.html`, link ativo "Movimentações" na sidebar, botão "+ Doação" em Itens, testes cobrindo os critérios de aceite da história #14.
-- **Quality Gates**: `ruff check` sem erros; `python manage.py test` passando (incluindo os novos testes); nenhuma migração pendente (`makemigrations --check`).
+- **Primary Goal**: Ao selecionar um item no formulário de distribuição, o Voluntário/Administrador vê o saldo disponível daquele item, tanto inline na opção do dropdown quanto em um Info-Box dedicado — replicando o layout do Figma.
+- **Key Deliverables**: `distribuicao_create` (contexto `itens_saldo`), `DistribuicaoForm.item` com saldo no rótulo, `distribuicao_form.html` com Info-Box + script, testes cobrindo o contexto/HTML gerado.
+- **Quality Gates**: `ruff check` sem erros; `python manage.py test` passando; validação manual do comportamento de `change`/`DOMContentLoaded` no navegador.
