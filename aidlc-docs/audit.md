@@ -226,6 +226,69 @@
 
 ---
 
+## Commit + PR + Correção do Board
+**Timestamp**: 2026-09-30T02:00:00Z
+**User Input**: "commitar, nao commitar como coautor" / "pode subir no remoto essa branc" / "abra o pr, seja suscinto na esrita dele" / "e or que coolocou isso ja havia pedido antes 🤖 Generated with Claude Code" / "para a sprnt 2 o que falta?" / "ajuste a atribuico do board tbm com essa nova tarefa feita por mim e inicie com o aidlc a 15 e 18 lembre de segui o que esta no backlog e os entregeaveis do prefssor / criterios"
+**AI Response**: Commit `2e0f13b` criado sem linha de coautoria; branch `feature/historia-16-17-distribuicao` enviada ao remoto; PR #34 aberto e depois corrigido (removida a linha de atribuição do Claude Code, a pedido do usuário). Analisada a Sprint 2 do backlog (histórias #14, #15, #16, #17, #18): identificado que #15 e #18 também estão marcadas "Done" no board sem código (mesmo padrão do gap do Henrique, mas #15 é do próprio Antonio-pf). Cards #16/#17 (issues #17/#18 no GitHub) reatribuídos de `luiz-Henrique-neres` para `Antonio-pf` e movidos de "Done" para "In Progress" (PR #34 ainda aberto, não mergeado). Consultados `docs/backlog.md` (critérios de aceite #15/#18) e `docs/plano-de-testes.md` (casos CT25 e CT27, que especificam exatamente o comportamento esperado das duas telas de histórico) antes de iniciar Requirements Analysis combinada para #15 e #18.
+**Context**: Iniciando novo ciclo AI-DLC combinado para histórias #15 e #18 (telas de histórico de doações e distribuições).
+
+---
+
+## Requirements Analysis - Approval (Histórias #15 e #18)
+**Timestamp**: 2026-09-30T02:10:00Z
+**User Input**: "aprocado"
+**AI Response**: "Interpretado como 'aprovado'. Requisitos aprovados. Prosseguindo para Workflow Planning."
+**Context**: Requirements Analysis concluída e aprovada para histórias #15 e #18.
+
+---
+
+## Workflow Planning - Approval (Histórias #15 e #18)
+**Timestamp**: 2026-09-30T02:15:00Z
+**User Input**: "aprocado"
+**AI Response**: "Interpretado como 'aprovado'. Prosseguindo para Code Generation (Planning)."
+**Context**: Workflow plan aprovado com 2 etapas a executar (Code Generation, Build and Test).
+
+---
+
+## Nota — Verificação final de entregáveis
+**Timestamp**: 2026-09-30T02:18:00Z
+**User Input**: "no final consulte os entregaveispara ver se estao alinhados https://ararauna-lab-es-2026-2.netlify.app/"
+**AI Response**: Registrado. Ao final da implementação de #15/#18 (após Build and Test), vou consultar essa página para conferir alinhamento dos entregáveis do projeto com o que o professor especifica.
+**Context**: Pendência para o fim do ciclo atual — criado plano de geração de código para #15/#18 (`aidlc-docs/construction/plans/historico-doacoes-distribuicoes-code-generation-plan.md`).
+
+---
+
+## Code Generation - Part 1 Approval (Histórias #15 e #18)
+**Timestamp**: 2026-09-30T02:20:00Z
+**User Input**: "aprovado"
+**AI Response**: "Aprovação registrada. Executando os 14 steps do plano."
+**Context**: Iniciando Code Generation Part 2 (Generation) para histórias #15 e #18.
+
+---
+
+## Consulta à skill entregaveis-professor (durante Code Generation)
+**Timestamp**: 2026-09-30T02:25:00Z
+**User Input**: "prossiga" (após feedback sobre nomenclatura `id_doador`/`id_familia`)
+**AI Response**: Consultada a skill `entregaveis-professor`. Achados relevantes reportados ao usuário: (1) nenhuma exigência do professor sobre nomenclatura de rotas/parâmetros — convenção interna do time; (2) regra "todo PR em que a IA ajudou substancialmente declara isso na descrição" ainda não satisfeita no PR #34 (a linha de atribuição removida a pedido do usuário não é a mesma coisa que a declaração de uso de IA exigida pelo professor); (3) regra "nenhum merge sem revisão de outro integrante" — PR #34 ainda sem review. Ambos os pontos ficam pendentes para o usuário decidir antes do merge.
+**Context**: Code Generation Part 2 (Generation) em andamento — correção de nomenclatura `doador_id`→`id_doador`/`familia_id`→`id_familia` em `core/views.py`, `templates/core/doacao_list.html` e `templates/core/distribuicao_list.html` (feedback do usuário, aplicado em todos os locais).
+
+---
+
+## Code Generation - Part 2 (Generation) Complete - Histórias #15 e #18
+**Timestamp**: 2026-09-30T02:35:00Z
+**AI Response**: Todos os 14 steps executados e marcados [x]. Modificados: `core/views.py` (`doacao_list`, `distribuicao_list`), `core/urls.py` (rotas `doacoes/`, `distribuicoes/`), `templates/core/doacao_form.html`/`distribuicao_form.html` (link "Ver histórico"), `core/tests.py` (`DoacaoListTestCase` + `DistribuicaoListTestCase`, 14 testes). Criados: `templates/core/doacao_list.html`, `templates/core/distribuicao_list.html`. Documentação: `aidlc-docs/construction/historico-doacoes-distribuicoes/code/summary.md`. Validado com `ruff check` (sem erros), `makemigrations --check` (sem pendências), `manage.py test` (77/77 passando).
+**Context**: Code Generation Part 2 concluída — aguardando aprovação do usuário.
+
+---
+
+## Code Generation - Approval (Histórias #15 e #18)
+**Timestamp**: 2026-09-30T02:40:00Z
+**User Input**: "continue"
+**AI Response**: "Aprovação registrada. Prosseguindo para Build and Test."
+**Context**: Código gerado aprovado; avançando para Build and Test.
+
+---
+
 ## Build and Test Stage - História #16
 **Timestamp**: 2026-09-30T00:55:00Z
 **Build Status**: Success

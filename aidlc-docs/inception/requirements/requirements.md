@@ -1,82 +1,83 @@
-# Requirements — História #17: Ver Saldo Disponível no Formulário de Distribuição
+# Requirements — Histórias #15 e #18: Histórico de Doações e Distribuições
 
 ## Intent Analysis Summary
-- **User Request**: "siga para a #17" — implementar a história #17 do `docs/backlog.md` (exibir o saldo disponível do item ao selecioná-lo no formulário de distribuição), na mesma branch da #16, sem commitar.
-- **Request Type**: Enhancement (melhoria de UX sobre a tela `distribuicao_create` já implementada na história #16, sem tocar em regras de negócio de persistência)
-- **Scope Estimate**: Single Component (app `core`; apenas a view/template de `distribuicao_create`)
-- **Complexity Estimate**: Simple — é a única história do backlog até agora que precisa de uma pequena interação client-side (JS puro, sem framework/lib nova), pois exige atualizar a tela sem reload ao trocar o item selecionado.
+- **User Request**: "ajuste a atribuição do board... e inicie com o aidlc a 15 e 18, lembre de seguir o que está no backlog e os entregáveis do professor / critérios" — implementar as histórias #15 (histórico de doações) e #18 (histórico de distribuições) do `docs/backlog.md`, os dois gaps restantes da Sprint 2 (além do merge do PR #34), seguindo também os casos de teste que o professor já definiu em `docs/plano-de-testes.md` (CT25 e CT27).
+- **Request Type**: New Feature (duas telas de listagem/histórico, mesmo padrão, sobre models já existentes e migrados)
+- **Scope Estimate**: Single Component (app `core`), mas **duas histórias tratadas em um único ciclo AI-DLC** por serem estruturalmente idênticas (mesma forma, uma para `Doacao`/`Doador`, outra para `Distribuicao`/`Familia`)
+- **Complexity Estimate**: Simple — é o mesmo padrão de listagem paginada com busca já usado em `item_list`/`doador_list`/`familia_list`, acrescido de filtro por entidade relacionada (select) e por intervalo de datas
 
 ## Por que Minimal Depth / sem novo arquivo de perguntas
-O critério de aceite já é objetivo e o projeto não tem nenhum precedente de fetch/AJAX (nenhuma outra tela do projeto faz chamada assíncrona) — a abordagem mais simples e nativa do Django, sem inventar uma camada de API nova, é:
-- A própria view já tem acesso a todos os `Item` (mesmo queryset usado no `ModelChoiceField`); ela monta um dicionário `{id_item: {saldo, unidade}}` e o expõe ao template via o filtro built-in `{{ ...|json_script }}` do Django (não é uma biblioteca externa, é parte do framework).
-- Um pequeno `<script>` inline (vanilla JS, sem dependência nova) lê esse JSON e atualiza um texto ao lado do campo "Item" quando o usuário troca a seleção (`change` event) — e também na carga da página, cobrindo o caso em que o formulário volta preenchido após um erro de validação (ex.: saldo insuficiente da história #16).
-- Nenhuma chamada de rede adicional é necessária: o saldo exibido é o mesmo calculado no momento em que a página é renderizada (`GET /distribuicoes/nova/`), o que satisfaz "saldo reflete sempre o valor mais atualizado" no mesmo padrão de atualidade já usado no resto do projeto (sem WebSocket/polling em nenhuma tela existente).
+Os critérios de aceite do backlog já são objetivos, e o professor já formalizou o comportamento esperado como casos de teste específicos:
 
-Por isso esta análise segue direto para o documento de requisitos, sem arquivo de perguntas de clarificação.
+> **CT25** (`docs/plano-de-testes.md`) — História #15: "doador selecionado; intervalo de datas; filtros isolados e combinados" → "Lista paginada exibe data, doador, item, quantidade e usuário que registrou, respeitando os filtros."
+>
+> **CT27** — História #18: "família selecionada; intervalo de datas; filtros isolados e combinados" → "Lista exibe data, família, item, quantidade e usuário que registrou, respeitando os filtros."
 
-## Referência do Backlog (docs/backlog.md, item #17)
-> Como Voluntário, quero ver o saldo disponível do item ao preencher o formulário de distribuição, para que eu saiba antes de submeter se a quantidade é viável.
->
-> **Critérios de aceite**:
-> - O saldo atual do item selecionado é exibido no formulário ao selecionar o item
-> - Saldo reflete sempre o valor mais atualizado
->
+Isso remove qualquer ambiguidade sobre colunas, tipos de filtro e comportamento de combinação — a única decisão de implementação em aberto é de navegação (ver seção seguinte), resolvida por precedente sem necessidade de pergunta ao usuário.
+
+## Referência do Backlog
+
+> **#15** — Como Voluntário, quero visualizar o histórico de doações com filtro por doador e por período, para que eu consulte o que cada doador contribuiu.
+> **Critérios**: Lista exibe data, doador, item, quantidade e usuário que registrou · Filtros por doador e por intervalo de datas funcionam isolados e combinados · Lista é paginada.
 > Prioridade: Deveria ter · Pontos: 3 · Sprint: 2
 
-## Referência de Design (Figma)
-Fonte: [Figma — E4 Conecta Social](https://www.figma.com/design/YChrqTf5IiwA9skwfSP8O7/E4---Conecta-Social), frame "distribuicao" (node `2603:641`), card "Nova Distribuição" (node `2603:701`).
+> **#18** — Como Voluntário, quero visualizar o histórico de distribuições com filtro por família e por período, para que eu consulte o que cada família recebeu.
+> **Critérios**: Lista exibe data, família, item, quantidade e usuário que registrou · Filtros por família e por intervalo de datas funcionam isolados e combinados.
+> Prioridade: Deveria ter · Pontos: 3 · Sprint: 2
 
-Elementos confirmados no design que este ciclo deve seguir:
-- Campo "Item" (dropdown): cada opção exibe o nome do item **e o saldo inline**, ex.: `"Arroz 5kg saldo: 62"`.
-- Logo abaixo do campo "Item" (antes da linha Qtd/Data), um **box de destaque verde claro** ("Info-Box" no Figma) com o texto do saldo do item selecionado (placeholder no design: "Saldo disponível.").
-- Ordem dos campos: Família → Item → **Info-Box de saldo** → Qtd + Data (lado a lado) → botão "Registrar".
-
-Essas duas peças (opção com saldo inline + Info-Box dedicado) substituem/detalham FR2 e FR3 abaixo, mantendo a mesma fonte de dado (`Item.saldo_atual`) e a mesma abordagem sem AJAX.
+## Decisão de Navegação (sem precedente 1:1 — resolvida por analogia)
+`doacao_create`/`distribuicao_create` (história #14/#16) já existem como páginas de formulário dedicadas, aprovadas em ciclos anteriores — não serão fundidas com a listagem (diferente do padrão `doador_list`/`familia_list`, que combinam formulário + tabela numa única página). Para não reabrir uma decisão já aprovada, `doacao_list`/`distribuicao_list` serão páginas de listagem **independentes**, no padrão visual de `item_list.html` (tabela + filtros + paginação), com:
+- Um link "Ver histórico" no topo de `doacao_form.html`/`distribuicao_form.html`, apontando para a nova listagem.
+- Um botão "+ Nova Doação"/"+ Nova Distribuição" no topo de `doacao_list.html`/`distribuicao_list.html`, apontando de volta para o formulário — mesmo padrão recíproco já usado entre `item_list.html` e `doacao_create`.
+- O link "Movimentações" da sidebar **não é alterado** nesta história (continua apontando para `doacao_create`, decisão já aprovada em #14/#16) — evita redesenhar a informação de navegação de "Movimentações" sem necessidade, já que nem o backlog nem o Figma especificam esse comportamento para as telas de histórico.
 
 ## Functional Requirements
 
-### FR1 — Dados de saldo disponíveis no template
-- A view `distribuicao_create` (`core/views.py`, história #16) passa ao contexto do template um dicionário `itens_saldo`: `{str(item.pk): {"saldo": item.saldo_atual, "unidade": item.unidade_medida.sigla} for item in Item.objects.select_related("unidade_medida").all()}` — mesma fonte de dado (`Item.saldo_atual`) já usada em `item_list.html`, nenhuma lógica de cálculo nova.
-- Aplicado tanto no branch GET quanto no branch de POST inválido (para que o saldo continue visível se o formulário voltar com erro, ex.: saldo insuficiente).
+### FR1 — Histórico de Doações (`doacao_list`)
+- Nova rota `doacoes/` (nome de URL: `doacao_list`), acessível a qualquer usuário autenticado (`@login_obrigatorio`), mesmo padrão de acesso de `doacao_create`.
+- Filtros via `GET`: `doador` (select, `ModelChoiceField`-like — id do `Doador`), `data_inicio` e `data_fim` (datas, inclusivas). Todos opcionais, funcionam isolados e combinados (critério do backlog/CT25).
+- Lista paginada (20 por página, mesmo padrão de `Paginator` já usado no projeto), ordenada por `data` decrescente (mais recente primeiro — mesmo critério de ordenação de `criado_em` usado em `doador_list`/`familia_list`).
+- Colunas exibidas: Data, Doador, Item, Quantidade, Usuário que registrou (`registrado_por.nome`) — exatamente as colunas exigidas pelo CT25.
+- Doações canceladas (`cancelado=True`) **não aparecem** na listagem (mesmo raciocínio de `Item.saldo_atual`, que já exclui movimentações canceladas — consistência de dado).
 
-### FR2 — Opção do item exibe o saldo inline (conforme Figma)
-- O campo `item` do `DistribuicaoForm` passa a usar um `ModelChoiceField` customizado (`label_from_instance` sobreposto) cujo rótulo de cada `<option>` é `"{nome} saldo: {saldo_atual:.2f}"`, ex.: `"Arroz 5kg saldo: 62.00"` — mesma fonte de dado (`Item.saldo_atual`), sem query extra (já é o queryset padrão do campo).
+### FR2 — Histórico de Distribuições (`distribuicao_list`)
+- Nova rota `distribuicoes/` (nome de URL: `distribuicao_list`), mesmo padrão de acesso.
+- Filtros via `GET`: `familia`, `data_inicio`, `data_fim` — isolados e combinados (CT27).
+- Lista paginada (20 por página), ordenada por `data` decrescente.
+- Colunas: Data, Família, Item, Quantidade, Usuário que registrou — exatamente as colunas exigidas pelo CT27.
+- Distribuições canceladas não aparecem na listagem.
 
-### FR3 — Info-Box de saldo disponível (conforme Figma)
-- `templates/core/distribuicao_form.html` usa o filtro built-in `{{ itens_saldo|json_script:"distribuicao-itens-saldo" }}` (sem biblioteca externa) para expor ao JavaScript um dicionário `{id_item: {saldo, unidade}}`, montado na view (FR1).
-- Um box de destaque (`data-testid="distribuicao-form-saldo-info"`, estilo verde claro reaproveitando os tokens já usados no projeto para indicadores positivos — mesmas classes `bg-green-100`/`text-primary` já usadas em `item_list.html`/`usuarios.html`) fica posicionado entre o campo "Item" e a linha Qtd/Data, exibindo "Saldo disponível: {saldo} {unidade}" — mesma posição e função do "Info-Box" do Figma.
-- Oculto (`hidden`) quando nenhum item está selecionado.
-
-### FR4 — Atualização client-side (JS puro, sem framework novo)
-- Um `<script>` inline no template escuta o evento `change` do `<select>` de item (`id_item` / `data-testid="distribuicao-form-item-select"`) e atualiza o texto do Info-Box lendo o JSON de FR3.
-- O mesmo script roda uma vez no carregamento da página (`DOMContentLoaded`), cobrindo o caso de reexibição do formulário após erro de validação com um item já selecionado.
-
-### FR5 — Sem alteração de regra de negócio
-- Nenhuma mudança na validação de saldo insuficiente da história #16 (`DistribuicaoForm.clean()`) — esta história é puramente informativa/UX, a validação de bloqueio continua sendo feita no backend no momento do submit.
+### FR3 — Navegação (ver seção de decisão acima)
+- Link "Ver histórico de doações" em `doacao_form.html` → `doacao_list`.
+- Link "Ver histórico de distribuições" em `distribuicao_form.html` → `distribuicao_list`.
+- Botão "+ Nova Doação" em `doacao_list.html` → `doacao_create`.
+- Botão "+ Nova Distribuição" em `distribuicao_list.html` → `distribuicao_create`.
 
 ## Non-Functional Requirements
 
 Extensões já decididas para o projeto (não redecididas aqui): **Security Baseline** e **Resiliency Baseline** habilitadas e escopadas a regras de nível de código de aplicação; **Property-Based Testing** desabilitado.
 
-### Security Baseline — regras aplicáveis ao código desta história
+### Security Baseline
 | Regra | Status | Como se aplica |
 |---|---|---|
-| SECURITY-05 (Input validation) | **N/A para esta história** | Nenhum novo input do usuário é processado; a mudança é somente leitura/exibição |
-| SECURITY-09-like (XSS) | **Aplicável** | `json_script` do Django escapa o conteúdo automaticamente contra injeção de HTML/script — não usar `{{ valor|safe }}` nem concatenação manual de strings no JS |
-| Demais regras | **N/A** | Mesma justificativa das histórias #14/#16 — sem infraestrutura como código no repositório |
+| SECURITY-05 (Input validation) | **Aplicável** | Filtros de data usam `forms`/parsing seguro (data inválida é ignorada, não gera exception 500); filtro de doador/família usa apenas o `pk` para `.filter()`, sem risco de injeção (ORM parametrizado) |
+| SECURITY-08 (Application-level access control) | **Aplicável** | Rotas exigem `@login_obrigatorio`, mesmo padrão das demais listagens |
+| Demais regras | **N/A** | Mesma justificativa das histórias #14/#16/#17 — sem infraestrutura como código no repositório |
 
 ### Resiliency Baseline
-| Regra | Status | Como se aplica |
-|---|---|---|
-| Todas | **N/A** | Sem chamada de rede nova, sem infraestrutura afetada; mesma justificativa das histórias anteriores |
+| Regra | Status |
+|---|---|
+| Todas | **N/A** — mesma justificativa das histórias anteriores |
+
+### Critério de bloqueio de merge (docs/plano-de-testes.md §2)
+Aplicável a esta história: "(b) nova regra de negócio sem teste unitário correspondente" — a exclusão de movimentações canceladas da listagem é uma regra de negócio nova (ainda que pequena) e será coberta por teste unitário dedicado.
 
 ### Outras NFRs
-- **Testabilidade**: como o projeto não tem framework de teste de JS, a cobertura automatizada (Django `TestCase`) verifica que o contexto da view contém `itens_saldo` com os valores corretos e que o template renderiza o `json_script` com o saldo esperado (via `assertContains` no HTML retornado). A interação de `change` do JS em si é validada manualmente (documentado em Build and Test).
-- **Consistência de UX**: reaproveitar classes de texto já usadas no projeto (`text-xs text-gray-500`, mesmo padrão de textos auxiliares).
+- **Testabilidade**: `DoacaoListTestCase`/`DistribuicaoListTestCase` cobrindo os cenários de CT25/CT27 (filtro isolado por entidade, filtro isolado por período, filtros combinados, paginação, exclusão de canceladas, acesso anônimo bloqueado) — mesmo padrão de `core/tests.py` já estabelecido.
+- **Consistência de UX**: reaproveitar 100% do layout de `item_list.html` (tabela, paginação, `data-testid`), sem introduzir novo componente visual.
 
 ## Key Requirements Summary
-1. View `distribuicao_create` passa `itens_saldo` (saldo + unidade por item) ao contexto, em GET e no POST inválido.
-2. Opções do campo "Item" exibem o saldo inline (`"Arroz 5kg saldo: 62.00"`), conforme Figma.
-3. Info-Box verde entre "Item" e a linha Qtd/Data exibe "Saldo disponível: X unidade" para o item selecionado, atualizado via `json_script` + JS vanilla ao trocar o item — mesma posição/estilo do Figma.
-4. Nenhuma mudança na regra de bloqueio de saldo insuficiente (história #16) — puramente informativo.
-5. Teste automatizado cobre o contexto da view/HTML gerado (incluindo o rótulo do item com saldo); interação JS validada manualmente em Build and Test.
+1. `doacao_list` (`doacoes/`) e `distribuicao_list` (`distribuicoes/`) — listagens paginadas com filtros por entidade relacionada + intervalo de datas, isolados e combinados, exatamente como especificado em CT25/CT27.
+2. Colunas: Data, Doador/Família, Item, Quantidade, Usuário — sem coluna extra, sem funcionalidade além do pedido (ex.: sem exportação, sem edição — fora de escopo).
+3. Movimentações canceladas excluídas da listagem (nova regra de negócio, com teste dedicado — exigência do critério de bloqueio de merge do plano de testes).
+4. Navegação via links recíprocos form↔lista, sem alterar o link "Movimentações" da sidebar (decisão já aprovada em ciclos anteriores, preservada).

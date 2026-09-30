@@ -18,13 +18,18 @@ python manage.py test core.tests.DoacaoTestCase -v 2
 python manage.py test core.tests.DistribuicaoTestCase -v 2
 ```
 
+### 2.2 Executar apenas os testes das histórias #15/#18
+```bash
+python manage.py test core.tests.DoacaoListTestCase core.tests.DistribuicaoListTestCase -v 2
+```
+
 ### 3. Lint
 ```bash
 ruff check core/
 ```
 
 ### 4. Revisar resultados
-- **Expected**: 63 testes passam, 0 falhas (54 pré-#16 + 7 de #16 + 2 novos de #17, todos em `DistribuicaoTestCase`)
+- **Expected**: 77 testes passam, 0 falhas (54 pré-#16 + 7 de #16 + 2 de #17, todos em `DistribuicaoTestCase`; + 14 novos de #15/#18 em `DoacaoListTestCase`/`DistribuicaoListTestCase`)
 - **Test Coverage**: sem ferramenta de coverage configurada no projeto; cobertura funcional avaliada pelos critérios de aceite (ver tabelas abaixo)
 - **Test Report Location**: saída do terminal (`manage.py test` usa `unittest`, sem relatório em arquivo por padrão)
 
@@ -56,3 +61,14 @@ ruff check core/
 | `test_administrador_tambem_pode_registrar_distribuicao` | FR1 — Voluntário e Administrador podem registrar |
 | `test_formulario_exibe_saldo_inline_na_opcao_do_item` | FR2 (história #17) — opção do item mostra saldo inline |
 | `test_contexto_da_view_contem_saldo_por_item` | FR1/FR3 (história #17) — contexto da view expõe `itens_saldo` correto |
+
+## Cobertura dos casos de teste de `DoacaoListTestCase`/`DistribuicaoListTestCase` (rastreabilidade com CT25/CT27 de docs/plano-de-testes.md — histórias #15 e #18)
+| Teste | Critério coberto |
+|---|---|
+| `test_lista_todas_as_*_sem_filtro` | Lista exibe registros não cancelados; exclusão de cancelados (regra nova — critério de bloqueio de merge §2.b) |
+| `test_filtro_por_doador_isolado` / `test_filtro_por_familia_isolado` | CT25/CT27 — filtro isolado por entidade |
+| `test_filtro_por_periodo_isolado` | CT25/CT27 — filtro isolado por período |
+| `test_filtro_por_doador_e_periodo_combinados` / `test_filtro_por_familia_e_periodo_combinados` | CT25/CT27 — filtros combinados |
+| `test_filtro_com_data_invalida_e_ignorado_sem_erro_500` | SECURITY-05 — input inválido não gera erro 500 |
+| `test_paginacao_lista_*` | Critério de aceite — lista paginada |
+| `test_lista_*_acesso_anonimo_redireciona_para_login` | SECURITY-08 — controle de acesso |
