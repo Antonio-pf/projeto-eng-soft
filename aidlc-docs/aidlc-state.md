@@ -114,7 +114,34 @@ Board tinha 4 histórias marcadas "Done" por Luiz Henrique sem código correspon
 
 **História #17 — workflow AI-DLC COMPLETE.**
 
+## Board (GitHub Project 11)
+- Cards #16 e #17: assignee corrigido de `luiz-Henrique-neres` para `Antonio-pf`; status ajustado de "Done" (incorreto) para "In Progress" (código pronto, PR #34 aberto, ainda não mergeado em `main`).
+- Cards #15 e #18 também estavam marcados "Done" sem código (gap adicional identificado, distinto do gap do Henrique) — serão corrigidos após a implementação nesta sessão.
+
+## Stage Progress — Histórias #15 e #18 (Histórico de Doações e Distribuições) — EM ANDAMENTO (ciclo AI-DLC combinado)
+
+### INCEPTION PHASE
+- [x] Workspace Detection (reaproveitado)
+- [x] Reverse Engineering - SKIPPED (artefatos já existentes)
+- [x] Requirements Analysis (approved, referenciando CT25/CT27 de `docs/plano-de-testes.md`)
+- [x] User Stories - SKIPPED
+- [x] Workflow Planning (approved)
+- [x] Application Design - SKIPPED
+- [x] Units Generation - SKIPPED
+
+### CONSTRUCTION PHASE (histórias #15 e #18)
+- [x] Functional Design - SKIPPED
+- [x] NFR Requirements - SKIPPED
+- [x] NFR Design - SKIPPED
+- [x] Infrastructure Design - SKIPPED
+- [x] Code Generation - DONE (aguardando aprovação)
+- [ ] Build and Test - próximo
+
+## Pendência de fim de sessão
+- [ ] Consultar https://ararauna-lab-es-2026-2.netlify.app/ (via skill `entregaveis-professor`) ao final do Build and Test de #15/#18, para conferir alinhamento.
+- [ ] Decidir com o usuário como declarar uso de IA no PR #34 (regra do professor) e providenciar revisão de outro integrante antes do merge.
+
 ## Current Status
-- **Lifecycle Phase**: COMPLETE (histórias #16 e #17)
-- **Current Stage**: Workflow finalizado para backlog #16 e #17, ambos na branch `feature/historia-16-17-distribuicao`, **sem commits**
-- **Next Stage**: Pendentes ciclos AI-DLC futuros: história #18 (histórico de distribuições) e #19 (cancelamento de movimentação)
+- **Lifecycle Phase**: CONSTRUCTION
+- **Current Stage**: Code Generation (Planning) para histórias #15 e #18 — aguardando aprovação
+- **Next Stage**: Code Generation (Generation)

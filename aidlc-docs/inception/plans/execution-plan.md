@@ -1,117 +1,64 @@
-# Execution Plan — História #17 (Ver Saldo Disponível no Formulário de Distribuição)
+# Execution Plan — Histórias #15 e #18 (Histórico de Doações e Distribuições)
 
 ## Detailed Analysis Summary
 
 ### Transformation Scope (Brownfield)
-- **Transformation Type**: Single component change (dentro do app `core` já existente), puramente de apresentação
-- **Primary Changes**: Ajustar view `distribuicao_create` (contexto extra `itens_saldo`), `DistribuicaoForm` (label do campo `item` com saldo inline), template `distribuicao_form.html` (Info-Box + script), conforme layout do Figma
-- **Related Components**: Nenhum além de `core` — reaproveita `Item.saldo_atual` já existente
+- **Transformation Type**: Single component change (app `core`), duas telas estruturalmente idênticas tratadas no mesmo ciclo
+- **Primary Changes**: Views `doacao_list`/`distribuicao_list`, rotas `doacoes/`/`distribuicoes/`, templates `doacao_list.html`/`distribuicao_list.html`, links recíprocos de navegação, testes
+- **Related Components**: Nenhum além de `core` — `Doacao`/`Distribuicao`/`Doador`/`Familia`/`Item` já existentes e migrados
 
 ### Change Impact Assessment
-- **User-facing changes**: Sim — melhoria visual/informativa na tela "Nova Distribuição" já existente (história #16)
+- **User-facing changes**: Sim — duas novas telas de consulta/histórico
 - **Structural changes**: Não
 - **Data model changes**: Não
-- **API changes**: Não — mesma rota `distribuicoes/nova/`, sem endpoint novo (decisão de requirements.md: sem AJAX)
-- **NFR impact**: Mínimo — XSS mitigado pelo uso do `json_script` nativo do Django
+- **API changes**: Sim, menor — duas rotas novas (`doacoes/`, `distribuicoes/`), seguindo o padrão já existente
+- **NFR impact**: Menor — mesmas regras de Security Baseline já mapeadas para as listagens existentes (`item_list`, `doador_list`)
 
 ### Component Relationships
-- **Primary Component**: `core` (app Django)
-- **Shared Components**: `Item` (já existente, sem alteração de schema)
-- **Dependent Components**: `templates/core/distribuicao_form.html` (história #16, ajustado nesta história)
+- **Primary Component**: `core`
+- **Shared Components**: `Doacao`, `Distribuicao`, `Doador`, `Familia`, `Item` (sem alteração)
+- **Dependent Components**: `templates/core/doacao_form.html`, `templates/core/distribuicao_form.html` (ganham link de navegação)
 
 ### Risk Assessment
-- **Risk Level**: Low — mudança de apresentação isolada, sem tocar em persistência/validação de negócio
-- **Rollback Complexity**: Easy — reverter o commit remove a alteração; nada de schema envolvido
-- **Testing Complexity**: Simple — testes de contexto de view/HTML; interação JS validada manualmente
-
-## Workflow Visualization
-
-```mermaid
-flowchart TD
-    Start(["User Request"])
-
-    subgraph INCEPTION["INCEPTION PHASE"]
-        WD["Workspace Detection<br/><b>COMPLETED</b>"]
-        RE["Reverse Engineering<br/><b>SKIPPED</b>"]
-        RA["Requirements Analysis<br/><b>COMPLETED</b>"]
-        US["User Stories<br/><b>SKIPPED</b>"]
-        WP["Workflow Planning<br/><b>IN PROGRESS</b>"]
-        AD["Application Design<br/><b>SKIP</b>"]
-        UG["Units Generation<br/><b>SKIP</b>"]
-    end
-
-    subgraph CONSTRUCTION["CONSTRUCTION PHASE"]
-        FD["Functional Design<br/><b>SKIP</b>"]
-        NFRA["NFR Requirements<br/><b>SKIP</b>"]
-        NFRD["NFR Design<br/><b>SKIP</b>"]
-        ID["Infrastructure Design<br/><b>SKIP</b>"]
-        CG["Code Generation<br/><b>EXECUTE</b>"]
-        BT["Build and Test<br/><b>EXECUTE</b>"]
-    end
-
-    subgraph OPERATIONS["OPERATIONS PHASE"]
-        OPS["Operations<br/><b>PLACEHOLDER</b>"]
-    end
-
-    Start --> WD --> RE --> RA --> US --> WP
-    WP --> AD --> UG --> CG
-    CG --> BT --> OPS --> End(["Complete"])
-
-    style WD fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style RE fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style RA fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style US fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style WP fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style AD fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style UG fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style FD fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style NFRA fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style NFRD fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style ID fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style CG fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style BT fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style OPS fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style Start fill:#CE93D8,stroke:#6A1B9A,stroke-width:3px,color:#000
-    style End fill:#CE93D8,stroke:#6A1B9A,stroke-width:3px,color:#000
-
-    linkStyle default stroke:#333,stroke-width:2px
-```
+- **Risk Level**: Low — leitura/listagem pura, sem escrita de dados além do já existente
+- **Rollback Complexity**: Easy
+- **Testing Complexity**: Simple — mesmo padrão de `TestCase` com `Client`, casos já especificados em CT25/CT27
 
 ## Phases to Execute
 
 ### INCEPTION PHASE
 - [x] Workspace Detection (COMPLETED — reaproveitado)
 - [x] Reverse Engineering (SKIPPED — artefatos já existentes)
-- [x] Requirements Analysis (COMPLETED, com referência de design do Figma)
-- [x] User Stories (SKIPPED — backlog #17 já é história completa com critérios de aceite)
+- [x] Requirements Analysis (COMPLETED, referenciando CT25/CT27)
+- [x] User Stories (SKIPPED — backlog #15/#18 já são histórias completas com critérios de aceite, reforçados pelos casos de teste do professor)
 - [x] Execution Plan (IN PROGRESS)
 - [ ] Application Design — **SKIP**
-  - **Rationale**: Nenhum componente novo; ajuste de apresentação sobre a tela `distribuicao_create` já existente (história #16).
+  - **Rationale**: Nenhum componente novo; duas views de listagem dentro do app `core` já existente, mesmo padrão de `item_list`/`doador_list`.
 - [ ] Units Generation — **SKIP**
-  - **Rationale**: Implementação simples e direta, um único pacote (`core`).
+  - **Rationale**: Duas telas estruturalmente idênticas, implementação direta, um único pacote (`core`) — não justifica decomposição em unidades separadas.
 
 ### CONSTRUCTION PHASE
 - [ ] Functional Design — **SKIP**
-  - **Rationale**: Sem lógica de negócio nova — apenas leitura de `Item.saldo_atual` já existente e exibição.
+  - **Rationale**: Sem lógica de negócio complexa nova — filtro por FK e por intervalo de data são operações de ORM diretas (`.filter(doador=..., data__gte=..., data__lte=...)`), mesmo padrão de `doador_list`/`item_list` com busca por `icontains`.
 - [ ] NFR Requirements — **SKIP**
-  - **Rationale**: Única consideração de NFR (XSS) já resolvida pelo uso do `json_script` nativo do Django, documentada em requirements.md.
+  - **Rationale**: Regras de Security Baseline aplicáveis já mapeadas em requirements.md; nenhuma tecnologia nova.
 - [ ] NFR Design — **SKIP**
   - **Rationale**: Consequência do skip de NFR Requirements.
 - [ ] Infrastructure Design — **SKIP**
   - **Rationale**: Nenhuma mudança de infraestrutura.
 - [ ] Code Generation — **EXECUTE (ALWAYS)**
-  - **Rationale**: Implementação da view, form, template e testes.
+  - **Rationale**: Implementação das duas views, templates, rotas, navegação e testes.
 - [ ] Build and Test — **EXECUTE (ALWAYS)**
-  - **Rationale**: Rodar `ruff`, `manage.py test`; validação manual do comportamento do JS.
+  - **Rationale**: `ruff`, `manage.py test` cobrindo os cenários de CT25/CT27, `makemigrations --check`.
 
 ### OPERATIONS PHASE
 - [ ] Operations — PLACEHOLDER
 
 ## Estimated Timeline
 - **Total Phases Executed**: 2 (Code Generation, Build and Test) + Requirements já concluída
-- **Estimated Duration**: Sessão única (feature pequena, ~3 pontos no backlog)
+- **Estimated Duration**: Sessão única (2 histórias pequenas, 3 pontos cada, mesmo padrão)
 
 ## Success Criteria
-- **Primary Goal**: Ao selecionar um item no formulário de distribuição, o Voluntário/Administrador vê o saldo disponível daquele item, tanto inline na opção do dropdown quanto em um Info-Box dedicado — replicando o layout do Figma.
-- **Key Deliverables**: `distribuicao_create` (contexto `itens_saldo`), `DistribuicaoForm.item` com saldo no rótulo, `distribuicao_form.html` com Info-Box + script, testes cobrindo o contexto/HTML gerado.
-- **Quality Gates**: `ruff check` sem erros; `python manage.py test` passando; validação manual do comportamento de `change`/`DOMContentLoaded` no navegador.
+- **Primary Goal**: Voluntário/Administrador consegue consultar o histórico de doações (por doador/período) e de distribuições (por família/período), com paginação, exatamente como especificado nos critérios de aceite do backlog e nos casos CT25/CT27 do plano de testes.
+- **Key Deliverables**: `doacao_list`, `distribuicao_list`, templates correspondentes, navegação recíproca, testes cobrindo filtros isolados/combinados, paginação e exclusão de canceladas.
+- **Quality Gates**: `ruff check` sem erros; `python manage.py test` passando; `makemigrations --check` sem pendências; nenhum teste existente quebrado (critério de bloqueio de merge do plano de testes, item "a").

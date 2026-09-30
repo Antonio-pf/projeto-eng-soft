@@ -37,6 +37,12 @@ Este projeto é um monólito Django de unidade única (app `core`) — não há 
 - **Test Steps**: login → Itens → "+ Distribuição" → confirmar que a opção de cada item no dropdown mostra "saldo: X"; trocar o item selecionado e confirmar que o Info-Box verde abaixo do campo exibe "Saldo disponível: X unidade" correspondente ao item recém-selecionado; submeter com erro (ex.: saldo insuficiente) e confirmar que o Info-Box continua correto após a reexibição do formulário
 - **Expected Results**: Info-Box atualiza corretamente a cada troca de item, sem chamadas de rede adicionais (inspecionar aba Network do navegador para confirmar ausência de requisições)
 
+### Cenário 6: Histórico de doações e distribuições com filtros combinados (histórias #15 e #18)
+- **Description**: Verifica que `doacao_list`/`distribuicao_list` respeitam filtro por entidade + período, isolados e combinados, e que a paginação preserva os filtros na querystring
+- **Setup**: pelo menos 2 doadores/famílias e algumas doações/distribuições em datas diferentes (coberto automaticamente por `DoacaoListTestCase`/`DistribuicaoListTestCase`)
+- **Test Steps**: acessar `doacoes/` e `distribuicoes/`, aplicar filtro só por entidade, só por período, e os dois combinados; navegar para a página 2 com filtro ativo e confirmar que o filtro continua aplicado
+- **Expected Results**: resultados corretos em cada combinação; link "Ver histórico de..." nos formulários de criação leva à listagem correspondente; botão "+ Nova Doação"/"+ Nova Distribuição" na listagem leva de volta ao formulário
+
 ## Setup Integration Test Environment
 
 ### 1. Não há serviços externos a iniciar

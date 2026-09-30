@@ -1,0 +1,78 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Histórico de Doações | Conecta Social{% endblock %}
+
+{% block page_title %}Histórico de Doações{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Consulte as doações registradas, com filtro por doador e por período</p>
+{% endblock %}
+
+{% block content %}
+<div class="flex justify-end gap-2">
+    <a href="{% url 'doacao_create' %}" class="btn btn-secondary btn-sm rounded-md" data-testid="doacao-list-nova-doacao-link">+ Nova Doação</a>
+</div>
+
+<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="doacao-table-card">
+    <form method="get" class="mb-4 flex flex-wrap gap-2" data-testid="doacao-list-filtros">
+        <select name="id_doador" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700" data-testid="doacao-list-doador-select">
+            <option value="">Todos os doadores</option>
+            {% for doador in doadores %}
+            <option value="{{ doador.pk }}" {% if id_doador == doador.pk|stringformat:"s" %}selected{% endif %}>{{ doador.nome }}</option>
+            {% endfor %}
+        </select>
+        <input type="date" name="data_inicio" value="{{ data_inicio }}" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700" data-testid="doacao-list-data-inicio-input">
+        <input type="date" name="data_fim" value="{{ data_fim }}" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700" data-testid="doacao-list-data-fim-input">
+        <button type="submit" class="btn btn-secondary rounded-md px-4 text-sm font-semibold">Filtrar</button>
+        {% if id_doador or data_inicio or data_fim %}
+        <a href="{% url 'doacao_list' %}" class="btn btn-ghost rounded-md px-4 text-sm font-semibold">Limpar</a>
+        {% endif %}
+    </form>
+
+    {% if page_obj %}
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[720px]">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                    <th class="px-4 py-3 font-semibold">Data</th>
+                    <th class="px-4 py-3 font-semibold">Doador</th>
+                    <th class="px-4 py-3 font-semibold">Item</th>
+                    <th class="px-4 py-3 font-semibold">Quantidade</th>
+                    <th class="px-4 py-3 font-semibold">Usuário</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200" data-testid="doacao-table-body">
+                {% for doacao in page_obj %}
+                <tr data-testid="doacao-table-row">
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ doacao.data|date:"d/m/Y" }}</td>
+                    <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ doacao.doador.nome }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ doacao.item.nome }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ doacao.quantidade }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ doacao.registrado_por.nome }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <div class="join">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if id_doador %}&id_doador={{ id_doador }}{% endif %}{% if data_inicio %}&data_inicio={{ data_inicio }}{% endif %}{% if data_fim %}&data_fim={{ data_fim }}{% endif %}" class="join-item btn btn-sm">«</a>
+            {% else %}
+            <button class="join-item btn btn-sm btn-disabled">«</button>
+            {% endif %}
+            <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if id_doador %}&id_doador={{ id_doador }}{% endif %}{% if data_inicio %}&data_inicio={{ data_inicio }}{% endif %}{% if data_fim %}&data_fim={{ data_fim }}{% endif %}" class="join-item btn btn-sm">»</a>
+            {% else %}
+            <button class="join-item btn btn-sm btn-disabled">»</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="text-sm text-gray-500">Nenhuma doação encontrada.</p>
+    {% endif %}
+</section>
+{% endblock %}

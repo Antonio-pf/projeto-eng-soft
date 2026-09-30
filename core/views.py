@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 
 from core.decorators import admin_obrigatorio, login_obrigatorio
@@ -16,7 +17,7 @@ from core.forms import (
     LoginForm,
     UsuarioForm,
 )
-from core.models import CategoriaItem, Doador, Familia, Item, Usuario
+from core.models import CategoriaItem, Distribuicao, Doacao, Doador, Familia, Item, Usuario
 
 
 def home(request):
@@ -315,6 +316,42 @@ def doacao_create(request):
 
 
 @login_obrigatorio
+def doacao_list(request):
+    id_doador = request.GET.get("id_doador", "").strip()
+    data_inicio = request.GET.get("data_inicio", "").strip()
+    data_fim = request.GET.get("data_fim", "").strip()
+
+    doacoes_list = (
+        Doacao.objects.filter(cancelado=False)
+        .select_related("doador", "item", "registrado_por")
+        .order_by("-data")
+    )
+    if id_doador:
+        doacoes_list = doacoes_list.filter(doador_id=id_doador)
+    data_inicio_parsed = parse_date(data_inicio) if data_inicio else None
+    if data_inicio_parsed:
+        doacoes_list = doacoes_list.filter(data__gte=data_inicio_parsed)
+    data_fim_parsed = parse_date(data_fim) if data_fim else None
+    if data_fim_parsed:
+        doacoes_list = doacoes_list.filter(data__lte=data_fim_parsed)
+
+    paginator = Paginator(doacoes_list, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "core/doacao_list.html",
+        {
+            "page_obj": page_obj,
+            "doadores": Doador.objects.order_by("nome"),
+            "id_doador": id_doador,
+            "data_inicio": data_inicio,
+            "data_fim": data_fim,
+        },
+    )
+
+
+@login_obrigatorio
 def distribuicao_create(request):
     itens_saldo = {
         str(item.pk): {"saldo": f"{item.saldo_atual:.2f}", "unidade": item.unidade_medida.sigla}
@@ -332,4 +369,40 @@ def distribuicao_create(request):
         form = DistribuicaoForm()
     return render(
         request, "core/distribuicao_form.html", {"form": form, "itens_saldo": itens_saldo}
+    )
+
+
+@login_obrigatorio
+def distribuicao_list(request):
+    id_familia = request.GET.get("id_familia", "").strip()
+    data_inicio = request.GET.get("data_inicio", "").strip()
+    data_fim = request.GET.get("data_fim", "").strip()
+
+    distribuicoes_list = (
+        Distribuicao.objects.filter(cancelado=False)
+        .select_related("familia", "item", "registrado_por")
+        .order_by("-data")
+    )
+    if id_familia:
+        distribuicoes_list = distribuicoes_list.filter(familia_id=id_familia)
+    data_inicio_parsed = parse_date(data_inicio) if data_inicio else None
+    if data_inicio_parsed:
+        distribuicoes_list = distribuicoes_list.filter(data__gte=data_inicio_parsed)
+    data_fim_parsed = parse_date(data_fim) if data_fim else None
+    if data_fim_parsed:
+        distribuicoes_list = distribuicoes_list.filter(data__lte=data_fim_parsed)
+
+    paginator = Paginator(distribuicoes_list, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "core/distribuicao_list.html",
+        {
+            "page_obj": page_obj,
+            "familias": Familia.objects.order_by("nome_responsavel"),
+            "id_familia": id_familia,
+            "data_inicio": data_inicio,
+            "data_fim": data_fim,
+        },
     )

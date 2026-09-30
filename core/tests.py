@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import SESSION_KEY, authenticate
@@ -1027,3 +1027,211 @@ class DistribuicaoTestCase(TestCase):
         itens_saldo = response.context["itens_saldo"]
         self.assertEqual(itens_saldo[str(self.item.pk)]["saldo"], "10.00")
         self.assertEqual(itens_saldo[str(self.item.pk)]["unidade"], "kg")
+
+
+class DoacaoListTestCase(TestCase):
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Voluntario Historico",
+            email="voluntario-historico@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.doador1 = Doador.objects.create(nome="Doador Um", cpf_cnpj="111.111.111-11")
+        self.doador2 = Doador.objects.create(nome="Doador Dois", cpf_cnpj="222.222.222-22")
+        categoria = CategoriaItem.objects.create(nome="Alimento Historico Doacao")
+        unidade = UnidadeMedida.objects.create(nome="Quilograma Historico Doacao", sigla="kgd")
+        self.item = Item.objects.create(
+            nome="Feijão", categoria=categoria, unidade_medida=unidade, estoque_minimo=1
+        )
+
+        self.doacao_antiga = Doacao.objects.create(
+            doador=self.doador1,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal("5"),
+            data=date(2026, 1, 10),
+        )
+        self.doacao_recente = Doacao.objects.create(
+            doador=self.doador2,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal("3"),
+            data=date(2026, 3, 15),
+        )
+        self.doacao_cancelada = Doacao.objects.create(
+            doador=self.doador1,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal("100"),
+            data=date(2026, 2, 1),
+            cancelado=True,
+        )
+        self._login(self.voluntario)
+
+    def _login(self, usuario, senha="senha-teste"):
+        self.client.post(reverse("login"), {"email": usuario.email, "senha": senha})
+
+    def test_lista_todas_as_doacoes_sem_filtro(self):
+        response = self.client.get(reverse("doacao_list"))
+        self.assertEqual(response.status_code, 200)
+        doacoes = list(response.context["page_obj"])
+        self.assertEqual(len(doacoes), 2)
+        self.assertNotIn(self.doacao_cancelada, doacoes)
+
+    def test_filtro_por_doador_isolado(self):
+        response = self.client.get(reverse("doacao_list"), {"id_doador": self.doador1.pk})
+        doacoes = list(response.context["page_obj"])
+        self.assertEqual(doacoes, [self.doacao_antiga])
+
+    def test_filtro_por_periodo_isolado(self):
+        response = self.client.get(
+            reverse("doacao_list"), {"data_inicio": "2026-03-01", "data_fim": "2026-03-31"}
+        )
+        doacoes = list(response.context["page_obj"])
+        self.assertEqual(doacoes, [self.doacao_recente])
+
+    def test_filtro_por_doador_e_periodo_combinados(self):
+        response = self.client.get(
+            reverse("doacao_list"),
+            {
+                "id_doador": self.doador1.pk,
+                "data_inicio": "2026-01-01",
+                "data_fim": "2026-01-31",
+            },
+        )
+        doacoes = list(response.context["page_obj"])
+        self.assertEqual(doacoes, [self.doacao_antiga])
+
+    def test_filtro_com_data_invalida_e_ignorado_sem_erro_500(self):
+        response = self.client.get(reverse("doacao_list"), {"data_inicio": "data-invalida"})
+        self.assertEqual(response.status_code, 200)
+        doacoes = list(response.context["page_obj"])
+        self.assertEqual(len(doacoes), 2)
+
+    def test_paginacao_lista_doacoes(self):
+        for _ in range(25):
+            Doacao.objects.create(
+                doador=self.doador1,
+                item=self.item,
+                registrado_por=self.voluntario,
+                quantidade=Decimal("1"),
+                data=date(2026, 5, 1),
+            )
+        response = self.client.get(reverse("doacao_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["page_obj"].has_other_pages())
+        self.assertEqual(len(response.context["page_obj"]), 20)
+
+    def test_lista_doacoes_acesso_anonimo_redireciona_para_login(self):
+        self.client.get(reverse("logout"))
+        response = self.client.get(reverse("doacao_list"))
+        self.assertRedirects(response, reverse("login"))
+
+
+class DistribuicaoListTestCase(TestCase):
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Voluntario Historico Dist",
+            email="voluntario-historico-dist@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.familia1 = Familia.objects.create(
+            nome_responsavel="Família Um", endereco="Rua 1", num_membros=2
+        )
+        self.familia2 = Familia.objects.create(
+            nome_responsavel="Família Dois", endereco="Rua 2", num_membros=3
+        )
+        categoria = CategoriaItem.objects.create(nome="Alimento Historico Distribuicao")
+        unidade = UnidadeMedida.objects.create(
+            nome="Quilograma Historico Distribuicao", sigla="kgt"
+        )
+        self.item = Item.objects.create(
+            nome="Macarrão", categoria=categoria, unidade_medida=unidade, estoque_minimo=1
+        )
+
+        self.distribuicao_antiga = Distribuicao.objects.create(
+            familia=self.familia1,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal("2"),
+            data=date(2026, 1, 5),
+        )
+        self.distribuicao_recente = Distribuicao.objects.create(
+            familia=self.familia2,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal("4"),
+            data=date(2026, 3, 20),
+        )
+        self.distribuicao_cancelada = Distribuicao.objects.create(
+            familia=self.familia1,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal("50"),
+            data=date(2026, 2, 10),
+            cancelado=True,
+        )
+        self._login(self.voluntario)
+
+    def _login(self, usuario, senha="senha-teste"):
+        self.client.post(reverse("login"), {"email": usuario.email, "senha": senha})
+
+    def test_lista_todas_as_distribuicoes_sem_filtro(self):
+        response = self.client.get(reverse("distribuicao_list"))
+        self.assertEqual(response.status_code, 200)
+        distribuicoes = list(response.context["page_obj"])
+        self.assertEqual(len(distribuicoes), 2)
+        self.assertNotIn(self.distribuicao_cancelada, distribuicoes)
+
+    def test_filtro_por_familia_isolado(self):
+        response = self.client.get(reverse("distribuicao_list"), {"id_familia": self.familia2.pk})
+        distribuicoes = list(response.context["page_obj"])
+        self.assertEqual(distribuicoes, [self.distribuicao_recente])
+
+    def test_filtro_por_periodo_isolado(self):
+        response = self.client.get(
+            reverse("distribuicao_list"), {"data_inicio": "2026-01-01", "data_fim": "2026-01-31"}
+        )
+        distribuicoes = list(response.context["page_obj"])
+        self.assertEqual(distribuicoes, [self.distribuicao_antiga])
+
+    def test_filtro_por_familia_e_periodo_combinados(self):
+        response = self.client.get(
+            reverse("distribuicao_list"),
+            {
+                "id_familia": self.familia1.pk,
+                "data_inicio": "2026-01-01",
+                "data_fim": "2026-01-31",
+            },
+        )
+        distribuicoes = list(response.context["page_obj"])
+        self.assertEqual(distribuicoes, [self.distribuicao_antiga])
+
+    def test_filtro_com_data_invalida_e_ignorado_sem_erro_500(self):
+        response = self.client.get(reverse("distribuicao_list"), {"data_fim": "data-invalida"})
+        self.assertEqual(response.status_code, 200)
+        distribuicoes = list(response.context["page_obj"])
+        self.assertEqual(len(distribuicoes), 2)
+
+    def test_paginacao_lista_distribuicoes(self):
+        for _ in range(25):
+            Distribuicao.objects.create(
+                familia=self.familia1,
+                item=self.item,
+                registrado_por=self.voluntario,
+                quantidade=Decimal("1"),
+                data=date(2026, 5, 1),
+            )
+        response = self.client.get(reverse("distribuicao_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["page_obj"].has_other_pages())
+        self.assertEqual(len(response.context["page_obj"]), 20)
+
+    def test_lista_distribuicoes_acesso_anonimo_redireciona_para_login(self):
+        self.client.get(reverse("logout"))
+        response = self.client.get(reverse("distribuicao_list"))
+        self.assertRedirects(response, reverse("login"))
