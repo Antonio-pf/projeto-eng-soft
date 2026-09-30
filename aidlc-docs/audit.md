@@ -132,3 +132,182 @@
 **Context**: Build and Test aprovado, workflow da história #14 finalizado.
 
 ---
+
+## New Feature Request - História #16 (Registrar Distribuição)
+**Timestamp**: 2026-09-30T00:00:00Z
+**User Input**: "bom, vamos fazer essas 4, usando aidlc fala a #16 di backlog e siga cobrindo com os testes, utilize bem do framework python e nao ivente coisas sem necessidade"
+**AI Response**: Iniciando novo ciclo AI-DLC (brownfield, reverse engineering já existente) para a história #16 do backlog (Registrar distribuição vinculando família, item e quantidade). Reaproveitando o padrão já estabelecido na história #14 (Registrar Doação) e o model `Distribuicao` já existente/migrado. As outras 3 histórias identificadas como "Done" no board sem código em `main` (#17, #18, #19) serão tratadas em ciclos subsequentes, uma de cada vez.
+**Context**: Requirements Analysis iniciada para história #16.
+
+---
+
+## Requirements Analysis - Documento gerado (História #16)
+**Timestamp**: 2026-09-30T00:05:00Z
+**User Input**: N/A (sem input adicional nesta etapa)
+**AI Response**: Gerado `aidlc-docs/inception/requirements/requirements.md` (minimal depth, sem novo arquivo de perguntas de clarificação — justificativa registrada no próprio documento, baseada no precedente direto da história #14 e no model `Distribuicao` já existente). `aidlc-state.md` atualizado com progresso da história #16.
+**Context**: Requirements Analysis — aguardando aprovação do usuário.
+
+---
+
+## Requirements Analysis - Approval (História #16)
+**Timestamp**: 2026-09-30T00:10:00Z
+**User Input**: "aprovado"
+**AI Response**: "Aprovação registrada. Requirements Analysis concluída para história #16. User Stories permanece SKIPPED (mesma justificativa da #14). Prosseguindo para Workflow Planning."
+**Context**: Requirements Analysis aprovada; avançando para Workflow Planning.
+
+---
+
+## Workflow Planning (História #16)
+**Timestamp**: 2026-09-30T00:15:00Z
+**AI Prompt**: "Plano de execução gerado com Application Design, Units Generation, Functional/NFR Requirements/NFR Design/Infrastructure Design todos SKIP; Code Generation e Build and Test EXECUTE. Pronto para prosseguir?"
+**User Response**: (aguardando)
+**Status**: Aguardando aprovação
+**Context**: `aidlc-docs/inception/plans/execution-plan.md` criado/atualizado para história #16.
+
+---
+
+## Workflow Planning - Approval (História #16)
+**Timestamp**: 2026-09-30T00:20:00Z
+**User Input**: "aprovado"
+**AI Response**: "Aprovação registrada. Prosseguindo para Code Generation (Planning) da história #16."
+**Context**: Workflow plan aprovado com 2 etapas a executar (Code Generation, Build and Test).
+
+---
+
+## Code Generation - Part 1 (Planning) - História #16
+**Timestamp**: 2026-09-30T00:25:00Z
+**AI Prompt**: "Plano de geração de código criado com 14 steps (DistribuicaoForm, view/URL, template, navegação, testes). Pronto para gerar o código?"
+**User Response**: (aguardando)
+**Status**: Aguardando aprovação
+**Context**: `aidlc-docs/construction/plans/registrar-distribuicao-code-generation-plan.md` criado.
+
+---
+
+## Code Generation - Part 1 Approval - História #16
+**Timestamp**: 2026-09-30T00:30:00Z
+**User Input**: "aprovado"
+**AI Response**: "Aprovação registrada. Iniciando Code Generation Part 2 (Generation) para a história #16."
+**Context**: Plano de geração de código aprovado; executando os 14 steps sequencialmente.
+
+---
+
+## Code Generation - Part 2 (Generation) Complete - História #16
+**Timestamp**: 2026-09-30T00:45:00Z
+**AI Response**: Todos os 14 steps do plano executados e marcados [x]. Arquivos modificados: `core/forms.py`, `core/views.py`, `core/urls.py`, `core/tests.py`, `templates/partials/_sidebar.html`, `templates/core/item_list.html`. Arquivo criado: `templates/core/distribuicao_form.html`. Documentação: `aidlc-docs/construction/registrar-distribuicao/code/summary.md`. Validado com `ruff check` (sem erros), `makemigrations --check` (sem pendências) e `manage.py test` (61/61 testes passando, incluindo os 7 novos de `DistribuicaoTestCase`).
+**Context**: Code Generation Part 2 concluída — aguardando aprovação do usuário.
+
+---
+
+## Code Generation - Approval - História #16
+**Timestamp**: 2026-09-30T00:50:00Z
+**User Input**: "aprovado"
+**AI Response**: "Aprovação registrada. Code Generation concluído para história #16. Prosseguindo para Build and Test."
+**Context**: Código gerado aprovado; avançando para Build and Test.
+
+---
+
+## Build and Test Stage - História #17
+**Timestamp**: 2026-09-30T01:50:00Z
+**Build Status**: Success
+**Test Status**: Pass (63/63)
+**Files Generated/Updated**:
+- unit-test-instructions.md (atualizado com casos de #17)
+- integration-test-instructions.md (atualizado com Cenário 5)
+- build-and-test-summary.md (reescrito para história #17)
+**Context**: `ruff check` sem erros, `makemigrations --check` sem pendências, `manage.py test` 63/63 passando, verificação manual do HTML renderizado confirmada.
+
+---
+
+## Build and Test - Approval (História #17)
+**Timestamp**: 2026-09-30T01:55:00Z
+**User Input**: "aprovado"
+**AI Response**: "Aprovação registrada. Build and Test concluído. Operations permanece placeholder. Workflow AI-DLC para a história #17 concluído."
+**Context**: Build and Test aprovado, workflow da história #17 finalizado. Histórias #16 e #17 completas na branch `feature/historia-16-17-distribuicao`, sem commits (a pedido do usuário).
+
+---
+
+## Build and Test Stage - História #16
+**Timestamp**: 2026-09-30T00:55:00Z
+**Build Status**: Success
+**Test Status**: Pass (61/61)
+**Files Generated/Updated**:
+- build-instructions.md (sem alteração — instruções genéricas, ainda válidas)
+- unit-test-instructions.md (atualizado com casos de `DistribuicaoTestCase`)
+- integration-test-instructions.md (atualizado com Cenários 3 e 4)
+- performance-test-instructions.md (atualizado — N/A para #14 e #16)
+- build-and-test-summary.md (reescrito para história #16)
+**Context**: `ruff check` sem erros, `makemigrations --check` sem pendências, `manage.py test` 61/61 passando.
+
+---
+
+## Build and Test - Approval (História #16)
+**Timestamp**: 2026-09-30T01:00:00Z
+**User Input**: "aprovado"
+**AI Response**: "Aprovação registrada. Build and Test concluído. Operations permanece placeholder. Workflow AI-DLC para a história #16 concluído."
+**Context**: Build and Test aprovado, workflow da história #16 finalizado. Código ainda não commitado (aguardando decisão do usuário sobre commit/PR).
+
+---
+
+## New Branch + Continue to História #17
+**Timestamp**: 2026-09-30T01:05:00Z
+**User Input**: "siga para a #17, faça esse 16 e 17 agora em uma outra branhc mas nao comirae"
+**AI Response**: Criada a branch `feature/historia-16-17-distribuicao` a partir de `main` (mudanças não commitadas da #16 preservadas na nova branch). Nenhum commit será feito nesta branch, conforme solicitado. Iniciando ciclo AI-DLC para a história #17 (Ver saldo disponível ao preencher formulário de distribuição).
+**Context**: Requirements Analysis iniciada para história #17.
+
+---
+
+## Requirements Analysis - Documento gerado (História #17)
+**Timestamp**: 2026-09-30T01:10:00Z
+**User Input**: N/A
+**AI Response**: Gerado `aidlc-docs/inception/requirements/requirements.md` para #17 (minimal depth). Abordagem escolhida: view passa dicionário de saldo por item ao contexto, template expõe via `json_script` (built-in Django) e um `<script>` vanilla JS atualiza o texto de saldo ao trocar o item — sem AJAX, sem biblioteca nova.
+**Context**: Requirements Analysis — aguardando aprovação do usuário.
+
+---
+
+## Requirements Analysis - Approval + Referência de Design (História #17)
+**Timestamp**: 2026-09-30T01:15:00Z
+**User Input**: "aprovadorefoço que o layout deve serguir o que esta no figma: https://www.figma.com/design/YChrqTf5IiwA9skwfSP8O7/E4---Conecta-Social?t=yAANtQ0YzvoBtWaV-0"
+**AI Response**: Requisitos aprovados. Consultado o Figma (frame "distribuicao", node 2603:641/2603:701) via MCP — confirmado: opções do dropdown "Item" exibem saldo inline ("Arroz 5kg saldo: 62"), e um Info-Box verde claro entre "Item" e a linha Qtd/Data exibe "Saldo disponível." `requirements.md` atualizado com seção "Referência de Design (Figma)" e FR2/FR3/FR4 revisados para refletir exatamente esse layout, reaproveitando classes `bg-green-100`/`text-primary` já usadas em `item_list.html`/`usuarios.html`.
+**Context**: Requirements Analysis concluída e aprovada para história #17; avançando para Workflow Planning.
+
+---
+
+## Workflow Planning - Approval (História #17)
+**Timestamp**: 2026-09-30T01:20:00Z
+**User Input**: "aprovado"
+**AI Response**: "Aprovação registrada. Prosseguindo para Code Generation (Planning) da história #17."
+**Context**: Workflow plan aprovado com 2 etapas a executar (Code Generation, Build and Test).
+
+---
+
+## Code Generation - Part 1 (Planning) - História #17
+**Timestamp**: 2026-09-30T01:25:00Z
+**AI Prompt**: "Plano de geração de código criado com 14 steps (item com saldo inline, contexto da view, Info-Box + script no template, testes). Pronto para gerar o código?"
+**User Response**: (aguardando)
+**Status**: Aguardando aprovação
+**Context**: `aidlc-docs/construction/plans/distribuicao-saldo-formulario-code-generation-plan.md` criado.
+
+---
+
+## Code Generation - Part 1 Approval - História #17
+**Timestamp**: 2026-09-30T01:30:00Z
+**User Input**: "814909arovado"
+**AI Response**: "Interpretado como aprovação ('aprovado' com caracteres estranhos/digitação). Iniciando Code Generation Part 2 (Generation) para a história #17."
+**Context**: Plano de geração de código aprovado; executando os 14 steps sequencialmente.
+
+---
+
+## Code Generation - Part 2 (Generation) Complete - História #17
+**Timestamp**: 2026-09-30T01:40:00Z
+**AI Response**: Todos os 14 steps executados e marcados [x]. Modificados: `core/forms.py` (`_ItemComSaldoChoiceField`), `core/views.py` (`itens_saldo` no contexto), `templates/core/distribuicao_form.html` (json_script + Info-Box + script), `core/tests.py` (2 novos testes). Documentação: `aidlc-docs/construction/distribuicao-saldo-formulario/code/summary.md`. Validado com `ruff check` (sem erros), `makemigrations --check` (sem pendências), `manage.py test` (63/63 passando) e verificação manual via `runserver`+`curl` confirmando o HTML renderizado (opção com saldo inline, Info-Box presente) conforme o Figma.
+**Context**: Code Generation Part 2 concluída — aguardando aprovação do usuário.
+
+---
+
+## Code Generation - Approval - História #17
+**Timestamp**: 2026-09-30T01:45:00Z
+**User Input**: "siga"
+**AI Response**: "Aprovação registrada. Code Generation concluído para história #17. Prosseguindo para Build and Test."
+**Context**: Código gerado aprovado; avançando para Build and Test.
+
+---

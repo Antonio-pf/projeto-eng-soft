@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from core.decorators import admin_obrigatorio, login_obrigatorio
 from core.forms import (
     CategoriaItemForm,
+    DistribuicaoForm,
     DoacaoForm,
     DoadorForm,
     FamiliaForm,
@@ -311,3 +312,24 @@ def doacao_create(request):
     else:
         form = DoacaoForm()
     return render(request, "core/doacao_form.html", {"form": form})
+
+
+@login_obrigatorio
+def distribuicao_create(request):
+    itens_saldo = {
+        str(item.pk): {"saldo": f"{item.saldo_atual:.2f}", "unidade": item.unidade_medida.sigla}
+        for item in Item.objects.select_related("unidade_medida").all()
+    }
+    if request.method == "POST":
+        form = DistribuicaoForm(request.POST)
+        if form.is_valid():
+            distribuicao = form.save(commit=False)
+            distribuicao.registrado_por = request.user
+            distribuicao.save()
+            messages.success(request, "Distribuição registrada com sucesso!")
+            return redirect("distribuicao_create")
+    else:
+        form = DistribuicaoForm()
+    return render(
+        request, "core/distribuicao_form.html", {"form": form, "itens_saldo": itens_saldo}
+    )

@@ -13,14 +13,19 @@ python manage.py test
 python manage.py test core.tests.DoacaoTestCase -v 2
 ```
 
+### 2.1 Executar apenas os testes das histórias #16/#17
+```bash
+python manage.py test core.tests.DistribuicaoTestCase -v 2
+```
+
 ### 3. Lint
 ```bash
 ruff check core/
 ```
 
 ### 4. Revisar resultados
-- **Expected**: 54 testes passam, 0 falhas (48 já existentes + 6 novos de `DoacaoTestCase`)
-- **Test Coverage**: sem ferramenta de coverage configurada no projeto; cobertura funcional avaliada pelos critérios de aceite (ver tabela abaixo)
+- **Expected**: 63 testes passam, 0 falhas (54 pré-#16 + 7 de #16 + 2 novos de #17, todos em `DistribuicaoTestCase`)
+- **Test Coverage**: sem ferramenta de coverage configurada no projeto; cobertura funcional avaliada pelos critérios de aceite (ver tabelas abaixo)
 - **Test Report Location**: saída do terminal (`manage.py test` usa `unittest`, sem relatório em arquivo por padrão)
 
 ### 5. Corrigir testes com falha
@@ -38,3 +43,16 @@ ruff check core/
 | `test_cadastrar_doacao_data_futura_invalida` | FR1 — data ≤ hoje |
 | `test_cadastrar_doacao_acesso_anonimo_redireciona_para_login` | FR1 — `@login_obrigatorio` (SECURITY-08 access control) |
 | `test_administrador_tambem_pode_registrar_doacao` | FR1 — Voluntário e Administrador podem registrar |
+
+## Cobertura dos casos de teste de `DistribuicaoTestCase` (rastreabilidade com requirements.md / SECURITY baseline escopado — história #16)
+| Teste | Critério coberto |
+|---|---|
+| `test_registrar_distribuicao_com_sucesso` | FR1/FR2 — cadastro válido, saldo do item diminui exatamente pela quantidade |
+| `test_registrar_distribuicao_quantidade_zero_ou_negativa_invalida` | FR1 — validação de quantidade > 0 (SECURITY-05 input validation) |
+| `test_registrar_distribuicao_data_futura_invalida` | FR1 — data ≤ hoje |
+| `test_registrar_distribuicao_saldo_insuficiente_bloqueada` | FR2 — bloqueio quando `quantidade > saldo_atual`, mensagem exata do backlog verificada |
+| `test_registrar_distribuicao_saldo_exatamente_igual_permitida` | FR2 — caso-limite `quantidade == saldo_atual` é permitido |
+| `test_registrar_distribuicao_acesso_anonimo_redireciona_para_login` | FR1 — `@login_obrigatorio` (SECURITY-08 access control) |
+| `test_administrador_tambem_pode_registrar_distribuicao` | FR1 — Voluntário e Administrador podem registrar |
+| `test_formulario_exibe_saldo_inline_na_opcao_do_item` | FR2 (história #17) — opção do item mostra saldo inline |
+| `test_contexto_da_view_contem_saldo_por_item` | FR1/FR3 (história #17) — contexto da view expõe `itens_saldo` correto |

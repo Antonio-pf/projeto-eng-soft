@@ -8,7 +8,16 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.forms import UsuarioForm
-from core.models import CategoriaItem, Doacao, Doador, Item, UnidadeMedida, Usuario
+from core.models import (
+    CategoriaItem,
+    Distribuicao,
+    Doacao,
+    Doador,
+    Familia,
+    Item,
+    UnidadeMedida,
+    Usuario,
+)
 
 
 class CoreSmokeTests(TestCase):
@@ -859,3 +868,162 @@ class DoacaoTestCase(TestCase):
         )
         self.assertRedirects(response, reverse("doacao_create"))
         self.assertEqual(Doacao.objects.count(), 1)
+
+
+class DistribuicaoTestCase(TestCase):
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.admin = Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.familia = Familia.objects.create(
+            nome_responsavel="Família Silva", endereco="Rua A, 123", num_membros=4
+        )
+        doador = Doador.objects.create(nome="João Doador", cpf_cnpj="123.456.789-00")
+        categoria = CategoriaItem.objects.create(nome="Alimento")
+        unidade = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.item = Item.objects.create(
+            nome="Arroz 5kg",
+            categoria=categoria,
+            unidade_medida=unidade,
+            estoque_minimo=10,
+        )
+        Doacao.objects.create(
+            doador=doador,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal("10"),
+            data=timezone.localdate(),
+        )
+        self._login(self.voluntario)
+
+    def _login(self, usuario, senha="senha-teste"):
+        self.client.post(reverse("login"), {"email": usuario.email, "senha": senha})
+
+    def test_registrar_distribuicao_com_sucesso(self):
+        response = self.client.post(
+            reverse("distribuicao_create"),
+            {
+                "familia": self.familia.pk,
+                "item": self.item.pk,
+                "quantidade": "4",
+                "data": timezone.localdate().isoformat(),
+            },
+        )
+        self.assertRedirects(response, reverse("distribuicao_create"))
+        self.assertEqual(Distribuicao.objects.count(), 1)
+        distribuicao = Distribuicao.objects.first()
+        self.assertEqual(distribuicao.familia, self.familia)
+        self.assertEqual(distribuicao.item, self.item)
+        self.assertEqual(distribuicao.quantidade, Decimal("4"))
+        self.assertEqual(distribuicao.registrado_por, self.voluntario)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.saldo_atual, Decimal("6"))
+
+    def test_registrar_distribuicao_quantidade_zero_ou_negativa_invalida(self):
+        for quantidade in ["0", "-3"]:
+            response = self.client.post(
+                reverse("distribuicao_create"),
+                {
+                    "familia": self.familia.pk,
+                    "item": self.item.pk,
+                    "quantidade": quantidade,
+                    "data": timezone.localdate().isoformat(),
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            form = response.context["form"]
+            self.assertIn("quantidade", form.errors)
+        self.assertEqual(Distribuicao.objects.count(), 0)
+
+    def test_registrar_distribuicao_data_futura_invalida(self):
+        data_futura = timezone.localdate() + timedelta(days=1)
+        response = self.client.post(
+            reverse("distribuicao_create"),
+            {
+                "familia": self.familia.pk,
+                "item": self.item.pk,
+                "quantidade": "3",
+                "data": data_futura.isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertIn("data", form.errors)
+        self.assertEqual(Distribuicao.objects.count(), 0)
+
+    def test_registrar_distribuicao_saldo_insuficiente_bloqueada(self):
+        response = self.client.post(
+            reverse("distribuicao_create"),
+            {
+                "familia": self.familia.pk,
+                "item": self.item.pk,
+                "quantidade": "11",
+                "data": timezone.localdate().isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertIn("Saldo insuficiente", str(form.errors))
+        self.assertIn("10.00", str(form.errors))
+        self.assertIn("11.00", str(form.errors))
+        self.assertEqual(Distribuicao.objects.count(), 0)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.saldo_atual, Decimal("10"))
+
+    def test_registrar_distribuicao_saldo_exatamente_igual_permitida(self):
+        response = self.client.post(
+            reverse("distribuicao_create"),
+            {
+                "familia": self.familia.pk,
+                "item": self.item.pk,
+                "quantidade": "10",
+                "data": timezone.localdate().isoformat(),
+            },
+        )
+        self.assertRedirects(response, reverse("distribuicao_create"))
+        self.assertEqual(Distribuicao.objects.count(), 1)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.saldo_atual, Decimal("0"))
+
+    def test_registrar_distribuicao_acesso_anonimo_redireciona_para_login(self):
+        self.client.get(reverse("logout"))
+        response = self.client.get(reverse("distribuicao_create"))
+        self.assertRedirects(response, reverse("login"))
+
+    def test_administrador_tambem_pode_registrar_distribuicao(self):
+        self.client.get(reverse("logout"))
+        self._login(self.admin)
+        response = self.client.post(
+            reverse("distribuicao_create"),
+            {
+                "familia": self.familia.pk,
+                "item": self.item.pk,
+                "quantidade": "1",
+                "data": timezone.localdate().isoformat(),
+            },
+        )
+        self.assertRedirects(response, reverse("distribuicao_create"))
+        self.assertEqual(Distribuicao.objects.count(), 1)
+
+    def test_formulario_exibe_saldo_inline_na_opcao_do_item(self):
+        response = self.client.get(reverse("distribuicao_create"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "saldo: 10.00")
+
+    def test_contexto_da_view_contem_saldo_por_item(self):
+        response = self.client.get(reverse("distribuicao_create"))
+        self.assertEqual(response.status_code, 200)
+        itens_saldo = response.context["itens_saldo"]
+        self.assertEqual(itens_saldo[str(self.item.pk)]["saldo"], "10.00")
+        self.assertEqual(itens_saldo[str(self.item.pk)]["unidade"], "kg")

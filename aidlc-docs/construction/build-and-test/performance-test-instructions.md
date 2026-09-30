@@ -1,8 +1,8 @@
 # Performance Test Instructions
 
-## Status: N/A para esta história
+## Status: N/A para as histórias #14 e #16
 
-Conforme `requirements.md` (Non-Functional Requirements) e `execution-plan.md` (NFR Requirements marcado SKIP), esta história não define metas de performance/carga próprias — é uma tela de CRUD simples adicionada a um projeto acadêmico sem infraestrutura de produção definida (sem load balancer, sem auto-scaling, sem ambiente de carga configurado no repositório). A extensão Resiliency Baseline foi escopada apenas às regras de nível de código de aplicação (ver `requirements.md`), e nenhuma delas exige teste de performance formal para esta mudança.
+Conforme `requirements.md` (Non-Functional Requirements) e `execution-plan.md` (NFR Requirements marcado SKIP), essas histórias não definem metas de performance/carga próprias — são telas de CRUD simples adicionadas a um projeto acadêmico sem infraestrutura de produção definida (sem load balancer, sem auto-scaling, sem ambiente de carga configurado no repositório). A extensão Resiliency Baseline foi escopada apenas às regras de nível de código de aplicação (ver `requirements.md`), e nenhuma delas exige teste de performance formal para essas mudanças.
 
 ## Se testes de performance vierem a ser necessários no futuro (referência)
 
