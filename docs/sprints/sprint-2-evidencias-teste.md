@@ -1,6 +1,11 @@
 # Evidências de Teste — Sprint 2 — Conecta Social
 
-**Equipe:** Alexandre Victoriano Ribeiro Ulhoa (RA 2840482423007) — Daniel Souza Monteiro de Carvalho (RA 2840482211052) — Cintia Marcelo de Oliveira (RA 2840482421017) — Antonio Pires Felipe (RA 2840482211003) — Luiz Henrique Neres (RA 2840482423005)
+**Equipe:**
+- Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
+- Daniel Souza Monteiro de Carvalho — RA 2840482211052
+- Cintia Marcelo de Oliveira — RA 2840482421017
+- Antonio Pires Felipe — RA 2840482211003
+- Luiz Henrique Neres — RA 2840482423005
 
 > Atualiza (não substitui) o [Plano de Testes](../plano-de-testes.md) (E4b). Todo caso de teste com ID (CTxx) implementado nesta sprint precisa de evidência verificável abaixo. Os testes ficam em `core/tests.py`; os nomes citados são métodos das classes indicadas.
 

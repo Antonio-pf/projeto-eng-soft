@@ -1,4 +1,4 @@
-<!-- RASCUNHO: revisar com a equipe na retrospectiva de 02/10/2026, ajustar a lista de presentes e remover este comentário antes de abrir o PR. -->
+
 # Ata de Retrospectiva — Sprint 2 — Conecta Social
 
 **Data:** 02/10/2026
@@ -41,7 +41,6 @@
 
 | Ação | Responsável |
 |---|---|
-| Bloquear o merge na `main` sem aprovação de outro integrante (proteção de branch no GitHub) e registrar a revisão no PR | Equipe |
 | Atualizar o board no mesmo dia do merge, e conferir o board contra a `main` na véspera da aula | Equipe |
 | Abrir o PR da correção da data padrão "hoje" (já feita) e acrescentar mensagem de sucesso nos formulários de doação e distribuição | Antonio Felipe |
 | Escrever os testes pendentes: expiração de sessão (CT01) e paginação de famílias (CT08) | Qualidade |

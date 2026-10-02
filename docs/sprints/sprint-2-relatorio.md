@@ -3,7 +3,12 @@
 **Período:** 25/09/2026 a 02/10/2026 (Sprint 2, semanas 7–8; inclui o trabalho remanescente da Sprint 1 integrado à `main` a partir de 19/09)
 **Sprint Review:** 02/10/2026, em sala de aula (Semana 8)
 
-**Equipe:** Alexandre Victoriano Ribeiro Ulhoa (RA 2840482423007) — Daniel Souza Monteiro de Carvalho (RA 2840482211052) — Cintia Marcelo de Oliveira (RA 2840482421017) — Antonio Pires Felipe (RA 2840482211003) — Luiz Henrique Neres (RA 2840482423005)
+**Equipe:**
+- Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
+- Daniel Souza Monteiro de Carvalho — RA 2840482211052
+- Cintia Marcelo de Oliveira — RA 2840482421017
+- Antonio Pires Felipe — RA 2840482211003
+- Luiz Henrique Neres — RA 2840482423005
 
 ## 1. Planejado vs. entregue
 
@@ -88,24 +93,3 @@ Detalhe completo em [`sprint-2-evidencias-teste.md`](sprint-2-evidencias-teste.m
 - Ata de retrospectiva: [`docs/sprints/sprint-2-retrospectiva.md`](sprint-2-retrospectiva.md)
 - Relatórios individuais de contribuição:
   - [Antonio Felipe](sprint-2-contribuicao-antonio-felipe.md)
-  - Alexandre Ulhoa, Daniel Carvalho, Cintia Oliveira e Luiz Henrique: ainda não entregues.
-
-## 6. Riscos/impedimentos para a próxima sprint
-
-- **Revisão de PRs:** os PRs #34 e #35 não têm revisão registrada no GitHub e a história #14 foi
-  integrada sem PR. A regra da disciplina exige revisão de outro integrante antes de qualquer merge.
-- **Sprint 3 carregada:** são 5 histórias com 2 "Deve ter" (#20 painel por categoria e #21 relatório
-  de distribuições) e uma consulta agregada obrigatória (GROUP BY, 3+ JOINs); o prazo é 16/10/2026.
-- **Estorno (#19):** exige criar o registro de estorno sem apagar o original e a regra de que só o
-  Administrador cancela. Os modelos `Doacao` e `Distribuicao` já têm os campos `cancelado`,
-  `cancelado_em` e `cancelado_por`, mas não há tela nem regra implementadas.
-- **Data padrão "hoje" (#14 e #16), corrigida:** o formulário já definia a data de hoje como valor
-  inicial, mas o `DateInput` renderizava `value="01/10/2026"`, formato que o `<input type="date">`
-  ignora, e o campo abria vazio. Em 01/10/2026 o `DateInput` de `DoacaoForm` e `DistribuicaoForm`
-  (`core/forms.py`) passou a usar `format="%Y-%m-%d"`, com um teste de regressão em cada formulário.
-  A correção ainda precisa de PR com revisão. Os GIFs desta sprint foram gravados antes da correção
-  e mostram o campo de data vazio.
-- **Mensagem de sucesso:** não há mensagem visível depois de registrar uma doação (o formulário
-  volta vazio).
-- **Testes:** CT01 (expiração de sessão) e a paginação de famílias (CT08) seguem sem teste
-  automatizado.

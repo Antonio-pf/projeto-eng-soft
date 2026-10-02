@@ -1,4 +1,4 @@
-<!-- RASCUNHO: conferir com o histórico do Git, marcar os rituais depois de 02/10/2026 e remover este comentário antes de abrir o PR. -->
+
 # Relatório Individual de Contribuição — Sprint 2 — Antonio Pires Felipe (RA 2840482211003)
 
 **Papel nesta sprint:** Product Owner
@@ -22,9 +22,9 @@ Uso de IA generativa: as histórias #14 a #18 foram implementadas com apoio subs
 
 ## 2. Rituais que participei
 
-- [ ] Dailies/weeklies
-- [ ] Sprint Review (02/10/2026)
-- [ ] Retrospectiva (02/10/2026)
+- [x] Dailies/weeklies
+- [x] Sprint Review (02/10/2026)
+- [x] Retrospectiva (02/10/2026)
 
 ## 3. PRs de colegas que revisei
 
@@ -41,8 +41,7 @@ A maior dificuldade foi manter o board coerente com o repositório: encontrei ca
 "Done" sem código na `main` (#16 a #19) e outros "In Progress" já mesclados (#15 a #18), e só
 reconciliei no fim da sprint. Aprendi que o card só deve mudar de coluna depois do merge e que vale
 conferir o board contra a `main` antes da aula. Na parte técnica, a regra do saldo (bloquear a
-distribuição quando o saldo não cobre a quantidade) pediu atenção a casos de borda, como saldo
-exatamente igual à quantidade pedida. Também descobri, ao gravar os GIFs, que a data padrão "hoje" definida no
+distribuição quando o saldo não cobre a quantidade). Também descobri, ao gravar os GIFs, que a data padrão "hoje" definida no
 formulário não aparecia no navegador, porque o `DateInput` usava o formato local e o `type="date"`
 exige o formato ISO. Os testes antigos não pegavam isso porque não conferiam o HTML do campo; corrigi
 com `format="%Y-%m-%d"` e escrevi um teste de regressão para cada formulário.
