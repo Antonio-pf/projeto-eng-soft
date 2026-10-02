@@ -16,9 +16,9 @@
         <div class="flex-none">
             {% if usuario_logado %}
                 <span class="mr-4 text-sm text-neutral/70">{{ usuario_logado.nome }}</span>
-                <a class="btn btn-ghost btn-sm" href="{% url 'logout' %}" data-testid="navbar-logout-button">Sair</a>
+                <a class="btn btn-ghost btn-sm" href="{% url 'logout' %}">Sair</a>
             {% else %}
-                <a class="btn btn-ghost btn-sm" href="{% url 'login' %}" data-testid="navbar-login-link">Entrar</a>
+                <a class="btn btn-ghost btn-sm" href="{% url 'login' %}">Entrar</a>
             {% endif %}
         </div>
     </header>

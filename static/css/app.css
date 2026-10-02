@@ -17,37 +17,32 @@
 
 [data-theme="conecta"] {
     color-scheme: light;
-    /* daisyUI 4.x resolves colors as `var(--fallback-X, oklch(var(--X)/1))`, so
-       --p/--s/--a/--n/etc. must hold raw OKLCH triplets ("L% C H"), not HSL —
-       converted from the Conecta brand hex palette above. */
-    --p: 48.97% 0.08 176.52; /* conecta-deep #1f6f5f */
-    --pc: 100% 0 89.88; /* white */
-    --s: 63.60% 0.1084 172.52; /* conecta-main #2fa084 */
-    --sc: 100% 0 89.88; /* white */
-    --a: 78.05% 0.1226 156.45; /* conecta-light #6fcf97 */
-    --ac: 29.52% 0.0328 169.85; /* dark teal-black */
-    --n: 29.52% 0.0328 169.85; /* dark teal-black */
-    --nc: 100% 0 89.88; /* white */
-    --b1: 100% 0 89.88; /* white */
-    --b2: 94.61% 0 89.88; /* light gray */
-    --b3: 90.67% 0 89.88; /* light gray, darker */
-    --bc: 29.52% 0.0328 169.85; /* dark teal-black */
-    --er: 57.71% 0.2152 27.33; /* error red */
+    /* daisyUI 4 lê as cores como triplas OKLCH (L C H), convertidas da paleta acima. */
+    --p: 48.97% 0.08 176.52;
+    --pc: 100% 0 89.88;
+    --s: 63.60% 0.1084 172.52;
+    --sc: 100% 0 89.88;
+    --a: 78.05% 0.1226 156.45;
+    --ac: 29.52% 0.0328 169.85;
+    --n: 29.52% 0.0328 169.85;
+    --nc: 100% 0 89.88;
+    --b1: 100% 0 89.88;
+    --b2: 94.61% 0 89.88;
+    --b3: 90.67% 0 89.88;
+    --bc: 29.52% 0.0328 169.85;
+    --er: 57.71% 0.2152 27.33;
     --erc: 100% 0 89.88;
-    --wa: 66.58% 0.1574 58.32; /* warning amber */
+    --wa: 66.58% 0.1574 58.32;
     --wac: 29.52% 0.0328 169.85;
-    --su: 62.71% 0.1699 149.21; /* success green */
+    --su: 62.71% 0.1699 149.21;
     --suc: 100% 0 89.88;
-    --in: 58.76% 0.1389 241.97; /* info blue */
+    --in: 58.76% 0.1389 241.97;
     --inc: 100% 0 89.88;
     --rounded-box: 1.25rem;
     --rounded-btn: 0.75rem;
 }
 
-/* daisyUI's .btn-* classes resolve their background through an intermediate
-   --btn-color re-wrapped inside oklch(), which only works when --btn-color is
-   itself a raw OKLCH triplet (not the theme's --fallback-* hex safety net, and
-   not left unset). Override it directly per role actually used in this app. */
+/* Os botões do daisyUI precisam de --btn-color em OKLCH. */
 .btn-primary { --btn-color: var(--p); }
 .btn-secondary { --btn-color: var(--s); }
 
@@ -109,9 +104,7 @@ body {
     }
 }
 
-/* Transição suave entre páginas (View Transitions entre documentos, só CSS).
-   Vale para toda tela que estende um dos templates base; navegadores sem
-   suporte ignoram e navegam normalmente. */
+/* Transição entre páginas; navegadores sem suporte ignoram. */
 @view-transition {
     navigation: auto;
 }
@@ -122,8 +115,8 @@ body {
 }
 
 /* Moldura do painel fica parada: só o conteúdo faz o fade. */
-[data-testid="sidebar"] { view-transition-name: conecta-sidebar; }
-[data-testid="dashboard-topbar"] { view-transition-name: conecta-topbar; }
+#sidebar { view-transition-name: conecta-sidebar; }
+#dashboard-topbar { view-transition-name: conecta-topbar; }
 
 @media (prefers-reduced-motion: reduce) {
     ::view-transition-group(*),

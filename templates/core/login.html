@@ -19,19 +19,19 @@
 {% endblock %}
 
 {% block content %}
-<div class="w-full max-w-sm" data-testid="login-form-panel">
+<div class="w-full max-w-sm">
     <h1 class="mb-2 text-[28px] font-bold text-neutral">Acesse seu espaço</h1>
     <p class="mb-6 text-sm text-conecta-muted">Entre para acompanhar o impacto da sua rede.</p>
 
     {% if erro %}
-    <div class="alert alert-error mb-4 text-sm" data-testid="login-form-error">{{ erro }}</div>
+    <div class="alert alert-error mb-4 text-sm">{{ erro }}</div>
     {% endif %}
 
-    <form method="post" novalidate class="flex flex-col gap-[18px]" data-testid="login-form">
+    <form method="post" novalidate class="flex flex-col gap-[18px]">
         {% csrf_token %}
         {% include "partials/_campo_formulario.html" with field=form.email %}
         {% include "partials/_campo_formulario.html" with field=form.senha toggle_senha=True %}
-        <button type="submit" class="btn btn-primary h-12 w-full rounded-[10px]" data-testid="login-form-submit-button">Entrar no Conecta</button>
+        <button type="submit" class="btn btn-primary h-12 w-full rounded-[10px]">Entrar no Conecta</button>
     </form>
     <p class="mt-4 text-xs text-conecta-muted">Acesso protegido por perfil de permissão.</p>
 </div>

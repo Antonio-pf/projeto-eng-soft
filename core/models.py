@@ -20,7 +20,6 @@ class UsuarioManager(BaseUserManager):
         )
 
     def create_superuser(self, email, nome, password=None, **extra_fields):
-        # Necessário pra `createsuperuser`; não dá acesso a /admin/ (ver Usuario.is_staff).
         return self._criar_usuario(
             email, nome, Usuario.Perfil.ADMINISTRADOR, password, **extra_fields
         )
@@ -37,7 +36,6 @@ class Usuario(AbstractBaseUser):
     id_usuario = models.BigAutoField(primary_key=True)
     nome = models.CharField(max_length=150)
     email = models.EmailField(max_length=255, unique=True)
-    # Nome Python exigido pelo Django; grava na coluna já documentada no DER via db_column.
     password = models.CharField(max_length=255, db_column="senha_hash")
     perfil = models.CharField(max_length=15, choices=Perfil.choices)
     ativo = models.BooleanField(default=True)
@@ -59,11 +57,6 @@ class Usuario(AbstractBaseUser):
     @property
     def is_active(self):
         return self.ativo
-
-    @property
-    def is_staff(self):
-        # Sempre False: sem PermissionsMixin, ligar a `perfil` trocaria um 500 por outro em /admin/.
-        return False
 
 
 class Doador(models.Model):

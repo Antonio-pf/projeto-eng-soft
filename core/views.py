@@ -30,11 +30,6 @@ def health(request):
     return JsonResponse({"status": "ok"})
 
 
-# ---------------------------------------------------------------------------
-# Autenticação
-# ---------------------------------------------------------------------------
-
-
 def login_view(request):
     if request.user.is_authenticated:
         return redirect("painel")
@@ -68,11 +63,6 @@ def painel_view(request):
     return render(request, "core/painel.html")
 
 
-# ---------------------------------------------------------------------------
-# Gestão de usuários (Admin)
-# ---------------------------------------------------------------------------
-
-
 @login_obrigatorio
 @admin_obrigatorio
 def usuarios_view(request):
@@ -104,11 +94,6 @@ def usuario_alternar_status_view(request, id_usuario):
     usuario.ativo = not usuario.ativo
     usuario.save(update_fields=["ativo"])
     return redirect("usuarios")
-
-
-# ---------------------------------------------------------------------------
-# Doadores
-# ---------------------------------------------------------------------------
 
 
 @login_obrigatorio
@@ -157,11 +142,6 @@ def doador_list(request):
     )
 
 
-# ---------------------------------------------------------------------------
-# Famílias
-# ---------------------------------------------------------------------------
-
-
 @login_obrigatorio
 def familia_create(request):
     if request.method == "POST":
@@ -191,11 +171,6 @@ def familia_list(request):
         "core/familia_list.html",
         {"page_obj": page_obj, "query": query, "form": FamiliaForm()},
     )
-
-
-# ---------------------------------------------------------------------------
-# Categorias
-# ---------------------------------------------------------------------------
 
 
 @login_obrigatorio
@@ -245,11 +220,6 @@ def categoria_list(request):
     )
 
 
-# ---------------------------------------------------------------------------
-# Itens
-# ---------------------------------------------------------------------------
-
-
 @login_obrigatorio
 @admin_obrigatorio
 def item_create(request):
@@ -295,11 +265,6 @@ def item_list(request):
         "core/item_list.html",
         {"page_obj": page_obj, "query": query},
     )
-
-
-# ---------------------------------------------------------------------------
-# Doações
-# ---------------------------------------------------------------------------
 
 
 @login_obrigatorio

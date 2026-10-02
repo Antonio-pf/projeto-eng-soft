@@ -6,14 +6,14 @@
 {% block page_subtitle %}<p class="text-sm text-gray-500">Gerencie as permissões de acesso ao Conecta Social</p>{% endblock %}
 
 {% block content %}
-<section class="w-full max-w-[500px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="usuario-form-card">
+<section class="w-full max-w-[500px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
     <h2 class="mb-4 text-base font-semibold text-gray-700">Novo Usuário</h2>
 
     {% if form.non_field_errors %}
     <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post" novalidate class="flex flex-col gap-4" data-testid="usuario-form">
+    <form method="post" novalidate class="flex flex-col gap-4">
         {% csrf_token %}
         <div class="flex flex-col gap-4 sm:flex-row">
             {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
@@ -23,11 +23,11 @@
             {% include "partials/_campo_formulario_dashboard.html" with field=form.senha %}
             {% include "partials/_campo_formulario_dashboard.html" with field=form.perfil select=True %}
         </div>
-        <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="usuario-form-submit-button">Salvar</button>
+        <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold">Salvar</button>
     </form>
 </section>
 
-<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="usuario-table-card">
+<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
     <div class="overflow-x-auto">
         <table class="w-full min-w-[560px]">
             <thead>
@@ -39,9 +39,9 @@
                     <th class="px-4 py-3 font-semibold">Ações</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200" data-testid="usuario-table-body">
+            <tbody class="divide-y divide-gray-200">
                 {% for usuario in usuarios %}
-                <tr data-testid="usuario-table-row" class="{% if not usuario.ativo %}opacity-60{% endif %}">
+                <tr class="{% if not usuario.ativo %}opacity-60{% endif %}">
                     <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ usuario.nome }}</td>
                     <td class="px-4 py-4 text-sm text-gray-500">{{ usuario.email }}</td>
                     <td class="px-4 py-4 text-sm">
@@ -53,9 +53,9 @@
                     </td>
                     <td class="px-4 py-4 text-sm">
                         {% if usuario.ativo %}
-                        <span class="inline-block whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-[13px] font-semibold text-primary" data-testid="usuario-status-badge">Ativo</span>
+                        <span class="inline-block whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-[13px] font-semibold text-primary">Ativo</span>
                         {% else %}
-                        <span class="inline-block whitespace-nowrap rounded bg-gray-200 px-2 py-0.5 text-[13px] font-semibold text-gray-500" data-testid="usuario-status-badge">Inativo</span>
+                        <span class="inline-block whitespace-nowrap rounded bg-gray-200 px-2 py-0.5 text-[13px] font-semibold text-gray-500">Inativo</span>
                         {% endif %}
                     </td>
                     <td class="px-4 py-4 text-sm">
@@ -65,9 +65,9 @@
                         <form method="post" action="{% url 'usuario_alternar_status' usuario.id_usuario %}">
                             {% csrf_token %}
                             {% if usuario.ativo %}
-                            <button type="submit" class="btn btn-outline btn-error btn-xs" data-testid="usuario-desativar-button">Desativar</button>
+                            <button type="submit" class="btn btn-outline btn-error btn-xs">Desativar</button>
                             {% else %}
-                            <button type="submit" class="btn btn-outline btn-xs" data-testid="usuario-ativar-button">Ativar</button>
+                            <button type="submit" class="btn btn-outline btn-xs">Ativar</button>
                             {% endif %}
                         </form>
                         {% endif %}
