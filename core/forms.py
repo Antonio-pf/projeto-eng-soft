@@ -27,7 +27,6 @@ class LoginForm(forms.Form):
                 "autocomplete": "email",
                 "class": _INPUT_CLASS,
                 "placeholder": "seu@email.com",
-                "data-testid": "login-form-email-input",
             }
         ),
     )
@@ -37,7 +36,6 @@ class LoginForm(forms.Form):
             attrs={
                 "autocomplete": "current-password",
                 "class": f"{_INPUT_CLASS} pr-16",
-                "data-testid": "login-form-senha-input",
             }
         ),
     )
@@ -51,7 +49,6 @@ class UsuarioForm(forms.Form):
             attrs={
                 "class": _CARD_INPUT_CLASS,
                 "placeholder": "Maria Oliveira",
-                "data-testid": "usuario-form-nome-input",
             }
         ),
     )
@@ -61,7 +58,6 @@ class UsuarioForm(forms.Form):
             attrs={
                 "class": _CARD_INPUT_CLASS,
                 "placeholder": "maria@conectasocial.org",
-                "data-testid": "usuario-form-email-input",
             }
         ),
     )
@@ -71,19 +67,13 @@ class UsuarioForm(forms.Form):
             attrs={
                 "class": _CARD_INPUT_CLASS,
                 "autocomplete": "new-password",
-                "data-testid": "usuario-form-senha-input",
             }
         ),
     )
     perfil = forms.ChoiceField(
         label="Perfil",
         choices=Usuario.Perfil.choices,
-        widget=forms.Select(
-            attrs={
-                "class": _CARD_SELECT_CLASS,
-                "data-testid": "usuario-form-perfil-select",
-            }
-        ),
+        widget=forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
     )
 
     def clean_email(self):
@@ -110,7 +100,6 @@ class DoadorForm(forms.ModelForm):
                 attrs={
                     "class": _CARD_INPUT_CLASS,
                     "placeholder": "Nome do doador",
-                    "data-testid": "doador-form-nome-input",
                 }
             ),
             "cpf_cnpj": forms.TextInput(
@@ -125,7 +114,6 @@ class DoadorForm(forms.ModelForm):
                         r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})"
                     ),
                     "title": ("Informe um CPF com 11 números ou CNPJ com 14 números."),
-                    "data-testid": "doador-form-cpf-cnpj-input",
                 }
             ),
             "telefone": forms.TextInput(
@@ -136,14 +124,12 @@ class DoadorForm(forms.ModelForm):
                     "maxlength": "14",
                     "pattern": (r"(?:\d{10,11}|\(\d{2}\)\d{4,5}-\d{4})"),
                     "title": "Informe o telefone com DDD.",
-                    "data-testid": "doador-form-telefone-input",
                 }
             ),
             "email": forms.EmailInput(
                 attrs={
                     "class": _CARD_INPUT_CLASS,
                     "placeholder": "doador@email.com",
-                    "data-testid": "doador-form-email-input",
                 }
             ),
         }
@@ -283,25 +269,14 @@ class DoacaoForm(forms.ModelForm):
         model = Doacao
         fields = ["doador", "item", "quantidade", "data"]
         widgets = {
-            "doador": forms.Select(
-                attrs={
-                    "class": _CARD_SELECT_CLASS,
-                    "data-testid": "doacao-form-doador-select",
-                }
-            ),
-            "item": forms.Select(
-                attrs={
-                    "class": _CARD_SELECT_CLASS,
-                    "data-testid": "doacao-form-item-select",
-                }
-            ),
+            "doador": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
+            "item": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
             "quantidade": forms.NumberInput(
                 attrs={
                     "class": _CARD_INPUT_CLASS,
                     "step": "0.01",
                     "min": "0.01",
                     "placeholder": "Quantidade doada",
-                    "data-testid": "doacao-form-quantidade-input",
                 }
             ),
             "data": forms.DateInput(
@@ -309,7 +284,6 @@ class DoacaoForm(forms.ModelForm):
                 attrs={
                     "class": _CARD_INPUT_CLASS,
                     "type": "date",
-                    "data-testid": "doacao-form-data-input",
                 },
             ),
         }
@@ -347,31 +321,20 @@ class DistribuicaoForm(forms.ModelForm):
     item = _ItemComSaldoChoiceField(
         queryset=Item.objects.select_related("unidade_medida").all(),
         label="Item",
-        widget=forms.Select(
-            attrs={
-                "class": _CARD_SELECT_CLASS,
-                "data-testid": "distribuicao-form-item-select",
-            }
-        ),
+        widget=forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
     )
 
     class Meta:
         model = Distribuicao
         fields = ["familia", "item", "quantidade", "data"]
         widgets = {
-            "familia": forms.Select(
-                attrs={
-                    "class": _CARD_SELECT_CLASS,
-                    "data-testid": "distribuicao-form-familia-select",
-                }
-            ),
+            "familia": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
             "quantidade": forms.NumberInput(
                 attrs={
                     "class": _CARD_INPUT_CLASS,
                     "step": "0.01",
                     "min": "0.01",
                     "placeholder": "Quantidade distribuída",
-                    "data-testid": "distribuicao-form-quantidade-input",
                 }
             ),
             "data": forms.DateInput(
@@ -379,7 +342,6 @@ class DistribuicaoForm(forms.ModelForm):
                 attrs={
                     "class": _CARD_INPUT_CLASS,
                     "type": "date",
-                    "data-testid": "distribuicao-form-data-input",
                 },
             ),
         }

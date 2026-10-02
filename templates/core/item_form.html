@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="item-form-card">
+<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
     {% if editing and item %}
     <div class="alert alert-info mb-4 text-sm">
         <span>Saldo Atual: <strong>{{ item.saldo_atual }}</strong> (o saldo não pode ser editado diretamente).</span>
@@ -19,7 +19,7 @@
     <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post" class="flex flex-col gap-4" data-testid="item-form">
+    <form method="post" class="flex flex-col gap-4">
         {% csrf_token %}
         {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
         <div class="flex flex-col gap-4 sm:flex-row">
@@ -28,7 +28,7 @@
         </div>
         {% include "partials/_campo_formulario_dashboard.html" with field=form.estoque_minimo %}
         <div class="flex gap-3">
-            <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="item-form-submit-button">
+            <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold">
                 {% if editing %}Salvar alterações{% else %}Salvar item{% endif %}
             </button>
             <a href="{% url 'item_list' %}" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold">Cancelar</a>

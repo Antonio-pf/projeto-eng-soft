@@ -8,14 +8,14 @@
 {% endblock %}
 
 {% block content %}
-<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="familia-form-card">
+<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
     <h2 class="mb-4 text-base font-semibold text-gray-700">Nova Família</h2>
 
     {% if form.non_field_errors %}
     <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post" action="{% url 'familia_create' %}" class="flex flex-col gap-4" data-testid="familia-form">
+    <form method="post" action="{% url 'familia_create' %}" class="flex flex-col gap-4">
         {% csrf_token %}
         <div class="flex flex-col gap-4 sm:flex-row">
             {% include "partials/_campo_formulario_dashboard.html" with field=form.nome_responsavel %}
@@ -24,13 +24,13 @@
         {% include "partials/_campo_formulario_dashboard.html" with field=form.endereco %}
         {% include "partials/_campo_formulario_dashboard.html" with field=form.telefone %}
         <p class="text-xs text-gray-500">O campo de telefone é opcional.</p>
-        <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="familia-form-submit-button">
+        <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold">
             Salvar família
         </button>
     </form>
 </section>
 
-<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="familia-table-card">
+<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
     <form method="get" class="mb-4 flex gap-2">
         <input
             type="text"
@@ -56,9 +56,9 @@
                     <th class="px-4 py-3 font-semibold">Membros</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200" data-testid="familia-table-body">
+            <tbody class="divide-y divide-gray-200">
                 {% for familia in page_obj %}
-                <tr data-testid="familia-table-row">
+                <tr>
                     <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ familia.nome_responsavel }}</td>
                     <td class="px-4 py-4 text-sm text-gray-500">{{ familia.endereco }}</td>
                     <td class="px-4 py-4 text-sm text-gray-500">{{ familia.telefone|default:"-" }}</td>

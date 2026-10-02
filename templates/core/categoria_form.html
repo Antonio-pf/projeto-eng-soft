@@ -8,17 +8,17 @@
 {% endblock %}
 
 {% block content %}
-<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="categoria-form-card">
+<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
     {% if form.non_field_errors %}
     <div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post" class="flex flex-col gap-4" data-testid="categoria-form">
+    <form method="post" class="flex flex-col gap-4">
         {% csrf_token %}
         {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
         {% include "partials/_campo_formulario_dashboard.html" with field=form.descricao %}
         <div class="flex gap-3">
-            <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="categoria-form-submit-button">
+            <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold">
                 {% if editing %}Salvar alterações{% else %}Salvar categoria{% endif %}
             </button>
             <a href="{% url 'item_list' %}" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold">Cancelar</a>
