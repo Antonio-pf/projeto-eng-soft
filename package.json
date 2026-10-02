@@ -1,0 +1,13 @@
+{
+  "name": "conecta-social",
+  "private": true,
+  "description": "Build do CSS (Tailwind + daisyUI) do Conecta Social",
+  "scripts": {
+    "build": "tailwindcss -i static/src/tailwind.css -o static/css/tailwind.css --minify",
+    "dev": "tailwindcss -i static/src/tailwind.css -o static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "daisyui": "4.12.10",
+    "tailwindcss": "3.4.17"
+  }
+}

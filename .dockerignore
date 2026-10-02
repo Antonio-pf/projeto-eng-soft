@@ -9,4 +9,5 @@ __pycache__
 .env
 staticfiles
 .ruff_cache
-.pre-commit-cache
+.pre-commit-cachenode_modules
+static/css/tailwind.css

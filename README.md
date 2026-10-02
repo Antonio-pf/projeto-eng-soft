@@ -13,7 +13,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
 ## Stack
 
-- Frontend: Django Templates + Tailwind CSS via CDN + daisyUI 4.12.10 via CDN
+- Frontend: Django Templates + Tailwind CSS 3.4.17 + daisyUI 4.12.10, compilados em um único CSS (`npm run build`), sem CDN
 - Backend: Python 3.12+ + Django 5.2+
 - Banco de dados: PostgreSQL 15+
 - Deploy: Render Web Service + PostgreSQL
@@ -27,6 +27,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 - pip 24+
 - PostgreSQL 15+
 - `venv`, incluído no Python
+- Node.js 18+ e npm 9+ (só para compilar o CSS)
 - Docker Engine 24+ e Docker Compose v2+ (opcional)
 
 ### Passo a passo
@@ -146,13 +147,22 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
    As migrations em `core/migrations/` são a fonte oficial da estrutura do banco. O comando `seed` pode ser executado novamente sem duplicar os dados. A aplicação também possui fallback para `db.sqlite3` quando `DATABASE_URL` não está definida, mas o fluxo documentado usa PostgreSQL.
 
-6. Suba o servidor:
+6. Compile o CSS (Tailwind + daisyUI):
+
+   ```bash
+   npm ci
+   npm run build
+   ```
+
+   O comando gera `static/css/tailwind.css`, que não é versionado. Ao editar templates ou classes em `core/forms.py`, deixe `npm run dev` rodando em outro terminal para recompilar automaticamente. Sem esse arquivo, as páginas abrem sem estilo.
+
+7. Suba o servidor:
 
    ```bash
    python manage.py runserver
    ```
 
-7. Acesse `http://127.0.0.1:8000`.
+8. Acesse `http://127.0.0.1:8000`.
 
 ### Alternativa com Docker
 
@@ -177,7 +187,7 @@ docker compose up --build
 
 No Windows, abra o Docker Desktop antes de executar o comando. O Compose cria o PostgreSQL e a aplicação; não é necessário executar `psql`, `python manage.py migrate` ou `python manage.py seed` manualmente.
 
-O container web executa automaticamente `migrate` e `seed` antes de iniciar o servidor. Acesse `http://127.0.0.1:8000`.
+O container web executa automaticamente `migrate` e `seed` antes de iniciar o servidor, e o serviço `tailwind` compila o CSS e o recompila a cada alteração nos templates (não é preciso instalar Node na máquina). Acesse `http://127.0.0.1:8000`.
 
 Comandos úteis:
 
@@ -213,7 +223,7 @@ Acesse `http://127.0.0.1:8000/login/` (ou `http://localhost:8000/login/` no Dock
 /conecta/             — configurações do projeto Django
 /core/                — aplicação Django e views principais
 /templates/           — templates HTML da aplicação
-/static/              — CSS e arquivos estáticos
+/static/              — CSS e arquivos estáticos (`static/src/tailwind.css` é a entrada do build do CSS)
 /db/                  — schema SQL de referência legada
 /core/migrations/     — migrations oficiais do banco
 /core/management/     — comandos Django, incluindo o seed
@@ -224,6 +234,8 @@ Acesse `http://127.0.0.1:8000/login/` (ou `http://localhost:8000/login/` no Dock
 /scripts/             — scripts de qualidade, incluindo validação de commits
 .env.example          — modelo das variáveis de ambiente, sem segredos
 manage.py             — ponto de entrada do Django
+package.json          — build do CSS (Tailwind + daisyUI) via npm
+tailwind.config.js    — arquivos varridos pelo Tailwind e plugin daisyUI
 requirements.txt      — dependências Python
 render.yaml           — configuração de deploy no Render
 ```

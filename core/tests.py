@@ -1,9 +1,13 @@
+import runpy
+import sys
 from datetime import date, timedelta
 from decimal import Decimal
+from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -1262,3 +1266,54 @@ class DistribuicaoListTestCase(TestCase):
         self.client.get(reverse("logout"))
         response = self.client.get(reverse("distribuicao_list"))
         self.assertRedirects(response, reverse("login"))
+
+
+class LayoutBaseTests(SimpleTestCase):
+    """Garante o padrão de layout: toda tela herda CSS compilado e transições dos bases."""
+
+    TEMPLATES_BASE = ("base.html", "auth_base.html", "dashboard_base.html")
+
+    def test_toda_pagina_estende_um_template_base(self):
+        extends_validos = tuple(f'{{% extends "{nome}" %}}' for nome in self.TEMPLATES_BASE)
+        paginas = sorted((settings.BASE_DIR / "templates" / "core").glob("*.html"))
+
+        self.assertTrue(paginas)
+        for pagina in paginas:
+            with self.subTest(pagina=pagina.name):
+                conteudo = pagina.read_text(encoding="utf-8")
+                self.assertTrue(any(e in conteudo for e in extends_validos))
+
+    def test_templates_base_carregam_css_compilado_e_app_css(self):
+        for nome in self.TEMPLATES_BASE:
+            with self.subTest(template=nome):
+                conteudo = (settings.BASE_DIR / "templates" / nome).read_text(encoding="utf-8")
+                self.assertIn("css/tailwind.css", conteudo)
+                self.assertIn("css/app.css", conteudo)
+                self.assertLess(conteudo.index("css/tailwind.css"), conteudo.index("css/app.css"))
+                self.assertNotIn("cdn.tailwindcss.com", conteudo)
+                self.assertNotIn("daisyui", conteudo)
+
+    def test_app_css_ativa_view_transition(self):
+        conteudo = (settings.BASE_DIR / "static" / "css" / "app.css").read_text(encoding="utf-8")
+
+        self.assertIn("@view-transition", conteudo)
+        self.assertIn("navigation: auto", conteudo)
+        self.assertIn("prefers-reduced-motion", conteudo)
+
+    def test_storage_de_producao_e_whitenoise_manifest(self):
+        caminho_settings = settings.BASE_DIR / "conecta" / "settings.py"
+        with mock.patch.object(sys, "argv", ["manage.py", "runserver"]):
+            config = runpy.run_path(str(caminho_settings))
+
+        self.assertEqual(
+            config["STORAGES"]["staticfiles"]["BACKEND"],
+            "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        )
+
+
+class LayoutRenderizadoTests(TestCase):
+    def test_pagina_renderizada_usa_css_compilado(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, "/static/css/tailwind.css")
+        self.assertNotContains(response, "cdn.tailwindcss.com")

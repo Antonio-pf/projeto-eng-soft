@@ -108,3 +108,27 @@ body {
         min-height: 18rem;
     }
 }
+
+/* Transição suave entre páginas (View Transitions entre documentos, só CSS).
+   Vale para toda tela que estende um dos templates base; navegadores sem
+   suporte ignoram e navegam normalmente. */
+@view-transition {
+    navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 200ms;
+}
+
+/* Moldura do painel fica parada: só o conteúdo faz o fade. */
+[data-testid="sidebar"] { view-transition-name: conecta-sidebar; }
+[data-testid="dashboard-topbar"] { view-transition-name: conecta-topbar; }
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none;
+    }
+}

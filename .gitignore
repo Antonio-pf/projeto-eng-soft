@@ -19,3 +19,7 @@ staticfiles/
 
 .aidlc-rule-details
 ./CLAUDE.md
+
+# Build do CSS (gerado por npm run build; não versionar)
+node_modules/
+static/css/tailwind.css

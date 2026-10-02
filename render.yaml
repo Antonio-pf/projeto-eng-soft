@@ -2,7 +2,7 @@ services:
   - type: web
     name: conecta-social
     runtime: python
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input
+    buildCommand: npm ci && npm run build && pip install -r requirements.txt && python manage.py collectstatic --no-input
     startCommand: python manage.py migrate && gunicorn conecta.wsgi:application
     healthCheckPath: /health/
     envVars:
