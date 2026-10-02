@@ -436,31 +436,31 @@ def distribuicao_exportar_csv(request):
     if data_fim_parsed:
         distribuicoes = distribuicoes.filter(data__lte=data_fim_parsed)
 
-    response = HttpResponse(
-        content_type="text/csv; charset=utf-8-sig"
-    )
+    response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
 
-    response["Content-Disposition"] = (
-        'attachment; filename="relatorio_distribuicoes.csv"'
-    )
+    response["Content-Disposition"] = 'attachment; filename="relatorio_distribuicoes.csv"'
 
     writer = csv.writer(response)
 
-    writer.writerow([
-        "Data",
-        "Família",
-        "Item",
-        "Quantidade",
-        "Usuário",
-    ])
+    writer.writerow(
+        [
+            "Data",
+            "Família",
+            "Item",
+            "Quantidade",
+            "Usuário",
+        ]
+    )
 
     for distribuicao in distribuicoes:
-        writer.writerow([
-            distribuicao.data.strftime("%d/%m/%Y"),
-            distribuicao.familia.nome_responsavel,
-            distribuicao.item.nome,
-            distribuicao.quantidade,
-            distribuicao.registrado_por.nome,
-        ])
+        writer.writerow(
+            [
+                distribuicao.data.strftime("%d/%m/%Y"),
+                distribuicao.familia.nome_responsavel,
+                distribuicao.item.nome,
+                distribuicao.quantidade,
+                distribuicao.registrado_por.nome,
+            ]
+        )
 
     return response
