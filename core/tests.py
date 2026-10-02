@@ -1046,6 +1046,15 @@ class DistribuicaoTestCase(TestCase):
         ):
             self.assertContains(response, f'href="{reverse(url_name)}"')
 
+    def test_submenu_de_movimentacoes_vem_fechado_fora_do_grupo(self):
+        response = self.client.get(reverse("painel"))
+        self.assertContains(response, "<details")
+        self.assertNotContains(response, "<details open")
+
+    def test_submenu_de_movimentacoes_abre_nas_paginas_do_grupo(self):
+        response = self.client.get(reverse("distribuicao_list"))
+        self.assertContains(response, "<details open")
+
 
 class DoacaoListTestCase(TestCase):
     def setUp(self):

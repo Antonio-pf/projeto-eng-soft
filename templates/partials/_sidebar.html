@@ -29,20 +29,40 @@
                 <img src="{% static 'icons/sidebar/familias.svg' %}" alt="" class="size-4">
                 Famílias
             </a>
-            {# Submenu nativo do daisyUI (menu + details): abre/fecha sem JS e marca o item atual com .active #}
+            {# Submenu nativo do daisyUI (menu + details): fechado por padrão, abre sozinho quando a página atual é do grupo #}
             {% with url_atual=request.resolver_match.url_name %}
             <ul class="menu menu-sm gap-1 p-0 text-accent" data-testid="sidebar-grupo-movimentacoes">
                 <li>
-                    <details open>
+                    <details {% if url_atual == 'doacao_create' or url_atual == 'doacao_list' or url_atual == 'distribuicao_create' or url_atual == 'distribuicao_list' %}open{% endif %}>
                         <summary class="h-10 gap-2.5 pl-3.5 text-[13px]">
                             <img src="{% static 'icons/sidebar/movimentacoes.svg' %}" alt="" class="size-4">
                             Movimentações
                         </summary>
                         <ul>
-                            <li><a href="{% url 'doacao_create' %}" class="{% if url_atual == 'doacao_create' %}active{% endif %}" data-testid="sidebar-link-nova-doacao">Nova doação</a></li>
-                            <li><a href="{% url 'doacao_list' %}" class="{% if url_atual == 'doacao_list' %}active{% endif %}" data-testid="sidebar-link-historico-doacoes">Histórico de doações</a></li>
-                            <li><a href="{% url 'distribuicao_create' %}" class="{% if url_atual == 'distribuicao_create' %}active{% endif %}" data-testid="sidebar-link-nova-distribuicao">Nova distribuição</a></li>
-                            <li><a href="{% url 'distribuicao_list' %}" class="{% if url_atual == 'distribuicao_list' %}active{% endif %}" data-testid="sidebar-link-historico-distribuicoes">Histórico de distribuições</a></li>
+                            <li>
+                                <a href="{% url 'doacao_create' %}" class="gap-2.5 text-[12px] {% if url_atual == 'doacao_create' %}active{% endif %}" data-testid="sidebar-link-nova-doacao">
+                                    <img src="{% static 'icons/sidebar/nova-doacao.svg' %}" alt="" class="size-4">
+                                    Nova doação
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'doacao_list' %}" class="gap-2.5 text-[12px] {% if url_atual == 'doacao_list' %}active{% endif %}" data-testid="sidebar-link-historico-doacoes">
+                                    <img src="{% static 'icons/sidebar/historico.svg' %}" alt="" class="size-4">
+                                    Histórico de doações
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'distribuicao_create' %}" class="gap-2.5 text-[12px] {% if url_atual == 'distribuicao_create' %}active{% endif %}" data-testid="sidebar-link-nova-distribuicao">
+                                    <img src="{% static 'icons/sidebar/nova-distribuicao.svg' %}" alt="" class="size-4">
+                                    Nova distribuição
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'distribuicao_list' %}" class="gap-2.5 text-[12px] {% if url_atual == 'distribuicao_list' %}active{% endif %}" data-testid="sidebar-link-historico-distribuicoes">
+                                    <img src="{% static 'icons/sidebar/historico.svg' %}" alt="" class="size-4">
+                                    Histórico de distribuições
+                                </a>
+                            </li>
                         </ul>
                     </details>
                 </li>
