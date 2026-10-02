@@ -1036,6 +1036,16 @@ class DistribuicaoTestCase(TestCase):
         response = self.client.get(reverse("distribuicao_create"))
         self.assertContains(response, f'value="{timezone.localdate().isoformat()}"')
 
+    def test_menu_lateral_tem_links_das_movimentacoes_e_dos_historicos(self):
+        response = self.client.get(reverse("distribuicao_create"))
+        for url_name in (
+            "doacao_create",
+            "doacao_list",
+            "distribuicao_create",
+            "distribuicao_list",
+        ):
+            self.assertContains(response, f'href="{reverse(url_name)}"')
+
 
 class DoacaoListTestCase(TestCase):
     def setUp(self):
