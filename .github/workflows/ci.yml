@@ -69,6 +69,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Build CSS
+        run: npm ci && npm run build
+
+      - name: Collect static files
+        run: python manage.py collectstatic --no-input
+
       - name: Django checks
         run: python manage.py check
 
