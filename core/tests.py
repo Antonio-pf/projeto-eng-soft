@@ -869,6 +869,10 @@ class DoacaoTestCase(TestCase):
         self.assertRedirects(response, reverse("doacao_create"))
         self.assertEqual(Doacao.objects.count(), 1)
 
+    def test_formulario_abre_com_data_de_hoje_em_formato_iso(self):
+        response = self.client.get(reverse("doacao_create"))
+        self.assertContains(response, f'value="{timezone.localdate().isoformat()}"')
+
 
 class DistribuicaoTestCase(TestCase):
     def setUp(self):
@@ -1027,6 +1031,20 @@ class DistribuicaoTestCase(TestCase):
         itens_saldo = response.context["itens_saldo"]
         self.assertEqual(itens_saldo[str(self.item.pk)]["saldo"], "10.00")
         self.assertEqual(itens_saldo[str(self.item.pk)]["unidade"], "kg")
+
+    def test_formulario_abre_com_data_de_hoje_em_formato_iso(self):
+        response = self.client.get(reverse("distribuicao_create"))
+        self.assertContains(response, f'value="{timezone.localdate().isoformat()}"')
+
+    def test_menu_lateral_tem_links_das_movimentacoes_e_dos_historicos(self):
+        response = self.client.get(reverse("distribuicao_create"))
+        for url_name in (
+            "doacao_create",
+            "doacao_list",
+            "distribuicao_create",
+            "distribuicao_list",
+        ):
+            self.assertContains(response, f'href="{reverse(url_name)}"')
 
 
 class DoacaoListTestCase(TestCase):
