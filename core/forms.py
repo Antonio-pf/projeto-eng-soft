@@ -305,11 +305,12 @@ class DoacaoForm(forms.ModelForm):
                 }
             ),
             "data": forms.DateInput(
+                format="%Y-%m-%d",
                 attrs={
                     "class": _CARD_INPUT_CLASS,
                     "type": "date",
                     "data-testid": "doacao-form-data-input",
-                }
+                },
             ),
         }
         labels = {
@@ -374,11 +375,12 @@ class DistribuicaoForm(forms.ModelForm):
                 }
             ),
             "data": forms.DateInput(
+                format="%Y-%m-%d",
                 attrs={
                     "class": _CARD_INPUT_CLASS,
                     "type": "date",
                     "data-testid": "distribuicao-form-data-input",
-                }
+                },
             ),
         }
         labels = {
