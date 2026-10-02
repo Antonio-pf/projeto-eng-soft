@@ -21,12 +21,29 @@ urlpatterns = [
     path("familias/nova/", views.familia_create, name="familia_create"),
     path("categorias/", views.categoria_list, name="categoria_list"),
     path("categorias/nova/", views.categoria_create, name="categoria_create"),
-    path("categorias/<int:pk>/editar/", views.categoria_update, name="categoria_update"),
+    path(
+        "categorias/<int:pk>/editar/",
+        views.categoria_update,
+        name="categoria_update",
+    ),
     path("itens/", views.item_list, name="item_list"),
     path("itens/novo/", views.item_create, name="item_create"),
     path("itens/<int:pk>/editar/", views.item_update, name="item_update"),
     path("doacoes/nova/", views.doacao_create, name="doacao_create"),
     path("doacoes/", views.doacao_list, name="doacao_list"),
-    path("distribuicoes/nova/", views.distribuicao_create, name="distribuicao_create"),
-    path("distribuicoes/", views.distribuicao_list, name="distribuicao_list"),
+    path(
+        "distribuicoes/nova/",
+        views.distribuicao_create,
+        name="distribuicao_create",
+    ),
+    path(
+        "distribuicoes/exportar/",
+        views.distribuicao_exportar_csv,
+        name="distribuicao_exportar_csv",
+    ),
+    path(
+        "distribuicoes/",
+        views.distribuicao_list,
+        name="distribuicao_list",
+    ),
 ]

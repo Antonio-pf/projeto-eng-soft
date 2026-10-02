@@ -1,7 +1,9 @@
+import csv
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
@@ -383,11 +385,14 @@ def distribuicao_list(request):
         .select_related("familia", "item", "registrado_por")
         .order_by("-data")
     )
+
     if id_familia:
         distribuicoes_list = distribuicoes_list.filter(familia_id=id_familia)
+
     data_inicio_parsed = parse_date(data_inicio) if data_inicio else None
     if data_inicio_parsed:
         distribuicoes_list = distribuicoes_list.filter(data__gte=data_inicio_parsed)
+
     data_fim_parsed = parse_date(data_fim) if data_fim else None
     if data_fim_parsed:
         distribuicoes_list = distribuicoes_list.filter(data__lte=data_fim_parsed)
@@ -406,3 +411,56 @@ def distribuicao_list(request):
             "data_fim": data_fim,
         },
     )
+
+
+@login_obrigatorio
+def distribuicao_exportar_csv(request):
+    id_familia = request.GET.get("id_familia", "").strip()
+    data_inicio = request.GET.get("data_inicio", "").strip()
+    data_fim = request.GET.get("data_fim", "").strip()
+
+    distribuicoes = (
+        Distribuicao.objects.filter(cancelado=False)
+        .select_related("familia", "item", "registrado_por")
+        .order_by("-data")
+    )
+
+    if id_familia:
+        distribuicoes = distribuicoes.filter(familia_id=id_familia)
+
+    data_inicio_parsed = parse_date(data_inicio) if data_inicio else None
+    if data_inicio_parsed:
+        distribuicoes = distribuicoes.filter(data__gte=data_inicio_parsed)
+
+    data_fim_parsed = parse_date(data_fim) if data_fim else None
+    if data_fim_parsed:
+        distribuicoes = distribuicoes.filter(data__lte=data_fim_parsed)
+
+    response = HttpResponse(
+        content_type="text/csv; charset=utf-8-sig"
+    )
+
+    response["Content-Disposition"] = (
+        'attachment; filename="relatorio_distribuicoes.csv"'
+    )
+
+    writer = csv.writer(response)
+
+    writer.writerow([
+        "Data",
+        "Família",
+        "Item",
+        "Quantidade",
+        "Usuário",
+    ])
+
+    for distribuicao in distribuicoes:
+        writer.writerow([
+            distribuicao.data.strftime("%d/%m/%Y"),
+            distribuicao.familia.nome_responsavel,
+            distribuicao.item.nome,
+            distribuicao.quantidade,
+            distribuicao.registrado_por.nome,
+        ])
+
+    return response

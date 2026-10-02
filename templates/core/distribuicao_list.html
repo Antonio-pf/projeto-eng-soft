@@ -9,7 +9,15 @@
 
 {% block content %}
 <div class="flex justify-end gap-2">
-    <a href="{% url 'distribuicao_create' %}" class="btn btn-secondary btn-sm rounded-md" data-testid="distribuicao-list-nova-distribuicao-link">+ Nova Distribuição</a>
+
+    <a href="{% url 'distribuicao_exportar_csv' %}?{% if id_familia %}id_familia={{ id_familia }}&{% endif %}{% if data_inicio %}data_inicio={{ data_inicio }}&{% endif %}{% if data_fim %}data_fim={{ data_fim }}{% endif %}" class="btn btn-secondary btn-sm rounded-md">
+        Exportar CSV
+    </a>
+
+    <a href="{% url 'distribuicao_create' %}" class="btn btn-secondary btn-sm rounded-md" data-testid="distribuicao-list-nova-distribuicao-link">
+        + Nova Distribuição
+    </a>
+
 </div>
 
 <section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="distribuicao-table-card">
