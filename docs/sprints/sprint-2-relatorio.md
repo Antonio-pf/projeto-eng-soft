@@ -97,20 +97,12 @@ Detalhe completo em [`sprint-2-evidencias-teste.md`](sprint-2-evidencias-teste.m
 
 ## 6. Riscos/impedimentos para a próxima sprint
 
-- **Revisão de PRs:** os PRs #34 e #35 não têm revisão registrada no GitHub, a história #14 foi
-  integrada sem PR e a exportação CSV (#23) entrou na `main` por commit direto (`12ecff3`). A regra
-  da disciplina exige PR com revisão de outro integrante antes de qualquer merge.
 - **CI quebrado pelo commit direto:** o `12ecff3` deixou `core/views.py` e `core/urls.py` fora do
   formato do `ruff format`, e o job `lint` passou a falhar em todos os PRs. A correção está no
   PR #37.
 - **Sprint 3 carregada:** são 5 histórias, com 2 "Deve ter" (#20 painel por categoria e #21
   relatório de distribuições) e uma consulta agregada obrigatória (GROUP BY, 3+ JOINs); o prazo é
   16/10/2026.
-- **Estorno (#19):** exige criar o registro de estorno sem apagar o original e a regra de que só o
-  Administrador cancela. Os modelos `Doacao` e `Distribuicao` já têm os campos `cancelado`,
-  `cancelado_em` e `cancelado_por`, mas não há tela nem regra implementadas.
-- **Testes pendentes:** CT01 (expiração de sessão), CT08 (paginação de famílias) e a exportação CSV
-  (CT21) seguem sem teste automatizado.
 - **Mensagem de sucesso:** não há mensagem visível depois de registrar uma doação (o formulário
   volta vazio).
 - **Data padrão "hoje" (#14 e #16):** o campo abre vazio no sistema em produção, porque o
