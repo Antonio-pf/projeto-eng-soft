@@ -38,6 +38,45 @@ class CoreSmokeTests(TestCase):
         self.assertJSONEqual(response.content, {"status": "ok"})
 
 
+class HomePageTests(TestCase):
+    def test_apresenta_secoes_e_equipe_sem_ra(self):
+        response = self.client.get(reverse("home"))
+
+        for secao in ("problema", "como-funciona", "perfis", "andamento", "equipe"):
+            self.assertContains(response, f'id="{secao}"')
+            self.assertContains(response, f'href="#{secao}"')
+        for nome in (
+            "Alexandre Victoriano Ribeiro Ulhoa",
+            "Antonio Pires Felipe",
+            "Daniel Souza Monteiro de Carvalho",
+            "Luiz Henrique Neres",
+        ):
+            self.assertContains(response, nome)
+        self.assertNotContains(response, "2840482")
+
+    def test_visitante_ve_botao_de_entrar(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, f'href="{reverse("login")}"')
+        self.assertNotContains(response, "Ir para o painel")
+
+    def test_usuario_logado_ve_atalho_para_o_painel(self):
+        usuario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("senha-correta"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.force_login(usuario)
+
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, f'href="{reverse("painel")}"')
+        self.assertContains(response, "Maria Voluntária")
+        self.assertNotContains(response, "Entrar no Conecta")
+
+
 class AutenticarTests(TestCase):
     def setUp(self):
         self.usuario = Usuario.objects.create(

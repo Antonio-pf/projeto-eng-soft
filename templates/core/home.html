@@ -1,27 +1,271 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Início | Conecta Social{% endblock %}
+{% block title %}Conecta Social | Gestão de doações para ONGs{% endblock %}
 
-{% block content %}
-<section class="home-panel overflow-hidden rounded-[2rem] bg-base-100 shadow-2xl">
-    <div class="grid min-h-[31rem] lg:grid-cols-[1.1fr_0.9fr]">
-        <div class="flex flex-col justify-between gap-12 p-8 sm:p-12 lg:p-16">
+{% block nav %}
+<nav class="hidden items-center gap-7 text-sm text-conecta-muted lg:flex" aria-label="Seções da página">
+    <a class="transition-colors hover:text-primary" href="#problema">O problema</a>
+    <a class="transition-colors hover:text-primary" href="#como-funciona">Como funciona</a>
+    <a class="transition-colors hover:text-primary" href="#perfis">Quem usa</a>
+    <a class="transition-colors hover:text-primary" href="#andamento">Andamento</a>
+    <a class="transition-colors hover:text-primary" href="#equipe">Equipe</a>
+</nav>
+{% endblock %}
+
+{% block main %}
+<main>
+    <section id="inicio" class="bg-primary text-primary-content">
+        <div class="mx-auto grid max-w-6xl items-center gap-16 px-6 pb-32 pt-16 lg:min-h-[min(calc(100svh-4rem),52rem)] lg:grid-cols-[1.05fr_0.95fr] lg:pb-36 lg:pt-12">
             <div>
-                <p class="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-secondary">Gestão de doações</p>
-                <h1 class="max-w-xl text-4xl font-black leading-tight text-neutral sm:text-6xl">Conecta Social</h1>
-                <p class="mt-6 max-w-lg text-lg leading-8 text-neutral/70">Registro de doações, controle de estoque e distribuição de itens para as famílias atendidas.</p>
+                <p class="entrada text-xs font-bold uppercase tracking-[0.18em] text-accent">Gestão de doações para ONGs</p>
+                <h1 class="entrada entrada-2 mt-5 max-w-xl text-4xl font-bold leading-[1.1] sm:text-5xl lg:text-[3.5rem]">Organizar recursos também é uma forma de cuidar.</h1>
+                <p class="entrada entrada-3 mt-6 max-w-lg text-lg leading-relaxed text-conecta-on-dark-muted">O Conecta Social registra cada doação, mantém o saldo de cada item sempre atualizado e só libera a distribuição quando há estoque, do doador até a família atendida.</p>
+                <div class="entrada entrada-3 mt-10 flex flex-wrap gap-3">
+                    {% if usuario_logado %}
+                    <a class="btn h-12 rounded-[10px] border-0 bg-white px-6 text-primary hover:bg-white/90" href="{% url 'painel' %}">Ir para o painel</a>
+                    {% else %}
+                    <a class="btn h-12 rounded-[10px] border-0 bg-white px-6 text-primary hover:bg-white/90" href="{% url 'login' %}">Entrar no Conecta</a>
+                    {% endif %}
+                    <a class="btn btn-ghost h-12 rounded-[10px] border-white/30 px-6 text-white hover:border-white/50 hover:bg-white/10" href="#problema">Conheça o projeto</a>
+                </div>
+                <p class="entrada entrada-3 mt-10 text-xs text-conecta-on-dark-muted">Projeto do Laboratório de Engenharia de Software · ADS · Fatec Ribeirão Preto · 2026/2</p>
             </div>
-            <div>
-                <a class="btn btn-primary px-6 text-base" href="{% url 'login' %}">Entrar</a>
+
+            <figure class="entrada entrada-3 relative mx-auto w-full max-w-md lg:mr-0" role="img" aria-label="Exemplo da tela de distribuição: o sistema bloqueia a saída de 50 unidades de pasta de dente porque o saldo é 20.">
+                <div class="rounded-2xl bg-white p-6 shadow-2xl shadow-black/25 sm:p-7">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">Movimentações</p>
+                    <p class="mt-1 text-xl font-bold text-neutral">Registrar distribuição</p>
+                    <div class="mt-6 grid gap-4 text-sm">
+                        <div>
+                            <p class="mb-1.5 text-xs font-medium text-neutral">Família</p>
+                            <p class="rounded-[10px] bg-conecta-form px-3.5 py-2.5 text-neutral">Família Santos</p>
+                        </div>
+                        <div>
+                            <p class="mb-1.5 text-xs font-medium text-neutral">Item</p>
+                            <p class="flex items-center justify-between rounded-[10px] bg-conecta-form px-3.5 py-2.5 text-neutral">Pasta de dente <span class="rounded-md bg-secondary/15 px-2 py-0.5 text-xs font-semibold text-primary">saldo 20</span></p>
+                        </div>
+                        <div>
+                            <p class="mb-1.5 text-xs font-medium text-neutral">Quantidade</p>
+                            <p class="rounded-[10px] bg-conecta-form px-3.5 py-2.5 text-neutral ring-1 ring-[color:var(--conecta-alert)]">50</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 rounded-[10px] bg-conecta-alert-soft px-3.5 py-2.5 text-[13px] font-medium text-conecta-alert">Saldo insuficiente: disponível 20.00, solicitado 50.00</p>
+                    <p class="mt-5 rounded-[10px] bg-primary py-3 text-center text-sm font-semibold text-white">Registrar</p>
+                </div>
+                <div class="absolute -right-3 -top-7 hidden w-44 rounded-xl bg-white p-4 shadow-xl shadow-black/20 sm:block lg:-right-8">
+                    <p class="text-[13px] font-bold text-neutral">Arroz 5 kg</p>
+                    <p class="mt-0.5 text-xs text-conecta-muted">saldo 3 · mínimo 10</p>
+                    <span class="mt-2 inline-block rounded-md bg-conecta-alert-soft px-2 py-0.5 text-[11px] font-semibold text-conecta-alert">Baixo estoque</span>
+                </div>
+                <div class="absolute -bottom-10 -left-3 hidden items-center gap-3 rounded-xl bg-white p-4 shadow-xl shadow-black/20 sm:flex lg:-left-10">
+                    <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-primary"><img src="{% static 'icons/sidebar/nova-doacao.svg' %}" alt="" class="size-4"></span>
+                    <span>
+                        <span class="block text-[13px] font-bold text-neutral">Doação registrada</span>
+                        <span class="block text-xs text-conecta-muted">+20 pasta de dente · Mercado Central</span>
+                    </span>
+                </div>
+            </figure>
+        </div>
+    </section>
+
+    <section id="problema" class="relative z-10 -mt-10 scroll-mt-16 rounded-t-[2.5rem] bg-conecta-form">
+        <div class="mx-auto max-w-6xl px-6 py-20 lg:py-28">
+            <div class="grid gap-10 lg:grid-cols-[1.35fr_1fr] lg:items-end">
+                <div class="reveal">
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">O problema</p>
+                    <h2 class="mt-4 max-w-2xl text-3xl font-bold leading-tight text-neutral sm:text-[2.5rem]">Doação sem registro vira estoque invisível.</h2>
+                    <p class="mt-5 max-w-2xl text-lg leading-relaxed text-conecta-muted">A maioria das ONGs de pequeno e médio porte ainda controla o que entra e o que sai com planilhas, cadernos e grupos de WhatsApp. Sem um registro central, ninguém sabe ao certo quanto há de cada item nem quem já recebeu.</p>
+                </div>
+                <div class="reveal rounded-2xl bg-primary p-8 text-primary-content">
+                    <p class="text-5xl font-bold tracking-tight sm:text-6xl">917 mil</p>
+                    <p class="mt-3 leading-relaxed text-conecta-on-dark-muted">organizações da sociedade civil ativas no Brasil, mais de 100 mil a mais do que há uma década.</p>
+                    <a class="mt-5 inline-block text-xs font-semibold text-accent underline-offset-4 hover:underline" href="https://mapaosc.ipea.gov.br/" target="_blank" rel="noopener">Fonte: Mapa das OSCs, Ipea</a>
+                </div>
+            </div>
+
+            <ol class="mt-14 grid gap-5 md:grid-cols-3">
+                <li class="reveal rounded-2xl border border-primary/10 bg-white p-7">
+                    <span class="grid size-9 place-items-center rounded-full bg-conecta-alert-soft text-sm font-bold text-conecta-alert">1</span>
+                    <h3 class="mt-5 text-lg font-bold text-neutral">Horas perdidas em planilhas</h3>
+                    <p class="mt-2 leading-relaxed text-conecta-muted">Um gestor típico gasta de 3 a 5 horas por semana só para consolidar as entradas e saídas de itens.</p>
+                </li>
+                <li class="reveal rounded-2xl border border-primary/10 bg-white p-7">
+                    <span class="grid size-9 place-items-center rounded-full bg-conecta-alert-soft text-sm font-bold text-conecta-alert">2</span>
+                    <h3 class="mt-5 text-lg font-bold text-neutral">Entregas duplicadas ou esquecidas</h3>
+                    <p class="mt-2 leading-relaxed text-conecta-muted">Erros de contagem fazem uma família receber duas vezes enquanto outra fica de fora do ciclo de entrega.</p>
+                </li>
+                <li class="reveal rounded-2xl border border-primary/10 bg-white p-7">
+                    <span class="grid size-9 place-items-center rounded-full bg-conecta-alert-soft text-sm font-bold text-conecta-alert">3</span>
+                    <h3 class="mt-5 text-lg font-bold text-neutral">Histórico que vai embora</h3>
+                    <p class="mt-2 leading-relaxed text-conecta-muted">Quando um voluntário sai, o que só ele sabia sai junto. E sem relatório confiável, prestar contas a financiadores fica difícil.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section id="como-funciona" class="scroll-mt-16 bg-base-100">
+        <div class="mx-auto max-w-6xl px-6 py-20 lg:py-28">
+            <div class="reveal max-w-2xl">
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Como funciona</p>
+                <h2 class="mt-4 text-3xl font-bold leading-tight text-neutral sm:text-[2.5rem]">Do doador à família, cada item deixa rastro.</h2>
+                <p class="mt-5 text-lg leading-relaxed text-conecta-muted">O saldo nunca é digitado à mão: ele só muda quando uma doação entra ou uma distribuição sai. Assim, o número na tela é o que existe no estoque.</p>
+            </div>
+
+            <ol class="passos mt-16 grid gap-12 md:grid-cols-3 md:gap-8">
+                <li class="reveal relative">
+                    <span class="grid size-12 place-items-center rounded-xl bg-primary"><img src="{% static 'icons/sidebar/nova-doacao.svg' %}" alt="" class="size-5"></span>
+                    <p class="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-secondary">Passo 1 · Entrada</p>
+                    <h3 class="mt-2 text-xl font-bold text-neutral">A doação é registrada</h3>
+                    <p class="mt-3 leading-relaxed text-conecta-muted">Doador, item, quantidade e data. Ao salvar, o saldo do item sobe na mesma hora.</p>
+                </li>
+                <li class="reveal relative">
+                    <span class="grid size-12 place-items-center rounded-xl bg-primary"><img src="{% static 'icons/sidebar/itens.svg' %}" alt="" class="size-5"></span>
+                    <p class="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-secondary">Passo 2 · Estoque</p>
+                    <h3 class="mt-2 text-xl font-bold text-neutral">O estoque fica visível</h3>
+                    <p class="mt-3 leading-relaxed text-conecta-muted">Cada item mostra a categoria e o saldo atual, e ganha destaque quando chega ao estoque mínimo.</p>
+                </li>
+                <li class="reveal relative">
+                    <span class="grid size-12 place-items-center rounded-xl bg-primary"><img src="{% static 'icons/sidebar/nova-distribuicao.svg' %}" alt="" class="size-5"></span>
+                    <p class="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-secondary">Passo 3 · Saída</p>
+                    <h3 class="mt-2 text-xl font-bold text-neutral">A distribuição tem trava</h3>
+                    <p class="mt-3 leading-relaxed text-conecta-muted">A entrega para uma família só é registrada se houver saldo. Se faltar, o sistema bloqueia e mostra quanto há disponível.</p>
+                </li>
+            </ol>
+
+            <div class="reveal mt-16 flex flex-col gap-4 rounded-2xl bg-conecta-form p-6 sm:flex-row sm:items-center sm:p-8">
+                <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-primary"><img src="{% static 'icons/sidebar/historico.svg' %}" alt="" class="size-5"></span>
+                <p class="leading-relaxed text-conecta-muted"><strong class="font-bold text-neutral">E tudo fica no histórico.</strong> Doações e distribuições podem ser consultadas por doador, família e período, com o nome de quem registrou cada uma.</p>
             </div>
         </div>
-        <div class="brand-field relative flex items-end p-8 sm:p-12 lg:p-16">
-            <div class="brand-mark" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
+    </section>
+
+    <section id="perfis" class="scroll-mt-16 bg-conecta-form">
+        <div class="mx-auto max-w-6xl px-6 py-20 lg:py-28">
+            <div class="reveal max-w-2xl">
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Quem usa</p>
+                <h2 class="mt-4 text-3xl font-bold leading-tight text-neutral sm:text-[2.5rem]">Dois perfis, cada um com o acesso de que precisa.</h2>
+                <p class="mt-5 text-lg leading-relaxed text-conecta-muted">O acesso é controlado por perfil: o voluntário não entra nas telas exclusivas do administrador, nem digitando o endereço direto.</p>
+            </div>
+
+            <div class="mt-14 grid gap-5 md:grid-cols-2">
+                <article class="reveal rounded-2xl border border-primary/10 bg-white p-8">
+                    <div class="flex items-center gap-4">
+                        <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-primary"><img src="{% static 'icons/sidebar/usuarios.svg' %}" alt="" class="size-5"></span>
+                        <div>
+                            <h3 class="text-xl font-bold text-neutral">Administrador</h3>
+                            <p class="text-sm text-conecta-muted">Gestor ou coordenador da ONG</p>
+                        </div>
+                    </div>
+                    <ul class="lista-check mt-7 grid gap-3.5 text-neutral">
+                        <li>Cadastra usuários e desativa acessos sem apagar o histórico</li>
+                        <li>Cadastra categorias e itens, com estoque mínimo</li>
+                        <li>Corrige os dados de doadores e de itens</li>
+                        <li>Faz tudo o que o voluntário faz</li>
+                    </ul>
+                </article>
+                <article class="reveal rounded-2xl border border-primary/10 bg-white p-8">
+                    <div class="flex items-center gap-4">
+                        <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-conecta-quote"><img src="{% static 'icons/sidebar/doadores.svg' %}" alt="" class="size-5"></span>
+                        <div>
+                            <h3 class="text-xl font-bold text-neutral">Voluntário</h3>
+                            <p class="text-sm text-conecta-muted">Quem ajuda no recebimento e na entrega</p>
+                        </div>
+                    </div>
+                    <ul class="lista-check mt-7 grid gap-3.5 text-neutral">
+                        <li>Cadastra doadores e famílias</li>
+                        <li>Registra doações e distribuições</li>
+                        <li>Consulta o saldo dos itens e os históricos</li>
+                    </ul>
+                </article>
             </div>
         </div>
+    </section>
+
+    <section id="andamento" class="scroll-mt-16 bg-base-100">
+        <div class="mx-auto max-w-6xl px-6 py-20 lg:py-28">
+            <div class="reveal max-w-2xl">
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Andamento</p>
+                <h2 class="mt-4 text-3xl font-bold leading-tight text-neutral sm:text-[2.5rem]">Construído em sprints, com entrega a cada duas semanas.</h2>
+                <p class="mt-5 text-lg leading-relaxed text-conecta-muted">Cada sprint termina com o sistema rodando, testes automatizados e uma retrospectiva com ações para a sprint seguinte.</p>
+            </div>
+
+            <ol class="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                <li class="reveal flex flex-col rounded-2xl border border-primary/10 bg-conecta-form p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="font-bold text-neutral">Sprint 1</p>
+                        <span class="rounded-full bg-secondary/15 px-2.5 py-1 text-[11px] font-semibold text-primary">Concluída</span>
+                    </div>
+                    <p class="mt-1 text-xs text-conecta-muted">até 18/09</p>
+                    <p class="mt-4 text-sm leading-relaxed text-neutral">Login, dois perfis com controle de acesso e gestão de usuários.</p>
+                </li>
+                <li class="reveal flex flex-col rounded-2xl border border-primary/10 bg-conecta-form p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="font-bold text-neutral">Sprint 2</p>
+                        <span class="rounded-full bg-secondary/15 px-2.5 py-1 text-[11px] font-semibold text-primary">Concluída</span>
+                    </div>
+                    <p class="mt-1 text-xs text-conecta-muted">até 02/10</p>
+                    <p class="mt-4 text-sm leading-relaxed text-neutral">Cadastros de doadores, famílias, categorias e itens; doações e distribuições com trava de saldo; históricos com filtros.</p>
+                </li>
+                <li class="reveal flex flex-col rounded-2xl border-2 border-secondary/50 bg-white p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="font-bold text-neutral">Sprint 3</p>
+                        <span class="rounded-full bg-accent/30 px-2.5 py-1 text-[11px] font-semibold text-neutral">Em andamento</span>
+                    </div>
+                    <p class="mt-1 text-xs text-conecta-muted">até 16/10</p>
+                    <p class="mt-4 text-sm leading-relaxed text-neutral">Painel do estoque por categoria, relatórios de doações e de distribuições, cancelamento de movimentações e exportação em CSV.</p>
+                </li>
+                <li class="reveal flex flex-col rounded-2xl border border-dashed border-primary/20 p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="font-bold text-neutral">Sprint 4 e entrega final</p>
+                        <span class="shrink-0 rounded-full bg-base-200 px-2.5 py-1 text-[11px] font-semibold text-conecta-muted">Prevista</span>
+                    </div>
+                    <p class="mt-1 text-xs text-conecta-muted">até 13/11</p>
+                    <p class="mt-4 text-sm leading-relaxed text-neutral">Testes finais, aceite do cliente, manual do usuário e apresentação.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section id="equipe" class="scroll-mt-16 bg-conecta-form">
+        <div class="mx-auto max-w-6xl px-6 pb-32 pt-20 lg:pb-40 lg:pt-28">
+            <div class="reveal max-w-2xl">
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Equipe</p>
+                <h2 class="mt-4 text-3xl font-bold leading-tight text-neutral sm:text-[2.5rem]">Quem está construindo o Conecta Social.</h2>
+                <p class="mt-5 text-lg leading-relaxed text-conecta-muted">Somos quatro estudantes de Análise e Desenvolvimento de Sistemas da Fatec Ribeirão Preto. Os papéis de facilitação, produto, dados e qualidade mudam a cada sprint, e todo mundo programa.</p>
+            </div>
+
+            <ul class="mt-14 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+                {% for pessoa in equipe %}
+                <li class="reveal flex flex-col items-center rounded-2xl border border-primary/10 bg-white px-5 py-8 text-center">
+                    <span class="grid size-16 place-items-center rounded-full text-xl font-bold {% cycle 'bg-primary text-white' 'bg-secondary text-white' 'bg-accent text-neutral' 'bg-conecta-quote text-white' %}" aria-hidden="true">{{ pessoa.iniciais }}</span>
+                    <p class="mt-5 font-bold leading-snug text-neutral">{{ pessoa.nome }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    <section class="relative z-10 -mt-10 rounded-t-[2.5rem] bg-primary text-primary-content">
+        <div class="reveal mx-auto max-w-3xl px-6 py-20 text-center lg:py-24">
+            <h2 class="text-3xl font-bold leading-tight sm:text-[2.5rem]">Veja o Conecta Social funcionando.</h2>
+            <p class="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-conecta-on-dark-muted">O sistema está no ar. Entre com a sua conta para registrar doações, acompanhar o estoque e fazer distribuições.</p>
+            <div class="mt-10 flex flex-wrap justify-center gap-3">
+                {% if usuario_logado %}
+                <a class="btn h-12 rounded-[10px] border-0 bg-white px-6 text-primary hover:bg-white/90" href="{% url 'painel' %}">Ir para o painel</a>
+                {% else %}
+                <a class="btn h-12 rounded-[10px] border-0 bg-white px-6 text-primary hover:bg-white/90" href="{% url 'login' %}">Entrar no Conecta</a>
+                {% endif %}
+                <a class="btn btn-ghost h-12 rounded-[10px] border-white/30 px-6 text-white hover:border-white/50 hover:bg-white/10" href="https://github.com/Antonio-pf/projeto-eng-soft" target="_blank" rel="noopener">Ver o código no GitHub</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="bg-primary px-6">
+    <div class="mx-auto flex max-w-6xl flex-col gap-2 border-t border-white/10 py-6 text-xs text-conecta-on-dark-muted sm:flex-row sm:items-center sm:justify-between">
+        <span class="text-base font-bold text-white">conecta</span>
+        <span>Laboratório de Engenharia de Software · ADS · Fatec Ribeirão Preto · 2026/2</span>
     </div>
-</section>
+</footer>
 {% endblock %}
