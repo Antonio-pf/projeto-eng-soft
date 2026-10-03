@@ -8,22 +8,27 @@
     <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
     <link href="{% static 'css/app.css' %}" rel="stylesheet">
 </head>
-<body class="min-h-screen bg-base-200 text-base-content">
-    <header class="navbar container mx-auto px-6 py-4">
-        <div class="flex-1">
-            <a class="text-lg font-black text-neutral" href="{% url 'home' %}">Conecta Social</a>
+<body class="min-h-screen bg-conecta-form text-base-content">
+    <header class="site-header sticky top-0 z-40">
+        <div class="mx-auto flex h-16 max-w-6xl items-center gap-10 px-6">
+            <a class="text-[22px] font-bold text-primary" href="{% url 'home' %}">conecta</a>
+            {% block nav %}{% endblock %}
+            <div class="ml-auto flex items-center gap-2">
+                {% if usuario_logado %}
+                    <span class="mr-2 hidden text-sm text-conecta-muted sm:inline">{{ usuario_logado.nome }}</span>
+                    <a class="btn btn-ghost btn-sm" href="{% url 'logout' %}">Sair</a>
+                    <a class="btn btn-primary btn-sm rounded-[10px] px-4" href="{% url 'painel' %}">Ir para o painel</a>
+                {% else %}
+                    <a class="btn btn-primary btn-sm rounded-[10px] px-5" href="{% url 'login' %}">Entrar</a>
+                {% endif %}
+            </div>
         </div>
-        <div class="flex-none">
-            {% if usuario_logado %}
-                <span class="mr-4 text-sm text-neutral/70">{{ usuario_logado.nome }}</span>
-                <a class="btn btn-ghost btn-sm" href="{% url 'logout' %}">Sair</a>
-            {% else %}
-                <a class="btn btn-ghost btn-sm" href="{% url 'login' %}">Entrar</a>
-            {% endif %}
-        </div>
+        <div class="scroll-progress" aria-hidden="true"></div>
     </header>
-    <main class="container mx-auto flex min-h-[calc(100vh-5rem)] items-center justify-center px-6 py-12">
+    {% block main %}
+    <main class="container mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
         {% block content %}{% endblock %}
     </main>
+    {% endblock %}
 </body>
 </html>

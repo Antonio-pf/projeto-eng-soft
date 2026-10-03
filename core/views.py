@@ -21,9 +21,17 @@ from core.forms import (
 )
 from core.models import CategoriaItem, Distribuicao, Doacao, Doador, Familia, Item, Usuario
 
+EQUIPE = (
+    "Alexandre Victoriano Ribeiro Ulhoa",
+    "Antonio Pires Felipe",
+    "Daniel Souza Monteiro de Carvalho",
+    "Luiz Henrique Neres",
+)
+
 
 def home(request):
-    return render(request, "core/home.html")
+    equipe = [{"nome": nome, "iniciais": nome[0] + nome.split()[-1][0]} for nome in EQUIPE]
+    return render(request, "core/home.html", {"equipe": equipe})
 
 
 def health(request):
