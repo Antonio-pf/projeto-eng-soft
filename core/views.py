@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 
@@ -20,6 +21,7 @@ from core.forms import (
     UsuarioForm,
 )
 from core.models import CategoriaItem, Distribuicao, Doacao, Doador, Familia, Item, Usuario
+from core.painel import montar_resumo, saudacao
 
 EQUIPE = (
     "Alexandre Victoriano Ribeiro Ulhoa",
@@ -68,7 +70,14 @@ def logout_view(request):
 
 @login_obrigatorio
 def painel_view(request):
-    return render(request, "core/painel.html")
+    agora = timezone.localtime()
+    contexto = {
+        "agora": agora,
+        "saudacao": saudacao(agora.hour),
+        "primeiro_nome": request.user.nome.split()[0],
+        "resumo": montar_resumo(agora.date()),
+    }
+    return render(request, "core/painel.html", contexto)
 
 
 @login_obrigatorio
