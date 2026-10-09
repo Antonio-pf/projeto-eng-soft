@@ -117,12 +117,13 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
    | `ALLOWED_HOSTS` | Hosts aceitos pelo Django, separados por vírgula. | `localhost,127.0.0.1` |
    | `DATABASE_URL` | URL de conexão com o PostgreSQL local. | `postgresql://conecta:conecta@localhost:5432/conectasocial` |
 
-5. Crie o banco PostgreSQL local, aplique as migrations e carregue os dados de desenvolvimento:
+5. Crie o usuário e o banco PostgreSQL local (os mesmos `conecta`/`conecta` da `DATABASE_URL` e do `compose.yaml`), aplique as migrations e carregue os dados de desenvolvimento:
 
    Linux/macOS ou Git Bash:
 
    ```bash
-   psql -U postgres -c "CREATE DATABASE conectasocial;"
+   psql -U postgres -c "CREATE USER conecta WITH PASSWORD 'conecta' CREATEDB;"
+   psql -U postgres -c "CREATE DATABASE conectasocial OWNER conecta;"
    python manage.py migrate
    python manage.py seed
    ```
@@ -130,7 +131,8 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
    Windows PowerShell:
 
    ```powershell
-   psql -U postgres -c "CREATE DATABASE conectasocial;"
+   psql -U postgres -c "CREATE USER conecta WITH PASSWORD 'conecta' CREATEDB;"
+   psql -U postgres -c "CREATE DATABASE conectasocial OWNER conecta;"
    python manage.py migrate
    python manage.py seed
    ```
@@ -138,12 +140,13 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
    Windows `cmd.exe`:
 
    ```cmd
-   psql -U postgres -c "CREATE DATABASE conectasocial;"
+   psql -U postgres -c "CREATE USER conecta WITH PASSWORD 'conecta' CREATEDB;"
+   psql -U postgres -c "CREATE DATABASE conectasocial OWNER conecta;"
    python manage.py migrate
    python manage.py seed
    ```
 
-   Nos comandos acima, o PostgreSQL precisa estar instalado, em execução e disponível no `PATH`. Se `psql` não for reconhecido, adicione a pasta `bin` da instalação do PostgreSQL ao `PATH` ou use o Docker Compose abaixo.
+   Nos comandos acima, o PostgreSQL precisa estar instalado, em execução e disponível no `PATH`. O usuário `postgres` é o administrador criado na instalação; o `psql` pode pedir a senha dele. A permissão `CREATEDB` do usuário `conecta` é necessária para o `python manage.py test` criar o banco de testes. Se `psql` não for reconhecido, adicione a pasta `bin` da instalação do PostgreSQL ao `PATH` ou use o Docker Compose abaixo.
 
    As migrations em `core/migrations/` são a fonte oficial da estrutura do banco. O comando `seed` pode ser executado novamente sem duplicar os dados. A aplicação também possui fallback para `db.sqlite3` quando `DATABASE_URL` não está definida, mas o fluxo documentado usa PostgreSQL.
 
@@ -274,7 +277,7 @@ O CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa Ruff, `ma
 
 ## Protótipo navegável
 
-O protótipo navegável está disponível no [Figma](https://www.figma.com/proto/TyUOya1fWIhDOESS57yEqy/Conecta-Social?node-id=1669-162202&t=Ic0Ttr16nL0o8TLl-1). O roteiro completo está em [`docs/prototipo.md`](docs/prototipo.md).
+O protótipo navegável está disponível no [Figma](https://www.figma.com/proto/YChrqTf5IiwA9skwfSP8O7/Conecta-Social--Copy-?node-id=2603-15&starting-point-node-id=2603-15). O roteiro completo está em [`docs/prototipo.md`](docs/prototipo.md).
 
 ## Licença / Uso acadêmico
 
