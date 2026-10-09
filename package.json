@@ -4,9 +4,11 @@
   "description": "Build do CSS (Tailwind + daisyUI) do Conecta Social",
   "scripts": {
     "build": "tailwindcss -i static/src/tailwind.css -o static/css/tailwind.css --minify",
-    "dev": "tailwindcss -i static/src/tailwind.css -o static/css/tailwind.css --watch"
+    "dev": "tailwindcss -i static/src/tailwind.css -o static/css/tailwind.css --watch",
+    "fonts": "cp node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2 node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-ext-wght-normal.woff2 static/fonts/ && cp node_modules/@fontsource-variable/dm-sans/LICENSE static/fonts/DM-Sans-OFL.txt"
   },
   "devDependencies": {
+    "@fontsource-variable/dm-sans": "5.3.0",
     "daisyui": "4.12.10",
     "tailwindcss": "3.4.17"
   }

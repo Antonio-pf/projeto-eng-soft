@@ -7,7 +7,9 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
+from django.db import connection
 from django.test import SimpleTestCase, TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
@@ -22,6 +24,7 @@ from core.models import (
     UnidadeMedida,
     Usuario,
 )
+from core.painel import montar_resumo, saudacao
 
 
 class CoreSmokeTests(TestCase):
@@ -1305,6 +1308,200 @@ class DistribuicaoListTestCase(TestCase):
         self.client.get(reverse("logout"))
         response = self.client.get(reverse("distribuicao_list"))
         self.assertRedirects(response, reverse("login"))
+
+
+class PainelTests(TestCase):
+    HOJE = date(2026, 10, 15)
+
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+        )
+        self.admin = Usuario.objects.create(
+            nome="Ana Admin",
+            email="ana@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+        )
+        self.doador = Doador.objects.create(nome="João Doador", cpf_cnpj="123.456.789-00")
+        self.familia = Familia.objects.create(
+            nome_responsavel="Família Silva", endereco="Rua A, 123", num_membros=4
+        )
+        self.alimento = CategoriaItem.objects.create(nome="Alimento")
+        self.kg = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.pct = UnidadeMedida.objects.create(nome="Pacote", sigla="pct")
+
+    def _item(self, nome, minimo=0, unidade=None, categoria=None):
+        return Item.objects.create(
+            nome=nome,
+            categoria=categoria or self.alimento,
+            unidade_medida=unidade or self.kg,
+            estoque_minimo=minimo,
+        )
+
+    def _doar(self, item, quantidade, data=None, cancelado=False):
+        return Doacao.objects.create(
+            doador=self.doador,
+            item=item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal(quantidade),
+            data=data or self.HOJE,
+            cancelado=cancelado,
+        )
+
+    def _distribuir(self, item, quantidade, data=None, cancelado=False):
+        return Distribuicao.objects.create(
+            familia=self.familia,
+            item=item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal(quantidade),
+            data=data or self.HOJE,
+            cancelado=cancelado,
+        )
+
+    def _categoria(self, resumo, nome):
+        return next(c for c in resumo.categorias if c.nome == nome)
+
+    def test_ct15_total_da_categoria_soma_os_saldos_e_reflete_movimentacao(self):
+        arroz = self._item("Arroz")
+        self._doar(arroz, 10)
+        self._doar(self._item("Feijão"), 20)
+        self._doar(self._item("Milho"), 30)
+
+        alimento = self._categoria(montar_resumo(self.HOJE), "Alimento")
+        self.assertEqual([(t.quantidade, t.sigla) for t in alimento.totais], [(60, "kg")])
+
+        self._distribuir(arroz, 5)
+        alimento = self._categoria(montar_resumo(self.HOJE), "Alimento")
+        self.assertEqual([(t.quantidade, t.sigla) for t in alimento.totais], [(55, "kg")])
+
+    def test_categoria_com_unidades_diferentes_mostra_totais_separados(self):
+        self._doar(self._item("Arroz", unidade=self.kg), 50)
+        self._doar(self._item("Biscoito", unidade=self.pct), 12)
+
+        alimento = self._categoria(montar_resumo(self.HOJE), "Alimento")
+
+        self.assertEqual(
+            [(t.quantidade, t.sigla) for t in alimento.totais], [(50, "kg"), (12, "pct")]
+        )
+
+    def test_movimentacoes_canceladas_nao_entram_no_saldo(self):
+        arroz = self._item("Arroz", minimo=5)
+        self._doar(arroz, 20)
+        self._doar(arroz, 100, cancelado=True)
+        self._distribuir(arroz, 8, cancelado=True)
+
+        resumo = montar_resumo(self.HOJE)
+
+        self.assertEqual(self._categoria(resumo, "Alimento").totais[0].quantidade, 20)
+        self.assertEqual(resumo.itens_em_alerta, 0)
+
+    def test_pontos_de_atencao_listam_ate_cinco_itens_do_menor_saldo(self):
+        for indice in range(7):
+            self._doar(self._item(f"Item {indice}", minimo=10), 9 - indice)
+        self._doar(self._item("Folgado", minimo=10), 50)
+
+        resumo = montar_resumo(self.HOJE)
+
+        self.assertEqual(resumo.itens_em_alerta, 7)
+        self.assertEqual(
+            [item.nome for item in resumo.pontos_de_atencao],
+            ["Item 6", "Item 5", "Item 4", "Item 3", "Item 2"],
+        )
+
+    def test_saldo_igual_ao_minimo_conta_como_alerta(self):
+        self._doar(self._item("Sabonete", minimo=20), 20)
+
+        self.assertEqual(montar_resumo(self.HOJE).itens_em_alerta, 1)
+
+    def test_percentual_de_itens_acima_do_minimo_por_categoria(self):
+        self._doar(self._item("Arroz", minimo=5), 10)
+        self._doar(self._item("Feijão", minimo=5), 10)
+        self._doar(self._item("Milho", minimo=5), 10)
+        self._doar(self._item("Leite", minimo=5), 2)
+        CategoriaItem.objects.create(nome="Higiene")
+
+        resumo = montar_resumo(self.HOJE)
+
+        self.assertEqual(self._categoria(resumo, "Alimento").percentual_acima_minimo, 75)
+        higiene = self._categoria(resumo, "Higiene")
+        self.assertEqual((higiene.quantidade_itens, higiene.percentual_acima_minimo), (0, 0))
+        self.assertEqual(higiene.totais, ())
+
+    def test_variacao_de_itens_em_estoque_compara_com_o_fim_do_mes_anterior(self):
+        arroz = self._item("Arroz")
+        self._doar(arroz, 10, data=date(2026, 9, 30))
+        self._doar(self._item("Feijão"), 5, data=date(2026, 10, 2))
+        self._doar(self._item("Milho"), 5, data=date(2026, 10, 3))
+
+        resumo = montar_resumo(self.HOJE)
+        self.assertEqual((resumo.itens_em_estoque, resumo.variacao_itens_em_estoque), (3, 2))
+        self.assertEqual(resumo.texto_variacao, "+2 este mês")
+
+        self._distribuir(arroz, 10, data=date(2026, 10, 4))
+        self._distribuir(Item.objects.get(nome="Feijão"), 5, data=date(2026, 10, 5))
+        self._distribuir(Item.objects.get(nome="Milho"), 5, data=date(2026, 10, 6))
+        resumo = montar_resumo(self.HOJE)
+        self.assertEqual(resumo.texto_variacao, "−1 este mês")
+
+    def test_sem_variacao(self):
+        self.assertEqual(montar_resumo(self.HOJE).texto_variacao, "Sem variação este mês")
+
+    def test_saudacao_pela_hora(self):
+        self.assertEqual(
+            [saudacao(hora) for hora in (4, 5, 11, 12, 17, 18, 23)],
+            ["Boa noite", "Bom dia", "Bom dia", "Boa tarde", "Boa tarde", "Boa noite", "Boa noite"],
+        )
+
+    def test_voluntario_e_administrador_acessam_o_painel(self):
+        for usuario in (self.voluntario, self.admin):
+            with self.subTest(perfil=usuario.perfil):
+                self.client.force_login(usuario)
+                response = self.client.get(reverse("painel"))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, usuario.nome.split()[0])
+
+    def test_painel_renderiza_categorias_alertas_e_atalhos(self):
+        self._doar(self._item("Arroz"), 60)
+        self._doar(self._item("Leite em pó", minimo=10, unidade=self.pct), 4)
+        self.client.force_login(self.voluntario)
+
+        response = self.client.get(reverse("painel"))
+
+        self.assertContains(response, "Estoque por categoria")
+        self.assertContains(response, "60 kg")
+        self.assertContains(response, "Leite em pó — 4 pct")
+        self.assertContains(response, f'href="{reverse("item_list")}"')
+        self.assertContains(response, f'href="{reverse("distribuicao_create")}"')
+
+    def test_painel_com_banco_vazio(self):
+        CategoriaItem.objects.all().delete()
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("painel"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Nenhum item no estoque mínimo.")
+
+    def test_numero_de_consultas_nao_cresce_com_os_itens(self):
+        self.client.force_login(self.voluntario)
+
+        def consultas():
+            with CaptureQueriesContext(connection) as contexto:
+                self.client.get(reverse("painel"))
+            return len(contexto)
+
+        self._doar(self._item("Item 0", minimo=1), 3)
+        com_um_item = consultas()
+        for indice in range(1, 10):
+            self._doar(self._item(f"Item {indice}", minimo=5), indice)
+
+        self.assertEqual(consultas(), com_um_item)
+        with self.assertNumQueries(6):
+            montar_resumo(self.HOJE)
 
 
 class LayoutBaseTests(SimpleTestCase):
