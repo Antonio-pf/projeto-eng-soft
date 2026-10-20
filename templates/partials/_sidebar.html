@@ -35,6 +35,18 @@
                 <img src="{% static 'icons/sidebar/movimentacoes.svg' %}" alt="" class="size-4">
                 Movimentações
             </a>
+            <a href="{% url 'doacao_relatorio' %}"
+               class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name == 'doacao_relatorio' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+               data-testid="sidebar-link-doacao-relatorio">
+                <img src="{% static 'icons/sidebar/movimentacoes.svg' %}" alt="" class="size-4">
+                Histórico de Doações
+            </a>
+            <a href="{% url 'distribuicao_relatorio' %}"
+               class="flex h-10 items-center gap-2.5 rounded-lg pl-3.5 text-[13px] {% if request.resolver_match.url_name == 'distribuicao_relatorio' %}bg-secondary text-white{% else %}text-accent hover:bg-white/5{% endif %}"
+               data-testid="sidebar-link-distribuicao-relatorio">
+                <img src="{% static 'icons/sidebar/movimentacoes.svg' %}" alt="" class="size-4">
+                Relatório de Distribuições
+            </a>
         </nav>
 
         {% if usuario_logado.perfil == "administrador" %}

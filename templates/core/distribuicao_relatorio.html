@@ -1,0 +1,96 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Relatório de Distribuições | Conecta Social{% endblock %}
+
+{% block page_title %}Relatório de Distribuições{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Acompanhe as distribuições agrupadas por família com os totais por item e categoria</p>
+{% endblock %}
+
+{% block content %}
+<section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="distribuicao-relatorio-card">
+    <form method="get" class="mb-6 flex flex-col sm:flex-row gap-3 items-end">
+        <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+            <label class="text-xs font-semibold text-gray-700">Família</label>
+            <select
+                name="familia"
+                class="rounded-lg border border-gray-200 bg-white p-2.5 text-sm text-gray-700"
+                data-testid="filtro-familia"
+            >
+                <option value="">Todas as famílias</option>
+                {% for fam in familias %}
+                <option value="{{ fam.id_familia }}" {% if familia_selecionada == fam.id_familia|stringformat:"s" %}selected{% endif %}>{{ fam.nome_responsavel }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+            <label class="text-xs font-semibold text-gray-700">Data Inicial</label>
+            <input
+                type="date"
+                name="data_inicio"
+                value="{{ data_inicio }}"
+                class="rounded-lg border border-gray-200 bg-white p-2.5 text-sm text-gray-700"
+                data-testid="filtro-data-inicio"
+            >
+        </div>
+        <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+            <label class="text-xs font-semibold text-gray-700">Data Final</label>
+            <input
+                type="date"
+                name="data_fim"
+                value="{{ data_fim }}"
+                class="rounded-lg border border-gray-200 bg-white p-2.5 text-sm text-gray-700"
+                data-testid="filtro-data-fim"
+            >
+        </div>
+        <div class="flex gap-2">
+            <button type="submit" class="btn btn-secondary rounded-md px-4 text-sm font-semibold" data-testid="filtro-submit-button">Filtrar</button>
+            {% if data_inicio or data_fim or familia_selecionada %}
+            <a href="{% url 'distribuicao_relatorio' %}" class="btn btn-ghost rounded-md px-4 text-sm font-semibold">Limpar</a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if relatorio %}
+    <div class="flex flex-col gap-6" data-testid="familias-relatorio-list">
+        {% for entry in relatorio %}
+        <div class="rounded-lg border border-gray-100 bg-gray-50/50 p-4 sm:p-5" data-testid="familia-relatorio-item">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 border-b border-gray-200 pb-3 gap-2">
+                <div>
+                    <h3 class="text-base font-bold text-gray-800" data-testid="familia-nome">{{ entry.familia }}</h3>
+                    <p class="text-xs text-gray-500">Endereço: {{ entry.endereco }}</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[500px]">
+                    <thead>
+                        <tr class="text-left text-xs font-semibold text-gray-500">
+                            <th class="py-2 px-3">Item</th>
+                            <th class="py-2 px-3">Categoria</th>
+                            <th class="py-2 px-3">Unidade</th>
+                            <th class="py-2 px-3 text-right">Quantidade Total</th>
+                            <th class="py-2 px-3 text-right">Nº de Distribuições</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for item in entry.itens %}
+                        <tr data-testid="item-distribuido-row">
+                            <td class="py-2.5 px-3 text-sm text-gray-700 font-medium">{{ item.item_nome }}</td>
+                            <td class="py-2.5 px-3 text-sm text-gray-500">{{ item.categoria }}</td>
+                            <td class="py-2.5 px-3 text-sm text-gray-500">{{ item.unidade }}</td>
+                            <td class="py-2.5 px-3 text-sm text-gray-700 font-semibold text-right">{{ item.quantidade }}</td>
+                            <td class="py-2.5 px-3 text-sm text-gray-700 font-semibold text-right">{{ item.num_distribuicoes }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-gray-500" data-testid="sem-distribuicoes-msg">Nenhum relatório de distribuição encontrado para os filtros selecionados.</p>
+    {% endif %}
+</section>
+{% endblock %}

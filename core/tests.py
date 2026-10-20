@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.forms import UsuarioForm
-from core.models import CategoriaItem, Doacao, Doador, Item, UnidadeMedida, Usuario
+from core.models import CategoriaItem, Distribuicao, Doacao, Doador, Familia, Item, UnidadeMedida, Usuario
 
 
 class CoreSmokeTests(TestCase):
@@ -859,3 +859,203 @@ class DoacaoTestCase(TestCase):
         )
         self.assertRedirects(response, reverse("doacao_create"))
         self.assertEqual(Doacao.objects.count(), 1)
+
+
+class DoacaoRelatorioTestCase(TestCase):
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Voluntário Teste",
+            email="vol@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "vol@conectasocial.org", "senha": "senha-teste"},
+        )
+        self.doador1 = Doador.objects.create(nome="Doador A", cpf_cnpj="111.111.111-11")
+        self.doador2 = Doador.objects.create(nome="Doador B", cpf_cnpj="222.222.222-22")
+
+        self.cat = CategoriaItem.objects.create(nome="Alimento")
+        self.un = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.item1 = Item.objects.create(nome="Arroz", categoria=self.cat, unidade_medida=self.un)
+        self.item2 = Item.objects.create(nome="Feijão", categoria=self.cat, unidade_medida=self.un)
+
+        self.hoje = timezone.localdate()
+        self.ontem = self.hoje - timedelta(days=1)
+        self.semana_passada = self.hoje - timedelta(days=7)
+
+        Doacao.objects.create(
+            doador=self.doador1,
+            item=self.item1,
+            quantidade=Decimal("10.00"),
+            data=self.hoje,
+            registrado_por=self.voluntario,
+        )
+        Doacao.objects.create(
+            doador=self.doador1,
+            item=self.item1,
+            quantidade=Decimal("5.00"),
+            data=self.hoje,
+            registrado_por=self.voluntario,
+        )
+        Doacao.objects.create(
+            doador=self.doador1,
+            item=self.item2,
+            quantidade=Decimal("4.00"),
+            data=self.hoje,
+            registrado_por=self.voluntario,
+        )
+        Doacao.objects.create(
+            doador=self.doador2,
+            item=self.item1,
+            quantidade=Decimal("20.00"),
+            data=self.semana_passada,
+            registrado_por=self.voluntario,
+        )
+
+    def test_relatorio_doacoes_agrupa_por_doador_e_item(self):
+        response = self.client.get(reverse("doacao_relatorio"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Doador A")
+        self.assertContains(response, "Doador B")
+        self.assertContains(response, "Arroz")
+        self.assertContains(response, "Feijão")
+        self.assertContains(response, "15")
+        self.assertContains(response, "4")
+        self.assertContains(response, "20")
+
+    def test_relatorio_doacoes_filtra_por_periodo(self):
+        response = self.client.get(
+            reverse("doacao_relatorio"),
+            {"data_inicio": self.hoje.isoformat(), "data_fim": self.hoje.isoformat()},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Doador A")
+        self.assertNotContains(response, "Doador B")
+
+    def test_relatorio_doacoes_acesso_anonimo_redireciona(self):
+        self.client.get(reverse("logout"))
+        response = self.client.get(reverse("doacao_relatorio"))
+        self.assertRedirects(response, reverse("login"))
+
+
+class DistribuicaoRelatorioTestCase(TestCase):
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Voluntário Teste",
+            email="vol2@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "vol2@conectasocial.org", "senha": "senha-teste"},
+        )
+        self.familia1 = Familia.objects.create(
+            nome_responsavel="Família Silva", endereco="Rua A, 123", num_membros=4
+        )
+        self.familia2 = Familia.objects.create(
+            nome_responsavel="Família Souza", endereco="Rua B, 456", num_membros=3
+        )
+
+        self.cat = CategoriaItem.objects.create(nome="Alimento")
+        self.un = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.item1 = Item.objects.create(nome="Arroz", categoria=self.cat, unidade_medida=self.un)
+        self.item2 = Item.objects.create(nome="Feijão", categoria=self.cat, unidade_medida=self.un)
+
+        self.doador = Doador.objects.create(nome="Doador X", cpf_cnpj="111.111.111-11")
+        Doacao.objects.create(
+            doador=self.doador,
+            item=self.item1,
+            quantidade=Decimal("100.00"),
+            data=timezone.localdate() - timedelta(days=10),
+            registrado_por=self.voluntario,
+        )
+        Doacao.objects.create(
+            doador=self.doador,
+            item=self.item2,
+            quantidade=Decimal("100.00"),
+            data=timezone.localdate() - timedelta(days=10),
+            registrado_por=self.voluntario,
+        )
+
+        self.hoje = timezone.localdate()
+        self.semana_passada = self.hoje - timedelta(days=7)
+
+        Distribuicao.objects.create(
+            familia=self.familia1,
+            item=self.item1,
+            quantidade=Decimal("5.00"),
+            data=self.hoje,
+            registrado_por=self.voluntario,
+        )
+        Distribuicao.objects.create(
+            familia=self.familia1,
+            item=self.item1,
+            quantidade=Decimal("3.00"),
+            data=self.hoje,
+            registrado_por=self.voluntario,
+        )
+        Distribuicao.objects.create(
+            familia=self.familia1,
+            item=self.item2,
+            quantidade=Decimal("4.00"),
+            data=self.hoje,
+            registrado_por=self.voluntario,
+        )
+        Distribuicao.objects.create(
+            familia=self.familia2,
+            item=self.item1,
+            quantidade=Decimal("10.00"),
+            data=self.semana_passada,
+            registrado_por=self.voluntario,
+        )
+
+    def test_relatorio_distribuicoes_agrupa_por_familia_e_item(self):
+        response = self.client.get(reverse("distribuicao_relatorio"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Família Silva")
+        self.assertContains(response, "Família Souza")
+        self.assertContains(response, "Arroz")
+        self.assertContains(response, "Feijão")
+        self.assertContains(response, "Alimento")
+        self.assertContains(response, "8")
+        self.assertContains(response, "2")
+
+    def test_relatorio_distribuicoes_filtra_por_periodo(self):
+        response = self.client.get(
+            reverse("distribuicao_relatorio"),
+            {"data_inicio": self.hoje.isoformat(), "data_fim": self.hoje.isoformat()},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Família Silva")
+        self.assertNotContains(response, "Rua B, 456")
+
+    def test_relatorio_distribuicoes_filtra_por_familia(self):
+        response = self.client.get(
+            reverse("distribuicao_relatorio"),
+            {"familia": str(self.familia2.id_familia)},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Família Souza")
+        self.assertNotContains(response, "Rua A, 123")
+
+    def test_relatorio_distribuicoes_filtra_combinado(self):
+        response = self.client.get(
+            reverse("distribuicao_relatorio"),
+            {
+                "familia": str(self.familia2.id_familia),
+                "data_inicio": self.semana_passada.isoformat(),
+                "data_fim": self.semana_passada.isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Família Souza")
+
+    def test_relatorio_distribuicoes_acesso_anonimo_redireciona(self):
+        self.client.get(reverse("logout"))
+        response = self.client.get(reverse("distribuicao_relatorio"))
+        self.assertRedirects(response, reverse("login"))

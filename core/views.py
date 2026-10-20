@@ -1,6 +1,8 @@
+from collections import defaultdict
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
+from django.db.models import Count, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -15,7 +17,7 @@ from core.forms import (
     LoginForm,
     UsuarioForm,
 )
-from core.models import CategoriaItem, Doador, Familia, Item, Usuario
+from core.models import CategoriaItem, Distribuicao, Doacao, Doador, Familia, Item, Usuario
 
 
 def home(request):
@@ -311,3 +313,135 @@ def doacao_create(request):
     else:
         form = DoacaoForm()
     return render(request, "core/doacao_form.html", {"form": form})
+
+
+@login_obrigatorio
+def doacao_relatorio(request):
+    data_inicio = request.GET.get("data_inicio", "").strip()
+    data_fim = request.GET.get("data_fim", "").strip()
+
+    doacoes = Doacao.objects.filter(cancelado=False).select_related(
+        "doador", "item", "item__unidade_medida"
+    )
+    if data_inicio:
+        doacoes = doacoes.filter(data__gte=data_inicio)
+    if data_fim:
+        doacoes = doacoes.filter(data__lte=data_fim)
+
+    totais = (
+        doacoes.values(
+            "doador__id_doador",
+            "doador__nome",
+            "doador__cpf_cnpj",
+            "item__id_item",
+            "item__nome",
+            "item__unidade_medida__sigla",
+        )
+        .annotate(total_quantidade=Sum("quantidade"))
+        .order_by("doador__nome", "item__nome")
+    )
+
+    doadores_dict = defaultdict(
+        lambda: {"doador": None, "cpf_cnpj": "", "itens": [], "total_geral": 0}
+    )
+
+    for row in totais:
+        d_id = row["doador__id_doador"]
+        if doadores_dict[d_id]["doador"] is None:
+            doadores_dict[d_id]["doador"] = row["doador__nome"]
+            doadores_dict[d_id]["cpf_cnpj"] = row["doador__cpf_cnpj"]
+
+        doadores_dict[d_id]["itens"].append(
+            {
+                "item_nome": row["item__nome"],
+                "unidade": row["item__unidade_medida__sigla"],
+                "quantidade": row["total_quantidade"],
+            }
+        )
+        doadores_dict[d_id]["total_geral"] += row["total_quantidade"]
+
+    relatorio = sorted(
+        doadores_dict.values(), key=lambda x: x["total_geral"], reverse=True
+    )
+
+    return render(
+        request,
+        "core/doacao_relatorio.html",
+        {
+            "relatorio": relatorio,
+            "data_inicio": data_inicio,
+            "data_fim": data_fim,
+        },
+    )
+
+
+@login_obrigatorio
+def distribuicao_relatorio(request):
+    data_inicio = request.GET.get("data_inicio", "").strip()
+    data_fim = request.GET.get("data_fim", "").strip()
+    familia_id = request.GET.get("familia", "").strip()
+
+    distribuicoes = Distribuicao.objects.filter(cancelado=False).select_related(
+        "familia", "item", "item__categoria", "item__unidade_medida"
+    )
+    if data_inicio:
+        distribuicoes = distribuicoes.filter(data__gte=data_inicio)
+    if data_fim:
+        distribuicoes = distribuicoes.filter(data__lte=data_fim)
+    if familia_id:
+        distribuicoes = distribuicoes.filter(familia_id=familia_id)
+
+    totais = (
+        distribuicoes.values(
+            "familia__id_familia",
+            "familia__nome_responsavel",
+            "familia__endereco",
+            "item__id_item",
+            "item__nome",
+            "item__categoria__nome",
+            "item__unidade_medida__sigla",
+        )
+        .annotate(
+            total_quantidade=Sum("quantidade"),
+            numero_distribuicoes=Count("id_distribuicao"),
+        )
+        .order_by("familia__nome_responsavel", "item__nome")
+    )
+
+    familias_dict = defaultdict(
+        lambda: {"familia": None, "endereco": "", "itens": [], "total_geral": 0}
+    )
+
+    for row in totais:
+        f_id = row["familia__id_familia"]
+        if familias_dict[f_id]["familia"] is None:
+            familias_dict[f_id]["familia"] = row["familia__nome_responsavel"]
+            familias_dict[f_id]["endereco"] = row["familia__endereco"]
+
+        familias_dict[f_id]["itens"].append(
+            {
+                "item_nome": row["item__nome"],
+                "categoria": row["item__categoria__nome"],
+                "unidade": row["item__unidade_medida__sigla"],
+                "quantidade": row["total_quantidade"],
+                "num_distribuicoes": row["numero_distribuicoes"],
+            }
+        )
+        familias_dict[f_id]["total_geral"] += row["total_quantidade"]
+
+    relatorio = sorted(
+        familias_dict.values(), key=lambda x: x["total_geral"], reverse=True
+    )
+    familias = Familia.objects.all().order_by("nome_responsavel")
+
+    return render(
+        request,
+        "core/distribuicao_relatorio.html",
+        {
+            "relatorio": relatorio,
+            "familias": familias,
+            "data_inicio": data_inicio,
+            "data_fim": data_fim,
+            "familia_selecionada": familia_id,
+        },
+    )
