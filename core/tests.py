@@ -1100,6 +1100,74 @@ class DistribuicaoTestCase(TestCase):
 
 
 class DoacaoListTestCase(TestCase):
+    def test_totais_agrupam_por_identidade_do_doador_e_item(self):
+        outro_item = Item.objects.create(
+            nome=self.item.nome,
+            categoria=self.item.categoria,
+            unidade_medida=self.item.unidade_medida,
+        )
+        self.doador2.nome = self.doador1.nome
+        self.doador2.save()
+        for item, quantidade in [(self.item, "2.75"), (outro_item, "4.50")]:
+            Doacao.objects.create(
+                doador=self.doador1,
+                item=item,
+                registrado_por=self.voluntario,
+                quantidade=Decimal(quantidade),
+                data=date(2026, 1, 10),
+            )
+        response = self.client.get(reverse("doacao_list"))
+        totais = {
+            (linha["doador_id"], linha["item_id"]): linha["total"]
+            for linha in response.context["totais_por_doador"]
+        }
+        self.assertEqual(
+            totais,
+            {
+                (self.doador1.pk, self.item.pk): Decimal("7.75"),
+                (self.doador1.pk, outro_item.pk): Decimal("4.50"),
+                (self.doador2.pk, self.item.pk): Decimal("3"),
+            },
+        )
+        self.assertContains(response, "Totais por doador e item")
+        self.assertContains(response, "kgd")
+
+    def test_totais_respeitam_doador_e_limites_inclusivos_do_periodo(self):
+        response = self.client.get(
+            reverse("doacao_list"),
+            {
+                "id_doador": self.doador1.pk,
+                "data_inicio": "2026-01-10",
+                "data_fim": "2026-01-10",
+            },
+        )
+        totais = list(response.context["totais_por_doador"])
+        self.assertEqual(len(totais), 1)
+        self.assertEqual(totais[0]["total"], Decimal("5"))
+        response = self.client.get(reverse("doacao_list"), {"data_inicio": "2027-01-01"})
+        self.assertEqual(list(response.context["totais_por_doador"]), [])
+        self.assertContains(response, "Nenhuma doação encontrada.")
+
+    def test_totais_incluem_registros_de_todas_as_paginas(self):
+        Doacao.objects.bulk_create(
+            [
+                Doacao(
+                    doador=self.doador1,
+                    item=self.item,
+                    registrado_por=self.voluntario,
+                    quantidade=Decimal("1.25"),
+                    data=date(2026, 1, 10),
+                )
+                for _ in range(25)
+            ]
+        )
+        filtros = {"id_doador": self.doador1.pk}
+        for pagina in [1, 2]:
+            response = self.client.get(reverse("doacao_list"), {**filtros, "page": pagina})
+            totais = list(response.context["totais_por_doador"])
+            self.assertEqual(len(totais), 1)
+            self.assertEqual(totais[0]["total"], Decimal("36.25"))
+
     def setUp(self):
         self.voluntario = Usuario.objects.create(
             nome="Voluntario Historico",

@@ -16,7 +16,7 @@
 {% block main %}
 <main>
     <section id="inicio" class="bg-primary text-primary-content">
-        <div class="mx-auto grid max-w-6xl items-center gap-16 px-6 pb-32 pt-16 lg:min-h-[min(calc(100svh-4rem),52rem)] lg:grid-cols-[1.05fr_0.95fr] lg:pb-36 lg:pt-12">
+        <div class="mx-auto max-w-6xl px-6 pb-32 pt-16 lg:pb-36 lg:pt-24">
             <div>
                 <p class="entrada text-xs font-bold uppercase tracking-[0.18em] text-accent">Gestão de doações para ONGs</p>
                 <h1 class="entrada entrada-2 mt-5 max-w-xl text-4xl font-bold leading-[1.1] sm:text-5xl lg:text-[3.5rem]">Organizar recursos também é uma forma de cuidar.</h1>
@@ -32,40 +32,6 @@
                 <p class="entrada entrada-3 mt-10 text-xs text-conecta-on-dark-muted">Projeto do Laboratório de Engenharia de Software · ADS · Fatec Ribeirão Preto · 2026/2</p>
             </div>
 
-            <figure class="entrada entrada-3 relative mx-auto w-full max-w-md lg:mr-0" role="img" aria-label="Exemplo da tela de distribuição: o sistema bloqueia a saída de 50 unidades de pasta de dente porque o saldo é 20.">
-                <div class="rounded-2xl bg-white p-6 shadow-2xl shadow-black/25 sm:p-7">
-                    <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">Movimentações</p>
-                    <p class="mt-1 text-xl font-bold text-neutral">Registrar distribuição</p>
-                    <div class="mt-6 grid gap-4 text-sm">
-                        <div>
-                            <p class="mb-1.5 text-xs font-medium text-neutral">Família</p>
-                            <p class="rounded-[10px] bg-conecta-form px-3.5 py-2.5 text-neutral">Família Santos</p>
-                        </div>
-                        <div>
-                            <p class="mb-1.5 text-xs font-medium text-neutral">Item</p>
-                            <p class="flex items-center justify-between rounded-[10px] bg-conecta-form px-3.5 py-2.5 text-neutral">Pasta de dente <span class="rounded-md bg-secondary/15 px-2 py-0.5 text-xs font-semibold text-primary">saldo 20</span></p>
-                        </div>
-                        <div>
-                            <p class="mb-1.5 text-xs font-medium text-neutral">Quantidade</p>
-                            <p class="rounded-[10px] bg-conecta-form px-3.5 py-2.5 text-neutral ring-1 ring-[color:var(--conecta-alert)]">50</p>
-                        </div>
-                    </div>
-                    <p class="mt-4 rounded-[10px] bg-conecta-alert-soft px-3.5 py-2.5 text-[13px] font-medium text-conecta-alert">Saldo insuficiente: disponível 20.00, solicitado 50.00</p>
-                    <p class="mt-5 rounded-[10px] bg-primary py-3 text-center text-sm font-semibold text-white">Registrar</p>
-                </div>
-                <div class="absolute -right-3 -top-7 hidden w-44 rounded-xl bg-white p-4 shadow-xl shadow-black/20 sm:block lg:-right-8">
-                    <p class="text-[13px] font-bold text-neutral">Arroz 5 kg</p>
-                    <p class="mt-0.5 text-xs text-conecta-muted">saldo 3 · mínimo 10</p>
-                    <span class="mt-2 inline-block rounded-md bg-conecta-alert-soft px-2 py-0.5 text-[11px] font-semibold text-conecta-alert">Baixo estoque</span>
-                </div>
-                <div class="absolute -bottom-10 -left-3 hidden items-center gap-3 rounded-xl bg-white p-4 shadow-xl shadow-black/20 sm:flex lg:-left-10">
-                    <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-primary"><img src="{% static 'icons/sidebar/nova-doacao.svg' %}" alt="" class="size-4"></span>
-                    <span>
-                        <span class="block text-[13px] font-bold text-neutral">Doação registrada</span>
-                        <span class="block text-xs text-conecta-muted">+20 pasta de dente · Mercado Central</span>
-                    </span>
-                </div>
-            </figure>
         </div>
     </section>
 

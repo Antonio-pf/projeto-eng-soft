@@ -4,7 +4,7 @@
 
 {% block page_title %}Histórico de Doações{% endblock %}
 {% block page_subtitle %}
-<p class="text-sm text-gray-500">Consulte as doações registradas, com filtro por doador e por período</p>
+<p class="text-sm text-gray-500">Consulte as doações e os totais por doador e item, com filtro por período</p>
 {% endblock %}
 
 {% block content %}
@@ -14,14 +14,14 @@
 
 <section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
     <form method="get" class="mb-4 flex flex-wrap gap-2">
-        <select name="id_doador" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
+        <select aria-label="Doador" name="id_doador" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
             <option value="">Todos os doadores</option>
             {% for doador in doadores %}
             <option value="{{ doador.pk }}" {% if id_doador == doador.pk|stringformat:"s" %}selected{% endif %}>{{ doador.nome }}</option>
             {% endfor %}
         </select>
-        <input type="date" name="data_inicio" value="{{ data_inicio }}" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
-        <input type="date" name="data_fim" value="{{ data_fim }}" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
+        <input aria-label="Data inicial" type="date" name="data_inicio" value="{{ data_inicio }}" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
+        <input aria-label="Data final" type="date" name="data_fim" value="{{ data_fim }}" class="rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
         <button type="submit" class="btn btn-secondary rounded-md px-4 text-sm font-semibold">Filtrar</button>
         {% if id_doador or data_inicio or data_fim %}
         <a href="{% url 'doacao_list' %}" class="btn btn-ghost rounded-md px-4 text-sm font-semibold">Limpar</a>
@@ -29,6 +29,31 @@
     </form>
 
     {% if page_obj %}
+    <h2 class="mb-4 text-lg font-semibold text-gray-700">Totais por doador e item</h2>
+    <p class="mb-4 text-sm text-gray-500">Totais de todas as doações do período filtrado, excluindo as canceladas.</p>
+    <div class="overflow-x-auto mb-4">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                    <th scope="col" class="px-4 py-3">Doador</th>
+                    <th scope="col" class="px-4 py-3">Item</th>
+                    <th scope="col" class="px-4 py-3">Total doado</th>
+                    <th scope="col" class="px-4 py-3">Unidade</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for total in totais_por_doador %}
+                <tr>
+                    <td class="px-4 py-4 text-sm font-medium text-gray-700">{% ifchanged total.doador_id %}{{ total.doador__nome }}{% endifchanged %}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ total.item__nome }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ total.total|floatformat:2 }}</td>
+                    <td class="px-4 py-4 text-sm text-gray-500">{{ total.item__unidade_medida__sigla }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <h2 class="mb-4 text-lg font-semibold text-gray-700">Doações registradas</h2>
     <div class="overflow-x-auto">
         <table class="w-full min-w-[720px]">
             <thead>

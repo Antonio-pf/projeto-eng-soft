@@ -3,6 +3,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
+from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.dateparse import parse_date
@@ -299,7 +300,7 @@ def doacao_list(request):
     doacoes_list = (
         Doacao.objects.filter(cancelado=False)
         .select_related("doador", "item", "registrado_por")
-        .order_by("-data")
+        .order_by("-data", "-pk")
     )
     if id_doador:
         doacoes_list = doacoes_list.filter(doador_id=id_doador)
@@ -310,6 +311,14 @@ def doacao_list(request):
     if data_fim_parsed:
         doacoes_list = doacoes_list.filter(data__lte=data_fim_parsed)
 
+    totais_por_doador = (
+        doacoes_list.values(
+            "doador_id", "doador__nome", "item_id", "item__nome", "item__unidade_medida__sigla"
+        )
+        .annotate(total=Sum("quantidade"))
+        .order_by("doador__nome", "doador_id", "item__nome", "item_id")
+    )
+
     paginator = Paginator(doacoes_list, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
@@ -317,6 +326,7 @@ def doacao_list(request):
         request,
         "core/doacao_list.html",
         {
+            "totais_por_doador": totais_por_doador,
             "page_obj": page_obj,
             "doadores": Doador.objects.order_by("nome"),
             "id_doador": id_doador,
