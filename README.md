@@ -248,6 +248,15 @@ render.yaml           — configuração de deploy no Render
 - Exemplos: `feat: adiciona cadastro de doador` e `fix(auth): corrige login do administrador`.
 - Toda PR exige revisão de pelo menos 1 integrante antes do merge na `main`.
 
+## Histórico de doações por doador
+
+Em **Histórico de Doações** (`/doacoes/`), o relatório **Totais por doador e item**
+agrupa as doações de cada doador e soma a quantidade de cada item, com sua unidade
+de medida. Os filtros de doador, data inicial e data final se aplicam tanto aos
+totais quanto aos registros detalhados. As datas dos limites são incluídas;
+sem datas, o relatório considera todo o histórico. Doações canceladas não entram
+no relatório, e os totais incluem todas as páginas dos registros filtrados.
+
 ## Testes
 
 Execute os testes e a checagem do Django com o ambiente virtual ativado:
