@@ -1,10 +1,9 @@
 import csv
-from collections import defaultdict
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
-from django.db.models import Count, Sum
+from django.db.models import Count, Max, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -459,71 +458,66 @@ def distribuicao_exportar_csv(request):
     return response
 
 
+def _data_do_filtro(texto):
+    try:
+        return parse_date(texto) if texto else None
+    except ValueError:
+        return None
+
+
 @login_obrigatorio
 def distribuicao_relatorio(request):
+    id_familia = request.GET.get("id_familia", "").strip()
     data_inicio = request.GET.get("data_inicio", "").strip()
     data_fim = request.GET.get("data_fim", "").strip()
-    familia_id = request.GET.get("familia", "").strip()
 
-    distribuicoes = Distribuicao.objects.filter(cancelado=False).select_related(
-        "familia", "item", "item__categoria", "item__unidade_medida"
-    )
-    if data_inicio:
-        distribuicoes = distribuicoes.filter(data__gte=data_inicio)
-    if data_fim:
-        distribuicoes = distribuicoes.filter(data__lte=data_fim)
-    if familia_id:
-        distribuicoes = distribuicoes.filter(familia_id=familia_id)
+    distribuicoes = Distribuicao.objects.filter(cancelado=False)
+    if id_familia.isdigit():
+        distribuicoes = distribuicoes.filter(familia_id=id_familia)
+    inicio = _data_do_filtro(data_inicio)
+    if inicio:
+        distribuicoes = distribuicoes.filter(data__gte=inicio)
+    fim = _data_do_filtro(data_fim)
+    if fim:
+        distribuicoes = distribuicoes.filter(data__lte=fim)
 
-    totais = (
+    linhas = (
         distribuicoes.values(
             "familia__id_familia",
             "familia__nome_responsavel",
-            "familia__endereco",
             "item__id_item",
             "item__nome",
             "item__categoria__nome",
             "item__unidade_medida__sigla",
         )
         .annotate(
-            total_quantidade=Sum("quantidade"),
+            quantidade_total=Sum("quantidade"),
             numero_distribuicoes=Count("id_distribuicao"),
+            ultimo_registro=Max("data"),
         )
         .order_by("familia__nome_responsavel", "item__nome")
     )
-
-    familias_dict = defaultdict(
-        lambda: {"familia": None, "endereco": "", "itens": [], "total_geral": 0}
+    # Somar kg com pacote não diz nada a quem lê o relatório, então o total sai por unidade.
+    total_por_unidade = (
+        distribuicoes.values("item__unidade_medida__sigla")
+        .annotate(total=Sum("quantidade"))
+        .order_by("item__unidade_medida__sigla")
     )
-
-    for row in totais:
-        f_id = row["familia__id_familia"]
-        if familias_dict[f_id]["familia"] is None:
-            familias_dict[f_id]["familia"] = row["familia__nome_responsavel"]
-            familias_dict[f_id]["endereco"] = row["familia__endereco"]
-
-        familias_dict[f_id]["itens"].append(
-            {
-                "item_nome": row["item__nome"],
-                "categoria": row["item__categoria__nome"],
-                "unidade": row["item__unidade_medida__sigla"],
-                "quantidade": row["total_quantidade"],
-                "num_distribuicoes": row["numero_distribuicoes"],
-            }
-        )
-        familias_dict[f_id]["total_geral"] += row["total_quantidade"]
-
-    relatorio = sorted(familias_dict.values(), key=lambda x: x["total_geral"], reverse=True)
-    familias = Familia.objects.all().order_by("nome_responsavel")
+    resumo = distribuicoes.aggregate(
+        familias_atendidas=Count("familia", distinct=True),
+        numero_distribuicoes=Count("id_distribuicao"),
+    )
 
     return render(
         request,
         "core/distribuicao_relatorio.html",
         {
-            "relatorio": relatorio,
-            "familias": familias,
+            "linhas": linhas,
+            "total_por_unidade": total_por_unidade,
+            "resumo": resumo,
+            "familias": Familia.objects.order_by("nome_responsavel"),
+            "id_familia": id_familia,
             "data_inicio": data_inicio,
             "data_fim": data_fim,
-            "familia_selecionada": familia_id,
         },
     )

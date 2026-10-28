@@ -1696,48 +1696,164 @@ class DistribuicaoRelatorioTestCase(TestCase):
             registrado_por=self.voluntario,
         )
 
+    def linhas(self, **filtros):
+        response = self.client.get(reverse("distribuicao_relatorio"), filtros)
+        self.assertEqual(response.status_code, 200)
+        return [
+            (
+                linha["familia__nome_responsavel"],
+                linha["item__nome"],
+                linha["quantidade_total"],
+                linha["numero_distribuicoes"],
+            )
+            for linha in response.context["linhas"]
+        ]
+
     def test_relatorio_distribuicoes_agrupa_por_familia_e_item(self):
+        self.assertEqual(
+            self.linhas(),
+            [
+                ("Família Silva", "Arroz", Decimal("8.00"), 2),
+                ("Família Silva", "Feijão", Decimal("4.00"), 1),
+                ("Família Souza", "Arroz", Decimal("10.00"), 1),
+            ],
+        )
         response = self.client.get(reverse("distribuicao_relatorio"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Família Silva")
-        self.assertContains(response, "Família Souza")
-        self.assertContains(response, "Arroz")
-        self.assertContains(response, "Feijão")
         self.assertContains(response, "Alimento")
-        self.assertContains(response, "8")
-        self.assertContains(response, "2")
+        self.assertContains(response, "8 kg")
 
-    def test_relatorio_distribuicoes_filtra_por_periodo(self):
-        response = self.client.get(
-            reverse("distribuicao_relatorio"),
-            {"data_inicio": self.hoje.isoformat(), "data_fim": self.hoje.isoformat()},
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Família Silva")
-        self.assertNotContains(response, "Rua B, 456")
+    def test_ct16_relatorio_distribuicoes_filtra_por_periodo(self):
+        linhas = self.linhas(data_inicio=self.hoje.isoformat(), data_fim=self.hoje.isoformat())
+        self.assertEqual([linha[0] for linha in linhas], ["Família Silva", "Família Silva"])
 
-    def test_relatorio_distribuicoes_filtra_por_familia(self):
-        response = self.client.get(
-            reverse("distribuicao_relatorio"),
-            {"familia": str(self.familia2.id_familia)},
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Família Souza")
-        self.assertNotContains(response, "Rua A, 123")
+    def test_ct17_relatorio_distribuicoes_filtra_por_familia(self):
+        linhas = self.linhas(id_familia=str(self.familia2.id_familia))
+        self.assertEqual(linhas, [("Família Souza", "Arroz", Decimal("10.00"), 1)])
 
     def test_relatorio_distribuicoes_filtra_combinado(self):
-        response = self.client.get(
-            reverse("distribuicao_relatorio"),
-            {
-                "familia": str(self.familia2.id_familia),
-                "data_inicio": self.semana_passada.isoformat(),
-                "data_fim": self.semana_passada.isoformat(),
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Família Souza")
+        filtros = {
+            "id_familia": str(self.familia2.id_familia),
+            "data_inicio": self.semana_passada.isoformat(),
+            "data_fim": self.semana_passada.isoformat(),
+        }
+        self.assertEqual(self.linhas(**filtros), [("Família Souza", "Arroz", Decimal("10.00"), 1)])
+        filtros["data_inicio"] = filtros["data_fim"] = self.hoje.isoformat()
+        self.assertEqual(self.linhas(**filtros), [])
 
     def test_relatorio_distribuicoes_acesso_anonimo_redireciona(self):
         self.client.get(reverse("logout"))
         response = self.client.get(reverse("distribuicao_relatorio"))
         self.assertRedirects(response, reverse("login"))
+
+    def test_ultimo_registro_e_a_data_mais_recente_do_grupo(self):
+        Distribuicao.objects.create(
+            familia=self.familia2,
+            item=self.item1,
+            quantidade=Decimal("1.00"),
+            data=self.semana_passada - timedelta(days=3),
+            registrado_por=self.voluntario,
+        )
+        response = self.client.get(
+            reverse("distribuicao_relatorio"), {"id_familia": str(self.familia2.id_familia)}
+        )
+        [linha] = response.context["linhas"]
+        self.assertEqual(linha["ultimo_registro"], self.semana_passada)
+        self.assertEqual(linha["numero_distribuicoes"], 2)
+        self.assertContains(response, self.semana_passada.strftime("%d/%m/%Y"))
+
+    def test_distribuicao_cancelada_fica_fora_do_relatorio(self):
+        Distribuicao.objects.create(
+            familia=self.familia2,
+            item=self.item2,
+            quantidade=Decimal("7.00"),
+            data=self.hoje,
+            registrado_por=self.voluntario,
+            cancelado=True,
+        )
+        self.assertNotIn(("Família Souza", "Feijão", Decimal("7.00"), 1), self.linhas())
+        response = self.client.get(reverse("distribuicao_relatorio"))
+        self.assertEqual(response.context["resumo"]["numero_distribuicoes"], 4)
+
+    def test_resumo_soma_por_unidade_e_conta_familias_e_distribuicoes(self):
+        pacote = UnidadeMedida.objects.create(nome="Pacote", sigla="pct")
+        macarrao = Item.objects.create(nome="Macarrão", categoria=self.cat, unidade_medida=pacote)
+        Doacao.objects.create(
+            doador=self.doador,
+            item=macarrao,
+            quantidade=Decimal("10.00"),
+            data=self.semana_passada,
+            registrado_por=self.voluntario,
+        )
+        Distribuicao.objects.create(
+            familia=self.familia2,
+            item=macarrao,
+            quantidade=Decimal("2.00"),
+            data=self.hoje,
+            registrado_por=self.voluntario,
+        )
+        response = self.client.get(reverse("distribuicao_relatorio"))
+        self.assertEqual(response.context["resumo"]["familias_atendidas"], 2)
+        self.assertEqual(response.context["resumo"]["numero_distribuicoes"], 5)
+        self.assertContains(response, "22 kg · 2 pct")
+
+    def test_filtros_invalidos_sao_ignorados(self):
+        for filtros in (
+            {"id_familia": "abc"},
+            {"data_inicio": "2026-02-30"},
+            {"data_fim": "ontem"},
+        ):
+            with self.subTest(filtros=filtros):
+                self.assertEqual(len(self.linhas(**filtros)), 3)
+
+    def test_relatorio_sem_distribuicoes(self):
+        Distribuicao.objects.all().delete()
+        response = self.client.get(reverse("distribuicao_relatorio"))
+        self.assertContains(response, "Nenhuma distribuição encontrada")
+        self.assertEqual(response.context["resumo"]["familias_atendidas"], 0)
+
+    def test_administrador_acessa_o_relatorio(self):
+        Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin2@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"), {"email": "admin2@conectasocial.org", "senha": "senha-teste"}
+        )
+        self.assertEqual(self.client.get(reverse("distribuicao_relatorio")).status_code, 200)
+
+    def test_exportar_csv_leva_os_filtros_do_relatorio(self):
+        response = self.client.get(
+            reverse("distribuicao_relatorio"),
+            {"id_familia": str(self.familia2.id_familia), "data_inicio": "2026-01-01"},
+        )
+        self.assertContains(
+            response,
+            f"{reverse('distribuicao_exportar_csv')}?id_familia={self.familia2.id_familia}"
+            "&data_inicio=2026-01-01&data_fim=",
+        )
+
+    def test_numero_de_consultas_nao_cresce_com_as_linhas(self):
+        with CaptureQueriesContext(connection) as poucas:
+            self.client.get(reverse("distribuicao_relatorio"))
+        for indice in range(10):
+            item = Item.objects.create(
+                nome=f"Item {indice}", categoria=self.cat, unidade_medida=self.un
+            )
+            Distribuicao.objects.create(
+                familia=self.familia1,
+                item=item,
+                quantidade=Decimal("1.00"),
+                data=self.hoje,
+                registrado_por=self.voluntario,
+            )
+        with CaptureQueriesContext(connection) as muitas:
+            self.client.get(reverse("distribuicao_relatorio"))
+        self.assertEqual(len(poucas), len(muitas))
+
+    def test_menu_lateral_tem_o_relatorio_aberto_no_grupo_de_movimentacoes(self):
+        response = self.client.get(reverse("distribuicao_relatorio"))
+        self.assertContains(response, f'href="{reverse("distribuicao_relatorio")}"')
+        self.assertContains(response, "<details open")
