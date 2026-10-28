@@ -2,6 +2,13 @@
 -- Conecta Social — Schema DDL
 -- PostgreSQL 15+
 -- Uso: psql -d conecta_social -f db/schema.sql
+--
+-- Equipe:
+--   Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
+--   Daniel Souza Monteiro de Carvalho — RA 2840482211052
+--   Cintia Marcelo de Oliveira — RA 2840482421017
+--   Antonio Pires Felipe — RA 2840482211003
+--   Luiz Henrique Neres — RA 2840482423005
 -- ============================================================
 
 BEGIN;
