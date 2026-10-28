@@ -12,7 +12,7 @@
     <div class="drawer lg:drawer-open">
         <input id="sidebar-drawer" type="checkbox" class="drawer-toggle">
         <div class="drawer-content flex min-h-screen flex-col">
-            <header id="dashboard-topbar" class="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-4 lg:px-12 lg:py-5">
+            <header id="dashboard-topbar" class="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-4 lg:px-12 lg:py-5 {% block topbar_class %}{% endblock %}">
                 <label for="sidebar-drawer" class="btn btn-square btn-ghost lg:hidden" aria-label="Abrir menu">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
                 </label>

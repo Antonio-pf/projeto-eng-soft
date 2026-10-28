@@ -1,6 +1,8 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import F, OuterRef, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce
 
 
 class UsuarioManager(BaseUserManager):
@@ -121,6 +123,22 @@ class UnidadeMedida(models.Model):
         return self.nome
 
 
+# Exige a anotação `saldo` de ItemQuerySet.com_saldo().
+EM_ALERTA = Q(saldo__lte=F("estoque_minimo"))
+ACIMA_DO_MINIMO = Q(saldo__gt=F("estoque_minimo"))
+
+
+class ItemQuerySet(models.QuerySet):
+    def com_saldo(self, campo="saldo", antes_de=None):
+        """Anota o saldo de cada item; com `antes_de`, conta só movimentações anteriores à data."""
+        entradas = Doacao.objects.ativas().soma_por_item(antes_de)
+        saidas = Distribuicao.objects.ativas().soma_por_item(antes_de)
+        return self.annotate(**{campo: entradas - saidas})
+
+    def em_alerta(self):
+        return self.com_saldo().filter(EM_ALERTA)
+
+
 class Item(models.Model):
     id_item = models.BigAutoField(primary_key=True)
     nome = models.CharField(max_length=150)
@@ -131,6 +149,8 @@ class Item(models.Model):
         validators=[MinValueValidator(0)],
     )
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    objects = ItemQuerySet.as_manager()
 
     class Meta:
         db_table = "item"
@@ -143,23 +163,39 @@ class Item(models.Model):
 
     @property
     def saldo_atual(self):
-        total_doacoes = (
-            self.doacao_set.filter(cancelado=False).aggregate(total=models.Sum("quantidade"))[
-                "total"
-            ]
-            or 0
-        )
+        total_doacoes = self.doacao_set.ativas().aggregate(total=Sum("quantidade"))["total"] or 0
         total_distribuicoes = (
-            self.distribuicao_set.filter(cancelado=False).aggregate(total=models.Sum("quantidade"))[
-                "total"
-            ]
-            or 0
+            self.distribuicao_set.ativas().aggregate(total=Sum("quantidade"))["total"] or 0
         )
         return total_doacoes - total_distribuicoes
 
     @property
     def abaixo_estoque_minimo(self):
         return self.saldo_atual <= self.estoque_minimo
+
+
+class MovimentacaoQuerySet(models.QuerySet):
+    def ativas(self):
+        return self.filter(cancelado=False)
+
+    def soma_por_item(self, antes_de=None):
+        """Subquery com a soma das quantidades do item da consulta externa (0 se não houver)."""
+        movimentacoes = self.filter(item=OuterRef("pk"))
+        if antes_de is not None:
+            movimentacoes = movimentacoes.filter(data__lt=antes_de)
+        soma = movimentacoes.order_by().values("item").annotate(total=Sum("quantidade"))
+        campo = self.model._meta.get_field("quantidade")
+        return Coalesce(
+            Subquery(soma.values("total"), output_field=campo),
+            Value(0, output_field=campo),
+        )
+
+    def totais_por_categoria_e_unidade(self):
+        return (
+            self.order_by()
+            .values("item__categoria_id", "item__unidade_medida__sigla")
+            .annotate(total=Sum("quantidade"))
+        )
 
 
 class Doacao(models.Model):
@@ -183,6 +219,8 @@ class Doacao(models.Model):
         null=True,
         blank=True,
     )
+
+    objects = MovimentacaoQuerySet.as_manager()
 
     class Meta:
         db_table = "doacao"
@@ -218,6 +256,8 @@ class Distribuicao(models.Model):
         null=True,
         blank=True,
     )
+
+    objects = MovimentacaoQuerySet.as_manager()
 
     class Meta:
         db_table = "distribuicao"

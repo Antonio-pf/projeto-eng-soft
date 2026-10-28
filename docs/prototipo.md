@@ -22,7 +22,7 @@ As telas abaixo foram conferidas no arquivo do Figma. A coluna **Evidência no l
 | Tela | Perfil | História relacionada (E2) | O que a tela mostra/permite | Evidência no layout |
 |---|---|---|---|---|
 | Login (`login`) | Administrador e Voluntário | #1 | Seleção de perfil, e-mail, senha, visibilidade da senha e botão **Entrar**. | Frame `2603:15`; estado Voluntário `2661:26`, com switch animado. |
-| Painel (`painel`) | Administrador e Voluntário | #20 | Cards de estoque por categoria, alerta de item abaixo do mínimo e tabela com item, categoria, saldo, mínimo e ação **Receber**. | Administrador `2603:39`; variante Voluntário `2666:99`, sem Administração. |
+| Painel (`painel`) | Administrador e Voluntário | #20 | Data, saudação e botão **+ Nova movimentação**; indicadores de itens em estoque e itens em alerta; estoque por categoria com barra de itens acima do mínimo; pontos de atenção com os itens no estoque mínimo. Os blocos de doações recebidas, famílias atendidas e movimentações recentes do frame ficam para a #24. | Frame `2603:39` (redesign), usado pelos dois perfis; `2666:99` é a versão anterior da variante Voluntário. |
 | Itens e Categorias (`itens`) | Administrador e Voluntário; criação: Administrador | #10, #11, #12 | Lista de itens com categoria, unidade, saldo, estoque mínimo e status; ações de categoria, item e edição. | Administrador `2603:126`; variante Voluntário `2669:2`. |
 | Doadores (`doadores`) | Voluntário | #5, #6 | Cadastro de doador e consulta da lista de doadores. | Administrador `2603:258`; variante Voluntário `2669:142`. |
 | Famílias (`familias`) | Voluntário | #8, #9 | Cadastro de família e consulta da lista de famílias. | Administrador `2603:344`; variante Voluntário `2669:236`. |

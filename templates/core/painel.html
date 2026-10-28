@@ -2,12 +2,81 @@
 
 {% block title %}Painel | Conecta Social{% endblock %}
 
+{% block topbar_class %}lg:hidden{% endblock %}
 {% block page_title %}Painel{% endblock %}
-{% block page_subtitle %}<p class="text-sm text-gray-500">Visão geral do Conecta Social</p>{% endblock %}
 
 {% block content %}
-<section class="w-full max-w-2xl rounded-xl border border-gray-200 bg-white p-6 sm:p-8">
-    <h2 class="mb-4 text-xl font-bold text-gray-700">Bem-vindo(a), {{ usuario_logado.nome }}</h2>
-    <p class="text-gray-500">Perfil: {{ usuario_logado.get_perfil_display }}</p>
-</section>
+<div class="flex w-full flex-col gap-[22px] text-conecta-title">
+    <header class="flex flex-col gap-[22px]">
+        <p class="text-[11px] font-bold uppercase text-conecta-muted">{{ agora|date:"l, j \d\e F" }}</p>
+        <h2 class="text-[28px] font-bold leading-tight lg:text-[32px]">{{ saudacao }}, {{ primeiro_nome }}</h2>
+        <p class="text-[15px] text-conecta-muted">Aqui está o pulso das doações da sua rede.</p>
+        <a href="{% url 'distribuicao_create' %}"
+           class="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[13px] font-medium text-white transition-colors hover:bg-primary/90 sm:w-[220px]">
+            +&nbsp;&nbsp;Nova movimentação
+        </a>
+    </header>
+
+    <section aria-label="Indicadores" class="grid gap-3 sm:grid-cols-2">
+        <div class="flex flex-col gap-[7px] rounded-xl bg-conecta-mint p-[18px]">
+            <p class="text-[12px] font-medium text-conecta-muted">Itens em estoque</p>
+            <p class="text-[28px] font-bold leading-none">{{ resumo.itens_em_estoque }}</p>
+            <p class="text-[12px] font-medium text-primary">{{ resumo.texto_variacao }}</p>
+        </div>
+        <div class="flex flex-col gap-[7px] rounded-xl bg-conecta-alert-soft p-[18px]">
+            <p class="text-[12px] font-medium text-conecta-muted">Itens em alerta</p>
+            <p class="text-[28px] font-bold leading-none">{{ resumo.itens_em_alerta|stringformat:"02d" }}</p>
+            {% if resumo.itens_em_alerta %}
+            <p class="text-[12px] font-medium text-conecta-alert">Requer atenção</p>
+            {% else %}
+            <p class="text-[12px] font-medium text-primary">Tudo em dia</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_336px]">
+        <section class="flex flex-col gap-[14px] rounded-xl bg-white p-[22px]">
+            <div class="flex flex-col gap-[14px]">
+                <h3 class="text-[19px] font-bold">Estoque por categoria</h3>
+                <p class="text-[13px] text-conecta-muted">Total disponível por unidade e itens acima do estoque mínimo.</p>
+            </div>
+            {% for categoria in resumo.categorias %}
+            <div class="flex flex-col gap-[14px]">
+                <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13px]">
+                    <span class="font-medium">{{ categoria.nome }}</span>
+                    <span class="text-conecta-muted">
+                        {% for total in categoria.totais %}{{ total.quantidade|floatformat:"-2" }} {{ total.sigla }}{% if not forloop.last %} · {% endif %}{% empty %}{% if categoria.quantidade_itens %}Sem saldo{% else %}Nenhum item cadastrado{% endif %}{% endfor %}
+                    </span>
+                    {% if categoria.quantidade_itens %}
+                    <span class="ml-auto font-medium">{{ categoria.percentual_acima_minimo }}% acima do mínimo</span>
+                    {% endif %}
+                </div>
+                <div class="h-2 w-full rounded bg-conecta-form"
+                     role="progressbar" aria-label="Itens de {{ categoria.nome }} acima do estoque mínimo"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ categoria.percentual_acima_minimo }}">
+                    <div class="h-2 rounded {% if categoria.percentual_acima_minimo < 50 %}bg-accent{% else %}bg-secondary{% endif %}"
+                         style="width: {{ categoria.percentual_acima_minimo }}%"></div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-[13px] text-conecta-muted">Nenhuma categoria cadastrada.</p>
+            {% endfor %}
+        </section>
+
+        <section class="flex flex-col gap-3 rounded-xl bg-conecta-alert-soft p-[22px] lg:min-h-[312px]">
+            <h3 class="text-[19px] font-bold">Pontos de atenção</h3>
+            <p class="text-[13px] text-conecta-muted">Itens no estoque mínimo.</p>
+            {% for item in resumo.pontos_de_atencao %}
+            <p class="text-[13px] font-medium">{{ item.nome }} — {{ item.saldo|floatformat:"-2" }} {{ item.unidade_medida.sigla }}</p>
+            {% empty %}
+            <p class="text-[13px] font-medium">Nenhum item no estoque mínimo.</p>
+            {% endfor %}
+            {% if resumo.itens_em_alerta %}
+            <a href="{% url 'item_list' %}" class="mt-auto pt-2 text-[13px] font-medium text-primary underline-offset-4 hover:underline">
+                Ver todos ({{ resumo.itens_em_alerta }})
+            </a>
+            {% endif %}
+        </section>
+    </div>
+</div>
 {% endblock %}
