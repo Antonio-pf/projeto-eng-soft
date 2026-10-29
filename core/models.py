@@ -190,13 +190,6 @@ class MovimentacaoQuerySet(models.QuerySet):
             Value(0, output_field=campo),
         )
 
-    def totais_por_categoria_e_unidade(self):
-        return (
-            self.order_by()
-            .values("item__categoria_id", "item__unidade_medida__sigla")
-            .annotate(total=Sum("quantidade"))
-        )
-
 
 class Doacao(models.Model):
     id_doacao = models.BigAutoField(primary_key=True)

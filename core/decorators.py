@@ -8,7 +8,7 @@ from core.models import Usuario
 
 
 def login_obrigatorio(view_func):
-    # Wrapper sobre login_required; usuário desativado perde acesso automático (Usuario.is_active).
+    # Usuário desativado perde o acesso porque o login_required consulta Usuario.is_active.
     return login_required(view_func, login_url="login", redirect_field_name=None)
 
 

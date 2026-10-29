@@ -1431,7 +1431,7 @@ class PainelTests(TestCase):
         )
 
     def _categoria(self, resumo, nome):
-        return next(c for c in resumo.categorias if c.nome == nome)
+        return next(c for c in resumo["categorias"] if c["nome"] == nome)
 
     def test_ct15_total_da_categoria_soma_os_saldos_e_reflete_movimentacao(self):
         arroz = self._item("Arroz")
@@ -1440,11 +1440,11 @@ class PainelTests(TestCase):
         self._doar(self._item("Milho"), 30)
 
         alimento = self._categoria(montar_resumo(self.HOJE), "Alimento")
-        self.assertEqual([(t.quantidade, t.sigla) for t in alimento.totais], [(60, "kg")])
+        self.assertEqual([(t["quantidade"], t["sigla"]) for t in alimento["totais"]], [(60, "kg")])
 
         self._distribuir(arroz, 5)
         alimento = self._categoria(montar_resumo(self.HOJE), "Alimento")
-        self.assertEqual([(t.quantidade, t.sigla) for t in alimento.totais], [(55, "kg")])
+        self.assertEqual([(t["quantidade"], t["sigla"]) for t in alimento["totais"]], [(55, "kg")])
 
     def test_categoria_com_unidades_diferentes_mostra_totais_separados(self):
         self._doar(self._item("Arroz", unidade=self.kg), 50)
@@ -1453,7 +1453,7 @@ class PainelTests(TestCase):
         alimento = self._categoria(montar_resumo(self.HOJE), "Alimento")
 
         self.assertEqual(
-            [(t.quantidade, t.sigla) for t in alimento.totais], [(50, "kg"), (12, "pct")]
+            [(t["quantidade"], t["sigla"]) for t in alimento["totais"]], [(50, "kg"), (12, "pct")]
         )
 
     def test_movimentacoes_canceladas_nao_entram_no_saldo(self):
@@ -1464,8 +1464,8 @@ class PainelTests(TestCase):
 
         resumo = montar_resumo(self.HOJE)
 
-        self.assertEqual(self._categoria(resumo, "Alimento").totais[0].quantidade, 20)
-        self.assertEqual(resumo.itens_em_alerta, 0)
+        self.assertEqual(self._categoria(resumo, "Alimento")["totais"][0]["quantidade"], 20)
+        self.assertEqual(resumo["itens_em_alerta"], 0)
 
     def test_pontos_de_atencao_listam_ate_cinco_itens_do_menor_saldo(self):
         for indice in range(7):
@@ -1474,16 +1474,16 @@ class PainelTests(TestCase):
 
         resumo = montar_resumo(self.HOJE)
 
-        self.assertEqual(resumo.itens_em_alerta, 7)
+        self.assertEqual(resumo["itens_em_alerta"], 7)
         self.assertEqual(
-            [item.nome for item in resumo.pontos_de_atencao],
+            [item.nome for item in resumo["pontos_de_atencao"]],
             ["Item 6", "Item 5", "Item 4", "Item 3", "Item 2"],
         )
 
     def test_saldo_igual_ao_minimo_conta_como_alerta(self):
         self._doar(self._item("Sabonete", minimo=20), 20)
 
-        self.assertEqual(montar_resumo(self.HOJE).itens_em_alerta, 1)
+        self.assertEqual(montar_resumo(self.HOJE)["itens_em_alerta"], 1)
 
     def test_percentual_de_itens_acima_do_minimo_por_categoria(self):
         self._doar(self._item("Arroz", minimo=5), 10)
@@ -1494,10 +1494,10 @@ class PainelTests(TestCase):
 
         resumo = montar_resumo(self.HOJE)
 
-        self.assertEqual(self._categoria(resumo, "Alimento").percentual_acima_minimo, 75)
+        self.assertEqual(self._categoria(resumo, "Alimento")["percentual_acima_minimo"], 75)
         higiene = self._categoria(resumo, "Higiene")
-        self.assertEqual((higiene.quantidade_itens, higiene.percentual_acima_minimo), (0, 0))
-        self.assertEqual(higiene.totais, ())
+        self.assertEqual((higiene["quantidade_itens"], higiene["percentual_acima_minimo"]), (0, 0))
+        self.assertEqual(higiene["totais"], [])
 
     def test_variacao_de_itens_em_estoque_compara_com_o_fim_do_mes_anterior(self):
         arroz = self._item("Arroz")
@@ -1506,17 +1506,17 @@ class PainelTests(TestCase):
         self._doar(self._item("Milho"), 5, data=date(2026, 10, 3))
 
         resumo = montar_resumo(self.HOJE)
-        self.assertEqual((resumo.itens_em_estoque, resumo.variacao_itens_em_estoque), (3, 2))
-        self.assertEqual(resumo.texto_variacao, "+2 este mês")
+        self.assertEqual((resumo["itens_em_estoque"], resumo["variacao_itens_em_estoque"]), (3, 2))
+        self.assertEqual(resumo["texto_variacao"], "+2 este mês")
 
         self._distribuir(arroz, 10, data=date(2026, 10, 4))
         self._distribuir(Item.objects.get(nome="Feijão"), 5, data=date(2026, 10, 5))
         self._distribuir(Item.objects.get(nome="Milho"), 5, data=date(2026, 10, 6))
         resumo = montar_resumo(self.HOJE)
-        self.assertEqual(resumo.texto_variacao, "−1 este mês")
+        self.assertEqual(resumo["texto_variacao"], "−1 este mês")
 
     def test_sem_variacao(self):
-        self.assertEqual(montar_resumo(self.HOJE).texto_variacao, "Sem variação este mês")
+        self.assertEqual(montar_resumo(self.HOJE)["texto_variacao"], "Sem variação este mês")
 
     def test_saudacao_pela_hora(self):
         self.assertEqual(
@@ -1857,3 +1857,29 @@ class DistribuicaoRelatorioTestCase(TestCase):
         response = self.client.get(reverse("distribuicao_relatorio"))
         self.assertContains(response, f'href="{reverse("distribuicao_relatorio")}"')
         self.assertContains(response, "<details open")
+
+
+class FiltrosInvalidosTests(TestCase):
+    def setUp(self):
+        Usuario.objects.create(
+            nome="Voluntário Filtro",
+            email="filtro@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"), {"email": "filtro@conectasocial.org", "senha": "senha-teste"}
+        )
+
+    def test_pessoa_e_data_invalidas_nao_derrubam_as_listas(self):
+        for url_name, parametro in (
+            ("doacao_list", "id_doador"),
+            ("distribuicao_list", "id_familia"),
+            ("distribuicao_exportar_csv", "id_familia"),
+        ):
+            with self.subTest(url_name=url_name):
+                response = self.client.get(
+                    reverse(url_name), {parametro: "abc", "data_inicio": "2026-02-30"}
+                )
+                self.assertEqual(response.status_code, 200)
