@@ -113,7 +113,7 @@ class DoadorForm(forms.ModelForm):
                         r"\d{3}\.\d{3}\.\d{3}-\d{2}|"
                         r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})"
                     ),
-                    "title": ("Informe um CPF com 11 números ou CNPJ com 14 números."),
+                    "title": "Informe um CPF com 11 números ou CNPJ com 14 números.",
                 }
             ),
             "telefone": forms.TextInput(
@@ -122,7 +122,7 @@ class DoadorForm(forms.ModelForm):
                     "placeholder": "(00)00000-0000",
                     "inputmode": "numeric",
                     "maxlength": "14",
-                    "pattern": (r"(?:\d{10,11}|\(\d{2}\)\d{4,5}-\d{4})"),
+                    "pattern": r"(?:\d{10,11}|\(\d{2}\)\d{4,5}-\d{4})",
                     "title": "Informe o telefone com DDD.",
                 }
             ),
@@ -255,16 +255,27 @@ class ItemForm(forms.ModelForm):
             "estoque_minimo": "Estoque Mínimo",
         }
 
-    def clean_estoque_minimo(self):
-        valor = self.cleaned_data.get("estoque_minimo")
-        if valor is not None and valor < 0:
-            raise forms.ValidationError(
-                "O estoque mínimo deve ser um número inteiro maior ou igual a zero."
-            )
-        return valor
+
+class MovimentacaoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound and not self.initial.get("data"):
+            self.initial["data"] = timezone.localdate()
+
+    def clean_quantidade(self):
+        quantidade = self.cleaned_data.get("quantidade")
+        if quantidade is not None and quantidade <= 0:
+            raise forms.ValidationError("A quantidade deve ser maior que zero.")
+        return quantidade
+
+    def clean_data(self):
+        data = self.cleaned_data.get("data")
+        if data is not None and data > timezone.localdate():
+            raise forms.ValidationError("A data não pode ser no futuro.")
+        return data
 
 
-class DoacaoForm(forms.ModelForm):
+class DoacaoForm(MovimentacaoForm):
     class Meta:
         model = Doacao
         fields = ["doador", "item", "quantidade", "data"]
@@ -294,32 +305,15 @@ class DoacaoForm(forms.ModelForm):
             "data": "Data",
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.is_bound and not self.initial.get("data"):
-            self.initial["data"] = timezone.localdate()
 
-    def clean_quantidade(self):
-        quantidade = self.cleaned_data.get("quantidade")
-        if quantidade is not None and quantidade <= 0:
-            raise forms.ValidationError("A quantidade deve ser maior que zero.")
-        return quantidade
-
-    def clean_data(self):
-        data = self.cleaned_data.get("data")
-        if data is not None and data > timezone.localdate():
-            raise forms.ValidationError("A data não pode ser no futuro.")
-        return data
-
-
-class _ItemComSaldoChoiceField(forms.ModelChoiceField):
+class ItemComSaldoChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         return f"{obj.nome} saldo: {obj.saldo_atual:.2f}"
 
 
-class DistribuicaoForm(forms.ModelForm):
-    item = _ItemComSaldoChoiceField(
-        queryset=Item.objects.select_related("unidade_medida").all(),
+class DistribuicaoForm(MovimentacaoForm):
+    item = ItemComSaldoChoiceField(
+        queryset=Item.objects.select_related("unidade_medida"),
         label="Item",
         widget=forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
     )
@@ -350,23 +344,6 @@ class DistribuicaoForm(forms.ModelForm):
             "quantidade": "Quantidade",
             "data": "Data",
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.is_bound and not self.initial.get("data"):
-            self.initial["data"] = timezone.localdate()
-
-    def clean_quantidade(self):
-        quantidade = self.cleaned_data.get("quantidade")
-        if quantidade is not None and quantidade <= 0:
-            raise forms.ValidationError("A quantidade deve ser maior que zero.")
-        return quantidade
-
-    def clean_data(self):
-        data = self.cleaned_data.get("data")
-        if data is not None and data > timezone.localdate():
-            raise forms.ValidationError("A data não pode ser no futuro.")
-        return data
 
     def clean(self):
         cleaned_data = super().clean()

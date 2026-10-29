@@ -3,7 +3,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
-from django.db.models import Sum
+from django.db.models import Count, Max, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -145,13 +145,12 @@ def doador_update(request, pk):
 @login_obrigatorio
 def doador_list(request):
     query = request.GET.get("q", "").strip()
-    doadores_list = Doador.objects.all().order_by("-criado_em")
+    doadores_list = Doador.objects.order_by("-criado_em")
     if query:
         doadores_list = doadores_list.filter(nome__icontains=query)
 
     paginator = Paginator(doadores_list, 20)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(
         request,
@@ -176,13 +175,12 @@ def familia_create(request):
 @login_obrigatorio
 def familia_list(request):
     query = request.GET.get("q", "").strip()
-    familias_list = Familia.objects.all().order_by("-criado_em")
+    familias_list = Familia.objects.order_by("-criado_em")
     if query:
         familias_list = familias_list.filter(nome_responsavel__icontains=query)
 
     paginator = Paginator(familias_list, 20)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(
         request,
@@ -223,13 +221,12 @@ def categoria_update(request, pk):
 @login_obrigatorio
 def categoria_list(request):
     query = request.GET.get("q", "").strip()
-    categorias_list = CategoriaItem.objects.all().order_by("nome")
+    categorias_list = CategoriaItem.objects.order_by("nome")
     if query:
         categorias_list = categorias_list.filter(nome__icontains=query)
 
     paginator = Paginator(categorias_list, 20)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(
         request,
@@ -270,13 +267,12 @@ def item_update(request, pk):
 @login_obrigatorio
 def item_list(request):
     query = request.GET.get("q", "").strip()
-    itens_list = Item.objects.select_related("categoria", "unidade_medida").all().order_by("nome")
+    itens_list = Item.objects.select_related("categoria", "unidade_medida").order_by("nome")
     if query:
         itens_list = itens_list.filter(nome__icontains=query)
 
     paginator = Paginator(itens_list, 20)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(
         request,
@@ -300,25 +296,38 @@ def doacao_create(request):
     return render(request, "core/doacao_form.html", {"form": form})
 
 
+def _data(texto):
+    try:
+        return parse_date(texto) if texto else None
+    except ValueError:
+        return None
+
+
+def _filtrar(movimentacoes, request, campo_pessoa, parametro):
+    filtros = {
+        nome: request.GET.get(nome, "").strip() for nome in (parametro, "data_inicio", "data_fim")
+    }
+    if filtros[parametro].isdigit():
+        movimentacoes = movimentacoes.filter(**{campo_pessoa: filtros[parametro]})
+    inicio = _data(filtros["data_inicio"])
+    if inicio:
+        movimentacoes = movimentacoes.filter(data__gte=inicio)
+    fim = _data(filtros["data_fim"])
+    if fim:
+        movimentacoes = movimentacoes.filter(data__lte=fim)
+    return movimentacoes, filtros
+
+
 @login_obrigatorio
 def doacao_list(request):
-    id_doador = request.GET.get("id_doador", "").strip()
-    data_inicio = request.GET.get("data_inicio", "").strip()
-    data_fim = request.GET.get("data_fim", "").strip()
-
-    doacoes_list = (
+    doacoes_list, filtros = _filtrar(
         Doacao.objects.filter(cancelado=False)
         .select_related("doador", "item", "registrado_por")
-        .order_by("-data", "-pk")
+        .order_by("-data", "-pk"),
+        request,
+        "doador_id",
+        "id_doador",
     )
-    if id_doador:
-        doacoes_list = doacoes_list.filter(doador_id=id_doador)
-    data_inicio_parsed = parse_date(data_inicio) if data_inicio else None
-    if data_inicio_parsed:
-        doacoes_list = doacoes_list.filter(data__gte=data_inicio_parsed)
-    data_fim_parsed = parse_date(data_fim) if data_fim else None
-    if data_fim_parsed:
-        doacoes_list = doacoes_list.filter(data__lte=data_fim_parsed)
 
     totais_por_doador = (
         doacoes_list.values(
@@ -338,9 +347,7 @@ def doacao_list(request):
             "totais_por_doador": totais_por_doador,
             "page_obj": page_obj,
             "doadores": Doador.objects.order_by("nome"),
-            "id_doador": id_doador,
-            "data_inicio": data_inicio,
-            "data_fim": data_fim,
+            **filtros,
         },
     )
 
@@ -349,7 +356,7 @@ def doacao_list(request):
 def distribuicao_create(request):
     itens_saldo = {
         str(item.pk): {"saldo": f"{item.saldo_atual:.2f}", "unidade": item.unidade_medida.sigla}
-        for item in Item.objects.select_related("unidade_medida").all()
+        for item in Item.objects.select_related("unidade_medida")
     }
     if request.method == "POST":
         form = DistribuicaoForm(request.POST)
@@ -368,26 +375,14 @@ def distribuicao_create(request):
 
 @login_obrigatorio
 def distribuicao_list(request):
-    id_familia = request.GET.get("id_familia", "").strip()
-    data_inicio = request.GET.get("data_inicio", "").strip()
-    data_fim = request.GET.get("data_fim", "").strip()
-
-    distribuicoes_list = (
+    distribuicoes_list, filtros = _filtrar(
         Distribuicao.objects.filter(cancelado=False)
         .select_related("familia", "item", "registrado_por")
-        .order_by("-data")
+        .order_by("-data"),
+        request,
+        "familia_id",
+        "id_familia",
     )
-
-    if id_familia:
-        distribuicoes_list = distribuicoes_list.filter(familia_id=id_familia)
-
-    data_inicio_parsed = parse_date(data_inicio) if data_inicio else None
-    if data_inicio_parsed:
-        distribuicoes_list = distribuicoes_list.filter(data__gte=data_inicio_parsed)
-
-    data_fim_parsed = parse_date(data_fim) if data_fim else None
-    if data_fim_parsed:
-        distribuicoes_list = distribuicoes_list.filter(data__lte=data_fim_parsed)
 
     paginator = Paginator(distribuicoes_list, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -398,52 +393,26 @@ def distribuicao_list(request):
         {
             "page_obj": page_obj,
             "familias": Familia.objects.order_by("nome_responsavel"),
-            "id_familia": id_familia,
-            "data_inicio": data_inicio,
-            "data_fim": data_fim,
+            **filtros,
         },
     )
 
 
 @login_obrigatorio
 def distribuicao_exportar_csv(request):
-    id_familia = request.GET.get("id_familia", "").strip()
-    data_inicio = request.GET.get("data_inicio", "").strip()
-    data_fim = request.GET.get("data_fim", "").strip()
-
-    distribuicoes = (
+    distribuicoes, _ = _filtrar(
         Distribuicao.objects.filter(cancelado=False)
         .select_related("familia", "item", "registrado_por")
-        .order_by("-data")
+        .order_by("-data"),
+        request,
+        "familia_id",
+        "id_familia",
     )
-
-    if id_familia:
-        distribuicoes = distribuicoes.filter(familia_id=id_familia)
-
-    data_inicio_parsed = parse_date(data_inicio) if data_inicio else None
-    if data_inicio_parsed:
-        distribuicoes = distribuicoes.filter(data__gte=data_inicio_parsed)
-
-    data_fim_parsed = parse_date(data_fim) if data_fim else None
-    if data_fim_parsed:
-        distribuicoes = distribuicoes.filter(data__lte=data_fim_parsed)
 
     response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
-
     response["Content-Disposition"] = 'attachment; filename="relatorio_distribuicoes.csv"'
-
     writer = csv.writer(response)
-
-    writer.writerow(
-        [
-            "Data",
-            "Família",
-            "Item",
-            "Quantidade",
-            "Usuário",
-        ]
-    )
-
+    writer.writerow(["Data", "Família", "Item", "Quantidade", "Usuário"])
     for distribuicao in distribuicoes:
         writer.writerow(
             [
@@ -454,5 +423,50 @@ def distribuicao_exportar_csv(request):
                 distribuicao.registrado_por.nome,
             ]
         )
-
     return response
+
+
+@login_obrigatorio
+def distribuicao_relatorio(request):
+    distribuicoes, filtros = _filtrar(
+        Distribuicao.objects.filter(cancelado=False), request, "familia_id", "id_familia"
+    )
+
+    linhas = (
+        distribuicoes.values(
+            "familia__id_familia",
+            "familia__nome_responsavel",
+            "item__id_item",
+            "item__nome",
+            "item__categoria__nome",
+            "item__unidade_medida__sigla",
+        )
+        .annotate(
+            quantidade_total=Sum("quantidade"),
+            numero_distribuicoes=Count("id_distribuicao"),
+            ultimo_registro=Max("data"),
+        )
+        .order_by("familia__nome_responsavel", "item__nome")
+    )
+    # Somar kg com pacote não diz nada a quem lê o relatório, então o total sai por unidade.
+    total_por_unidade = (
+        distribuicoes.values("item__unidade_medida__sigla")
+        .annotate(total=Sum("quantidade"))
+        .order_by("item__unidade_medida__sigla")
+    )
+    resumo = distribuicoes.aggregate(
+        familias_atendidas=Count("familia", distinct=True),
+        numero_distribuicoes=Count("id_distribuicao"),
+    )
+
+    return render(
+        request,
+        "core/distribuicao_relatorio.html",
+        {
+            "linhas": linhas,
+            "total_por_unidade": total_por_unidade,
+            "resumo": resumo,
+            "familias": Familia.objects.order_by("nome_responsavel"),
+            **filtros,
+        },
+    )
