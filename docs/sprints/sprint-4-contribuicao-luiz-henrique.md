@@ -8,7 +8,8 @@
 
 | Item | PR/commit | Status |
 |---|---|---|
-| História #21: relatório de distribuições agrupado por família e item, com quantidade total e número de distribuições e filtros por período e família (`/distribuicoes/relatorio/`), mais um relatório de doações por doador e item (`/doacoes/relatorio/`) e testes | `a632519` (19/10/2026), branch `feature/distribuicoes-historico-estorno` | Em branch, sem PR. A branch parte da `main` de 24/09 e versiona a pasta `venv/` |
+| História #21: primeira versão do relatório de distribuições agrupado por família e item, com quantidade total e número de distribuições e filtros por período e família, em uma branch antiga | `a632519` (19/10/2026), branch `feature/distribuicoes-historico-estorno` | Substituído pelo commit abaixo. A branch partia da `main` de 24/09 e versionava a pasta `venv/` |
+| História #21: relatório refeito a partir da `main` atual, sem a pasta `venv/`, com a rota `/distribuicoes/relatorio/` e 5 testes (agrupamento, filtro por período, filtro por família, filtros combinados e acesso anônimo) | `56ce3c6` (28/10/2026) — PR #53 | Concluído. Antonio Felipe complementou no mesmo PR (`d8c463f`), e o PR foi integrado em 29/10/2026 sem revisão de outro integrante |
 | [outros itens da sprint, com PR ou commit] | | |
 
 [Declarar aqui se houve uso de IA generativa na história #21]

@@ -8,11 +8,13 @@
 |---|---|---|
 | Integração na `main` dos PRs #46 (correções da E4), #47 (#20, painel) e #49 (#22, de Daniel Carvalho) | merges `410c821`, `ef8b4b7` e `e1417c5` (28/10/2026) | Concluído. #46 e #47 entraram sem revisão de outro integrante |
 | Recuperação do deploy: diagnóstico do banco gratuito do Render expirado, troca do banco, execução do `seed` em produção e verificação de `/health/` e do login | painel do Render, 28/10/2026 | Concluído |
-| Correções de forma da E2 e da E3: RAs no `db/schema.sql` e título da seção de escopo do termo de aceite | `26603ab` — PR #51 | Aguardando revisão |
+| Correções de forma da E2 e da E3: RAs no `db/schema.sql` e título da seção de escopo do termo de aceite | `26603ab` — PR #51 | Concluído, integrado em 29/10/2026 sem revisão de outro integrante |
+| História #21 (com Luiz Henrique): alinhamento do relatório de distribuições ao protótipo, com resumo por unidade, link de exportação CSV com os filtros e item no menu lateral; ajuste dos testes de Luiz e 9 testes novos | `d8c463f` — PR #53 | Concluído, integrado em 29/10/2026 sem revisão de outro integrante |
+| Simplificação de filtros, formulários e painel, com filtros inválidos nas listas ignorados em vez de gerar erro, e 1 teste novo | `d3285a6` — PR #54 | Concluído, integrado em 29/10/2026 sem revisão de outro integrante |
 | Reconciliação do board: #20 em "Done", issue da #19 reaberta e issue #50 criada para a #24 | board do projeto, 28/10/2026 | Concluído |
-| Documentos coletivos da Sprint 3 (E7, com atraso) e da Sprint 4 (E8): relatório, evidências de teste e retrospectiva | branch `docs/sprint-3` | Em andamento |
+| Documentos coletivos da Sprint 3 (E7, com atraso) e da Sprint 4 (E8): relatório, evidências de teste e retrospectiva | PR #52 (branch `docs/sprint-3-4`) | Em andamento |
 
-Uso de IA generativa: a recuperação do deploy, a revisão do protótipo contra o app e os rascunhos dos documentos das Sprints 3 e 4 foram feitos com apoio de IA (Claude Code), declarado na descrição dos PRs.
+Uso de IA generativa: a recuperação do deploy, a revisão do protótipo contra o app, o alinhamento da #21 ao protótipo, a simplificação do PR #54 e os rascunhos dos documentos das Sprints 3 e 4 foram feitos com apoio de IA (Claude Code), declarado na descrição dos PRs.
 
 ## 2. Rituais que participei
 
