@@ -27,7 +27,7 @@
             {% with url_atual=request.resolver_match.url_name %}
             <ul class="menu menu-sm gap-1 p-0 text-accent">
                 <li>
-                    <details {% if url_atual == 'doacao_create' or url_atual == 'doacao_list' or url_atual == 'distribuicao_create' or url_atual == 'distribuicao_list' %}open{% endif %}>
+                    <details {% if url_atual == 'doacao_create' or url_atual == 'doacao_list' or url_atual == 'distribuicao_create' or url_atual == 'distribuicao_list' or url_atual == 'distribuicao_relatorio' %}open{% endif %}>
                         <summary class="h-10 gap-2.5 pl-3.5 text-[13px]">
                             <img src="{% static 'icons/sidebar/movimentacoes.svg' %}" alt="" class="size-4">
                             Movimentações
@@ -55,6 +55,12 @@
                                 <a href="{% url 'distribuicao_list' %}" class="gap-2.5 text-[12px] {% if url_atual == 'distribuicao_list' %}active{% endif %}">
                                     <img src="{% static 'icons/sidebar/historico.svg' %}" alt="" class="size-4">
                                     Histórico de distribuições
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'distribuicao_relatorio' %}" class="gap-2.5 text-[12px] {% if url_atual == 'distribuicao_relatorio' %}active{% endif %}">
+                                    <img src="{% static 'icons/sidebar/relatorio.svg' %}" alt="" class="size-4">
+                                    Relatório de distribuições
                                 </a>
                             </li>
                         </ul>

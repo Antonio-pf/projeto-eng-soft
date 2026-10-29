@@ -42,6 +42,11 @@ urlpatterns = [
         name="distribuicao_exportar_csv",
     ),
     path(
+        "distribuicoes/relatorio/",
+        views.distribuicao_relatorio,
+        name="distribuicao_relatorio",
+    ),
+    path(
         "distribuicoes/",
         views.distribuicao_list,
         name="distribuicao_list",
