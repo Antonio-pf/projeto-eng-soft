@@ -1,0 +1,14 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Nova Movimentação | Conecta Social{% endblock %}
+
+{% block page_title %}Nova Movimentação{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">Escolha o que você quer registrar</p>
+{% endblock %}
+
+{% block content %}
+<section class="w-full max-w-[700px]">
+    {% include "partials/_movimentacao_escolha.html" %}
+</section>
+{% endblock %}

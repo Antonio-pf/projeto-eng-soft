@@ -1,0 +1,19 @@
+{# Abas Itens | Categorias e botões de cadastro (abrem o modal via htmx; sem JS, vão à página do formulário). #}
+<div class="flex flex-wrap items-center justify-between gap-3">
+    <nav class="flex gap-1 rounded-lg border border-gray-200 bg-white p-1" aria-label="Itens e categorias">
+        <a href="{% url 'item_list' %}"
+           class="rounded-md px-4 py-1.5 text-sm font-semibold {% if aba == 'itens' %}bg-secondary text-white{% else %}text-gray-500 hover:bg-gray-50{% endif %}"
+           {% if aba == "itens" %}aria-current="page"{% endif %}>Itens</a>
+        <a href="{% url 'categoria_list' %}"
+           class="rounded-md px-4 py-1.5 text-sm font-semibold {% if aba == 'categorias' %}bg-secondary text-white{% else %}text-gray-500 hover:bg-gray-50{% endif %}"
+           {% if aba == "categorias" %}aria-current="page"{% endif %}>Categorias</a>
+    </nav>
+    {% if usuario_logado.perfil == "administrador" %}
+    <div class="flex gap-2">
+        <a href="{% url 'categoria_create' %}" hx-get="{% url 'categoria_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+           class="btn btn-outline btn-sm rounded-md">+ Nova categoria</a>
+        <a href="{% url 'item_create' %}" hx-get="{% url 'item_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+           class="btn btn-secondary btn-sm rounded-md">+ Novo item</a>
+    </div>
+    {% endif %}
+</div>

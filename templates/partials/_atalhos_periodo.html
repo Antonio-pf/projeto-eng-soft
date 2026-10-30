@@ -1,0 +1,7 @@
+{# Atalhos de período: botões de envio com name="periodo"; o servidor calcula as datas (ver _filtrar em views.py). #}
+<div class="flex flex-wrap gap-2" role="group" aria-label="Atalhos de período">
+    {% for atalho in atalhos %}
+    <button type="submit" name="periodo" value="{{ atalho.valor }}" aria-pressed="{% if atalho.ativo %}true{% else %}false{% endif %}"
+            class="inline-flex h-9 items-center rounded-full border px-3 text-sm font-medium {% if atalho.ativo %}border-secondary bg-[#eaf5ee] text-primary{% else %}border-gray-200 text-gray-500 hover:bg-gray-50{% endif %}">{{ atalho.rotulo }}</button>
+    {% endfor %}
+</div>

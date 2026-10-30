@@ -1,0 +1,32 @@
+{# Formulário de doador: dentro do modal quando aberto pelo htmx (parcial), ou na página doador_form.html. #}
+{% if parcial %}
+<h3 id="modal-titulo" class="mb-4 text-lg font-bold text-gray-700">{% if editing %}Editar doador{% else %}Novo doador{% endif %}</h3>
+{% endif %}
+
+{% if form.non_field_errors %}
+<div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
+{% endif %}
+
+<form method="post" class="flex flex-col gap-4"{% if parcial %} action="{{ request.path }}" hx-post="{{ request.path }}" hx-target="#modal-conteudo" hx-swap="innerHTML" hx-sync="this:drop"{% endif %}>
+    {% csrf_token %}
+    <div class="flex flex-col gap-4 sm:flex-row">
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.cpf_cnpj %}
+    </div>
+    <div class="flex flex-col gap-4 sm:flex-row">
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.telefone %}
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.email %}
+    </div>
+    <p class="text-xs text-gray-500">Os campos de telefone e e-mail são opcionais.</p>
+    <div class="flex gap-3{% if parcial %} justify-end{% endif %}">
+        {% if parcial %}
+        <button type="button" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold" onclick="this.closest('dialog').close()">Cancelar</button>
+        {% endif %}
+        <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold">
+            {% if editing %}Salvar alterações{% else %}Salvar doador{% endif %}
+        </button>
+        {% if not parcial %}
+        <a href="{% url 'doador_list' %}" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold">Cancelar</a>
+        {% endif %}
+    </div>
+</form>

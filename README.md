@@ -14,6 +14,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 ## Stack
 
 - Frontend: Django Templates + Tailwind CSS 3.4.17 + daisyUI 4.12.10, compilados em um único CSS (`npm run build`), sem CDN
+- Interações sem recarregar a página (modais, busca e filtros): htmx 2.0.11, versionado em `static/js/htmx.min.js` (atualizado com `npm run htmx`), sem CDN
 - Backend: Python 3.12+ + Django 5.2+
 - Banco de dados: PostgreSQL 15+
 - Deploy: Render Web Service + PostgreSQL
@@ -159,6 +160,8 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
    O comando gera `static/css/tailwind.css`, que não é versionado. Ao editar templates ou classes em `core/forms.py`, deixe `npm run dev` rodando em outro terminal para recompilar automaticamente. Sem esse arquivo, as páginas abrem sem estilo.
 
+   O htmx já está versionado em `static/js/htmx.min.js`; não é preciso rodar nada para ele. Para atualizar a versão, altere `htmx.org` no `package.json` e rode `npm install` seguido de `npm run htmx`.
+
 7. Suba o servidor:
 
    ```bash
@@ -237,11 +240,20 @@ Acesse `http://127.0.0.1:8000/login/` (ou `http://localhost:8000/login/` no Dock
 /scripts/             — scripts de qualidade, incluindo validação de commits
 .env.example          — modelo das variáveis de ambiente, sem segredos
 manage.py             — ponto de entrada do Django
-package.json          — build do CSS (Tailwind + daisyUI) via npm
+package.json          — build do CSS (Tailwind + daisyUI) e cópia do htmx via npm
 tailwind.config.js    — arquivos varridos pelo Tailwind e plugin daisyUI
 requirements.txt      — dependências Python
 render.yaml           — configuração de deploy no Render
 ```
+
+## Interações com htmx
+
+As telas internas abrem cadastros em modal e atualizam listas sem recarregar a página. Sem JavaScript, os mesmos links e formulários continuam abrindo as páginas completas.
+
+- **Página inteira ou trecho:** `_render` (em `core/views.py`) devolve a página completa numa navegação normal e só o trecho (`templates/partials/_*.html`) quando o pedido vem do htmx.
+- **Depois de salvar:** `_salvo` redireciona sem htmx; no modal, mostra o toast e dispara o evento `registro-salvo`, que fecha o modal (`static/js/modal.js`) e faz as listas se recarregarem.
+- **Modal compartilhado:** fica em `templates/dashboard_base.html`; os links usam `hx-get="..." hx-target="#modal-conteudo"`.
+- **Envio único:** `static/js/formularios.js` trava o botão dos formulários POST até a resposta chegar.
 
 ## Convenções da equipe
 

@@ -61,14 +61,30 @@
                     <td class="px-4 py-4 text-sm">
                         {% if usuario.id_usuario == usuario_logado.id_usuario %}
                         <span class="text-xs text-gray-400">—</span>
+                        {% elif usuario.ativo %}
+                        <button type="button" class="btn btn-outline btn-error btn-xs" onclick="document.getElementById('confirmar-desativacao-{{ usuario.id_usuario }}').showModal()">Desativar</button>
+                        <dialog id="confirmar-desativacao-{{ usuario.id_usuario }}" class="modal" aria-labelledby="confirmar-desativacao-{{ usuario.id_usuario }}-titulo">
+                            <div class="modal-box max-w-md rounded-xl">
+                                <h3 id="confirmar-desativacao-{{ usuario.id_usuario }}-titulo" class="text-lg font-bold text-gray-700">Desativar o acesso de {{ usuario.nome }}?</h3>
+                                <p class="mt-2 text-sm text-gray-500">{{ usuario.email }} não conseguirá mais entrar no Conecta Social. O acesso pode ser reativado depois.</p>
+                                <div class="modal-action">
+                                    <form method="dialog">
+                                        <button class="btn btn-ghost rounded-md px-4 text-sm font-semibold">Cancelar</button>
+                                    </form>
+                                    <form method="post" action="{% url 'usuario_alternar_status' usuario.id_usuario %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-error rounded-md px-4 text-sm font-semibold">Desativar acesso</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <form method="dialog" class="modal-backdrop">
+                                <button>Fechar</button>
+                            </form>
+                        </dialog>
                         {% else %}
                         <form method="post" action="{% url 'usuario_alternar_status' usuario.id_usuario %}">
                             {% csrf_token %}
-                            {% if usuario.ativo %}
-                            <button type="submit" class="btn btn-outline btn-error btn-xs">Desativar</button>
-                            {% else %}
                             <button type="submit" class="btn btn-outline btn-xs">Ativar</button>
-                            {% endif %}
                         </form>
                         {% endif %}
                     </td>

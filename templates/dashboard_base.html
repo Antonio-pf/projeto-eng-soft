@@ -7,6 +7,9 @@
     <title>{% block title %}Conecta Social{% endblock %}</title>
     <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
     <link href="{% static 'css/app.css' %}" rel="stylesheet">
+    <script src="{% static 'js/htmx.min.js' %}" defer></script>
+    <script src="{% static 'js/modal.js' %}" defer></script>
+    <script src="{% static 'js/formularios.js' %}" defer></script>
 </head>
 <body class="min-h-screen bg-conecta-form text-base-content">
     <div class="drawer lg:drawer-open">
@@ -30,5 +33,13 @@
             {% include "partials/_sidebar.html" %}
         </div>
     </div>
+    {# Modal compartilhado: o htmx carrega os formulários em #modal-conteudo (ver modal.js). #}
+    <dialog id="modal" class="modal" aria-labelledby="modal-titulo">
+        <div id="modal-conteudo" class="modal-box max-w-lg rounded-xl"></div>
+        <form method="dialog" class="modal-backdrop">
+            <button>Fechar</button>
+        </form>
+    </dialog>
+    {% include "partials/_mensagens.html" %}
 </body>
 </html>

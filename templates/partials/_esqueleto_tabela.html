@@ -1,0 +1,13 @@
+{# Skeleton das listas: o CSS (.lista-esqueleto em app.css) só o mostra enquanto o htmx busca os dados. #}
+<div class="lista-esqueleto" aria-hidden="true">
+    <div class="h-10 rounded bg-gray-50"></div>
+    {% for linha in "12345" %}
+    <div class="flex items-center gap-6 border-b border-gray-200 px-4 py-5">
+        <div class="esqueleto-barra w-1/4"></div>
+        <div class="esqueleto-barra w-1/6"></div>
+        <div class="esqueleto-barra w-1/12"></div>
+        <div class="esqueleto-barra w-1/12"></div>
+        <div class="esqueleto-barra ml-auto w-24"></div>
+    </div>
+    {% endfor %}
+</div>

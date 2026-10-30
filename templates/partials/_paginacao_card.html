@@ -1,0 +1,18 @@
+{# Paginação dos históricos: com htmx troca só o card (alvo); sem JS, links normais. #}
+{% if page_obj.has_other_pages %}
+<div class="mt-6 flex justify-center" hx-boost="true" hx-target="#{{ alvo }}" hx-swap="outerHTML" hx-indicator="#{{ alvo }}">
+    <div class="join">
+        {% if page_obj.has_previous %}
+        <a href="{% querystring page=page_obj.previous_page_number %}" class="join-item btn btn-sm">«</a>
+        {% else %}
+        <button class="join-item btn btn-sm btn-disabled">«</button>
+        {% endif %}
+        <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+        {% if page_obj.has_next %}
+        <a href="{% querystring page=page_obj.next_page_number %}" class="join-item btn btn-sm">»</a>
+        {% else %}
+        <button class="join-item btn btn-sm btn-disabled">»</button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

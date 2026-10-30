@@ -1,4 +1,5 @@
 import csv
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -7,6 +8,7 @@ from django.db.models import Count, Max, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.cache import patch_vary_headers
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 
@@ -21,7 +23,16 @@ from core.forms import (
     LoginForm,
     UsuarioForm,
 )
-from core.models import CategoriaItem, Distribuicao, Doacao, Doador, Familia, Item, Usuario
+from core.models import (
+    EM_ALERTA,
+    CategoriaItem,
+    Distribuicao,
+    Doacao,
+    Doador,
+    Familia,
+    Item,
+    Usuario,
+)
 from core.painel import montar_resumo, saudacao
 
 EQUIPE = (
@@ -30,6 +41,34 @@ EQUIPE = (
     "Daniel Souza Monteiro de Carvalho",
     "Luiz Henrique Neres",
 )
+
+
+def _parcial(request):
+    """O htmx pede só um trecho da página; ao restaurar o histórico, precisa da página inteira."""
+    return (
+        request.headers.get("HX-Request") == "true"
+        and request.headers.get("HX-History-Restore-Request") != "true"
+    )
+
+
+def _render(request, template, parcial, contexto):
+    """Renderiza a página inteira ou, para o htmx, só o trecho que ele vai trocar."""
+    eh_parcial = _parcial(request)
+    contexto = {**contexto, "parcial": eh_parcial}
+    response = render(request, parcial if eh_parcial else template, contexto)
+    patch_vary_headers(response, ["HX-Request"])
+    return response
+
+
+def _salvo(request, mensagem, destino):
+    """Sem htmx, redireciona; no modal, mostra o toast e dispara registro-salvo."""
+    messages.success(request, mensagem)
+    if not _parcial(request):
+        return redirect(destino)
+    response = render(request, "partials/_mensagens.html", {"oob": True})
+    response["HX-Trigger"] = "registro-salvo"
+    response["HX-Reswap"] = "none"
+    return response
 
 
 def home(request):
@@ -93,6 +132,7 @@ def usuarios_view(request):
                 password=form.cleaned_data["senha"],
                 perfil=form.cleaned_data["perfil"],
             )
+            messages.success(request, "Usuário cadastrado com sucesso!")
             return redirect("usuarios")
     else:
         form = UsuarioForm()
@@ -111,6 +151,8 @@ def usuario_alternar_status_view(request, id_usuario):
     usuario = get_object_or_404(Usuario, id_usuario=id_usuario)
     usuario.ativo = not usuario.ativo
     usuario.save(update_fields=["ativo"])
+    estado = "reativado" if usuario.ativo else "desativado"
+    messages.success(request, f"Acesso de {usuario.nome} {estado}.")
     return redirect("usuarios")
 
 
@@ -120,11 +162,10 @@ def doador_create(request):
         form = DoadorForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Doador cadastrado com sucesso!")
-            return redirect("doador_list")
+            return _salvo(request, "Doador cadastrado com sucesso!", "doador_list")
     else:
         form = DoadorForm()
-    return render(request, "core/doador_form.html", {"form": form})
+    return _render(request, "core/doador_form.html", "partials/_doador_form.html", {"form": form})
 
 
 @login_obrigatorio
@@ -135,11 +176,15 @@ def doador_update(request, pk):
         form = DoadorForm(request.POST, instance=doador)
         if form.is_valid():
             form.save()
-            messages.success(request, "Doador atualizado com sucesso!")
-            return redirect("doador_list")
+            return _salvo(request, "Doador atualizado com sucesso!", "doador_list")
     else:
         form = DoadorForm(instance=doador)
-    return render(request, "core/doador_form.html", {"form": form, "editing": True})
+    return _render(
+        request,
+        "core/doador_form.html",
+        "partials/_doador_form.html",
+        {"form": form, "editing": True},
+    )
 
 
 @login_obrigatorio
@@ -152,10 +197,11 @@ def doador_list(request):
     paginator = Paginator(doadores_list, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(
+    return _render(
         request,
         "core/doador_list.html",
-        {"page_obj": page_obj, "query": query, "form": DoadorForm()},
+        "partials/_doador_lista.html",
+        {"page_obj": page_obj, "query": query},
     )
 
 
@@ -165,11 +211,10 @@ def familia_create(request):
         form = FamiliaForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Família cadastrada com sucesso!")
-            return redirect("familia_list")
+            return _salvo(request, "Família cadastrada com sucesso!", "familia_list")
     else:
         form = FamiliaForm()
-    return render(request, "core/familia_form.html", {"form": form})
+    return _render(request, "core/familia_form.html", "partials/_familia_form.html", {"form": form})
 
 
 @login_obrigatorio
@@ -182,10 +227,11 @@ def familia_list(request):
     paginator = Paginator(familias_list, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(
+    return _render(
         request,
         "core/familia_list.html",
-        {"page_obj": page_obj, "query": query, "form": FamiliaForm()},
+        "partials/_familia_lista.html",
+        {"page_obj": page_obj, "query": query},
     )
 
 
@@ -196,11 +242,12 @@ def categoria_create(request):
         form = CategoriaItemForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Categoria cadastrada com sucesso!")
-            return redirect("categoria_list")
+            return _salvo(request, "Categoria cadastrada com sucesso!", "categoria_list")
     else:
         form = CategoriaItemForm()
-    return render(request, "core/categoria_form.html", {"form": form})
+    return _render(
+        request, "core/categoria_form.html", "partials/_categoria_form.html", {"form": form}
+    )
 
 
 @login_obrigatorio
@@ -211,11 +258,15 @@ def categoria_update(request, pk):
         form = CategoriaItemForm(request.POST, instance=categoria)
         if form.is_valid():
             form.save()
-            messages.success(request, "Categoria atualizada com sucesso!")
-            return redirect("categoria_list")
+            return _salvo(request, "Categoria atualizada com sucesso!", "categoria_list")
     else:
         form = CategoriaItemForm(instance=categoria)
-    return render(request, "core/categoria_form.html", {"form": form, "editing": True})
+    return _render(
+        request,
+        "core/categoria_form.html",
+        "partials/_categoria_form.html",
+        {"form": form, "editing": True},
+    )
 
 
 @login_obrigatorio
@@ -228,9 +279,10 @@ def categoria_list(request):
     paginator = Paginator(categorias_list, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(
+    return _render(
         request,
         "core/categoria_list.html",
+        "partials/_categoria_lista.html",
         {"page_obj": page_obj, "query": query},
     )
 
@@ -242,42 +294,63 @@ def item_create(request):
         form = ItemForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Item cadastrado com sucesso!")
-            return redirect("item_list")
+            return _salvo(request, "Item cadastrado com sucesso!", "item_list")
     else:
         form = ItemForm()
-    return render(request, "core/item_form.html", {"form": form})
+    return _render(request, "core/item_form.html", "partials/_item_form.html", {"form": form})
 
 
 @login_obrigatorio
 @admin_obrigatorio
 def item_update(request, pk):
-    item = get_object_or_404(Item, pk=pk)
+    item = get_object_or_404(Item.objects.com_saldo().select_related("unidade_medida"), pk=pk)
     if request.method == "POST":
         form = ItemForm(request.POST, instance=item)
         if form.is_valid():
             form.save()
-            messages.success(request, "Item atualizado com sucesso!")
-            return redirect("item_list")
+            return _salvo(request, "Item atualizado com sucesso!", "item_list")
     else:
         form = ItemForm(instance=item)
-    return render(request, "core/item_form.html", {"form": form, "editing": True})
+    return _render(
+        request,
+        "core/item_form.html",
+        "partials/_item_form.html",
+        {"form": form, "editing": True, "item": item},
+    )
 
 
 @login_obrigatorio
 def item_list(request):
     query = request.GET.get("q", "").strip()
-    itens_list = Item.objects.select_related("categoria", "unidade_medida").order_by("nome")
+    estoque = request.GET.get("estoque", "")
+    itens_list = (
+        Item.objects.com_saldo().select_related("categoria", "unidade_medida").order_by("nome")
+    )
     if query:
         itens_list = itens_list.filter(nome__icontains=query)
+    if estoque == "baixo":
+        itens_list = itens_list.filter(EM_ALERTA)
 
     paginator = Paginator(itens_list, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(
+    return _render(
         request,
         "core/item_list.html",
-        {"page_obj": page_obj, "query": query},
+        "partials/_item_lista.html",
+        {
+            "page_obj": page_obj,
+            "query": query,
+            "estoque": estoque,
+            "total_em_alerta": Item.objects.em_alerta().count(),
+        },
+    )
+
+
+@login_obrigatorio
+def movimentacao_nova(request):
+    return _render(
+        request, "core/movimentacao_nova.html", "partials/_movimentacao_escolha.html", {}
     )
 
 
@@ -289,11 +362,10 @@ def doacao_create(request):
             doacao = form.save(commit=False)
             doacao.registrado_por = request.user
             doacao.save()
-            messages.success(request, "Doação registrada com sucesso!")
-            return redirect("doacao_create")
+            return _salvo(request, "Doação registrada com sucesso!", "doacao_create")
     else:
-        form = DoacaoForm()
-    return render(request, "core/doacao_form.html", {"form": form})
+        form = DoacaoForm(initial={"item": request.GET.get("item")})
+    return _render(request, "core/doacao_form.html", "partials/_doacao_form.html", {"form": form})
 
 
 def _data(texto):
@@ -303,10 +375,31 @@ def _data(texto):
         return None
 
 
+ATALHOS_DE_PERIODO = {"mes": "Este mês", "30dias": "Últimos 30 dias", "ano": "Este ano"}
+
+
+def _periodo(atalho, hoje):
+    inicio = {
+        "mes": hoje.replace(day=1),
+        "30dias": hoje - timedelta(days=29),
+        "ano": hoje.replace(month=1, day=1),
+    }[atalho]
+    return inicio.isoformat(), hoje.isoformat()
+
+
 def _filtrar(movimentacoes, request, campo_pessoa, parametro):
     filtros = {
         nome: request.GET.get(nome, "").strip() for nome in (parametro, "data_inicio", "data_fim")
     }
+    hoje = timezone.localdate()
+    atalho = request.GET.get("periodo")
+    if atalho in ATALHOS_DE_PERIODO:
+        filtros["data_inicio"], filtros["data_fim"] = _periodo(atalho, hoje)
+    periodo_atual = (filtros["data_inicio"], filtros["data_fim"])
+    filtros["atalhos"] = [
+        {"valor": valor, "rotulo": rotulo, "ativo": _periodo(valor, hoje) == periodo_atual}
+        for valor, rotulo in ATALHOS_DE_PERIODO.items()
+    ]
     if filtros[parametro].isdigit():
         movimentacoes = movimentacoes.filter(**{campo_pessoa: filtros[parametro]})
     inicio = _data(filtros["data_inicio"])
@@ -340,9 +433,10 @@ def doacao_list(request):
     paginator = Paginator(doacoes_list, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(
+    return _render(
         request,
         "core/doacao_list.html",
+        "partials/_doacao_historico.html",
         {
             "totais_por_doador": totais_por_doador,
             "page_obj": page_obj,
@@ -364,12 +458,16 @@ def distribuicao_create(request):
             distribuicao = form.save(commit=False)
             distribuicao.registrado_por = request.user
             distribuicao.save()
-            messages.success(request, "Distribuição registrada com sucesso!")
-            return redirect("distribuicao_create")
+            return _salvo(request, "Distribuição registrada com sucesso!", "distribuicao_create")
     else:
-        form = DistribuicaoForm()
-    return render(
-        request, "core/distribuicao_form.html", {"form": form, "itens_saldo": itens_saldo}
+        form = DistribuicaoForm(
+            initial={"item": request.GET.get("item"), "familia": request.GET.get("familia")}
+        )
+    return _render(
+        request,
+        "core/distribuicao_form.html",
+        "partials/_distribuicao_form.html",
+        {"form": form, "itens_saldo": itens_saldo},
     )
 
 
@@ -387,9 +485,10 @@ def distribuicao_list(request):
     paginator = Paginator(distribuicoes_list, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(
+    return _render(
         request,
         "core/distribuicao_list.html",
+        "partials/_distribuicao_historico.html",
         {
             "page_obj": page_obj,
             "familias": Familia.objects.order_by("nome_responsavel"),

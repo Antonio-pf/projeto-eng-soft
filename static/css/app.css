@@ -74,6 +74,25 @@ body {
 /* Os botões do daisyUI precisam de --btn-color em OKLCH. */
 .btn-primary { --btn-color: var(--p); }
 .btn-secondary { --btn-color: var(--s); }
+.btn-error { --btn-color: var(--er); }
+
+/* Toast das mensagens do Django: some sozinho após 4s. */
+.toast-conecta {
+    position: relative;
+    overflow: hidden;
+    animation: toast-sair 300ms ease-in 4s forwards;
+}
+
+/* Skeleton das listas: toma o lugar da tabela enquanto o htmx busca os dados. */
+.lista-esqueleto { display: none; }
+.htmx-request .lista-esqueleto { display: block; }
+.htmx-request .lista-dados { display: none; }
+
+.esqueleto-barra {
+    height: 0.75rem;
+    border-radius: 0.25rem;
+    background: #e5e7eb;
+}
 
 .site-header {
     background: rgb(247 245 240 / 88%);
@@ -130,6 +149,31 @@ body {
     .entrada-2 { animation-delay: 120ms; }
     .entrada-3 { animation-delay: 240ms; }
 
+    .toast-conecta {
+        animation:
+            toast-entrar 200ms ease-out,
+            toast-sair 300ms ease-in 4s forwards;
+    }
+
+    .esqueleto-barra {
+        background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+        background-size: 200% 100%;
+        animation: brilho 1.2s ease-in-out infinite;
+    }
+
+    /* Barra no rodapé do toast mostrando o tempo até ele sumir. */
+    .toast-conecta::after {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        background: var(--conecta-main);
+        transform-origin: left;
+        animation: toast-tempo 4s linear forwards;
+        content: "";
+    }
+
     @supports (animation-timeline: view()) {
         .reveal {
             animation: revelar linear both;
@@ -158,6 +202,29 @@ body {
 
 @keyframes progresso {
     to { transform: scaleX(1); }
+}
+
+@keyframes brilho {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+@keyframes toast-entrar {
+    from {
+        opacity: 0;
+        transform: translateY(0.5rem);
+    }
+}
+
+@keyframes toast-sair {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+@keyframes toast-tempo {
+    to { transform: scaleX(0); }
 }
 
 /* Transição entre páginas; navegadores sem suporte ignoram. */
