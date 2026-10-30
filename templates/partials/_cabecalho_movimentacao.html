@@ -1,0 +1,8 @@
+{# Título do modal de doação/distribuição; "Voltar" só aparece quando veio da escolha do painel. #}
+<div class="mb-4 flex items-center gap-2">
+    {% if request.GET.escolha %}
+    <a href="{% url 'movimentacao_nova' %}" hx-get="{% url 'movimentacao_nova' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+       class="btn btn-ghost btn-sm rounded-md px-2" aria-label="Voltar para a escolha de movimentação">← Voltar</a>
+    {% endif %}
+    <h3 id="modal-titulo" class="text-lg font-bold text-gray-700">{{ titulo }}</h3>
+</div>

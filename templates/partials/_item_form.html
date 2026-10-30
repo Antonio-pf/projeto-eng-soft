@@ -1,0 +1,35 @@
+{# Formulário de item: dentro do modal quando aberto pelo htmx (parcial), ou na página item_form.html. #}
+{% if parcial %}
+<h3 id="modal-titulo" class="mb-4 text-lg font-bold text-gray-700">{% if editing %}Editar item{% else %}Novo item{% endif %}</h3>
+{% endif %}
+
+{% if editing %}
+<div class="mb-4 rounded-lg bg-conecta-mint px-4 py-3 text-sm text-gray-700">
+    Saldo atual: <strong>{{ item.saldo|floatformat:"-2" }} {{ item.unidade_medida.sigla }}</strong> (o saldo não pode ser editado diretamente).
+</div>
+{% endif %}
+
+{% if form.non_field_errors %}
+<div class="alert alert-error mb-4 text-sm">{{ form.non_field_errors }}</div>
+{% endif %}
+
+<form method="post" class="flex flex-col gap-4"{% if parcial %} action="{{ request.path }}" hx-post="{{ request.path }}" hx-target="#modal-conteudo" hx-swap="innerHTML" hx-sync="this:drop"{% endif %}>
+    {% csrf_token %}
+    {% include "partials/_campo_formulario_dashboard.html" with field=form.nome %}
+    <div class="flex flex-col gap-4 sm:flex-row">
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.categoria select=True %}
+        {% include "partials/_campo_formulario_dashboard.html" with field=form.unidade_medida select=True %}
+    </div>
+    {% include "partials/_campo_formulario_dashboard.html" with field=form.estoque_minimo %}
+    <div class="flex gap-3{% if parcial %} justify-end{% endif %}">
+        {% if parcial %}
+        <button type="button" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold" onclick="this.closest('dialog').close()">Cancelar</button>
+        {% endif %}
+        <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold">
+            {% if editing %}Salvar alterações{% else %}Salvar item{% endif %}
+        </button>
+        {% if not parcial %}
+        <a href="{% url 'item_list' %}" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold">Cancelar</a>
+        {% endif %}
+    </div>
+</form>

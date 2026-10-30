@@ -252,6 +252,22 @@ class UsuariosViewTests(TestCase):
         response_lista = self.client.get(reverse("usuarios"))
         self.assertContains(response_lista, "João Voluntário")
 
+    def test_cadastro_de_usuario_mostra_notificacao(self):
+        self._login(self.admin)
+
+        response = self.client.post(
+            reverse("usuarios"),
+            {
+                "nome": "João Voluntário",
+                "email": "joao@conectasocial.org",
+                "senha": "uma-senha-bem-forte-123",
+                "perfil": Usuario.Perfil.VOLUNTARIO,
+            },
+            follow=True,
+        )
+
+        self.assertContains(response, "Usuário cadastrado com sucesso!")
+
     def test_email_duplicado_mostra_erro_e_nao_duplica(self):
         self._login(self.admin)
         total_antes = Usuario.objects.count()
@@ -393,6 +409,29 @@ class UsuarioAlternarStatusViewTests(TestCase):
         self.assertContains(response, "Inativo")
         self.assertContains(response, "Ativo")
 
+    def test_desativar_pede_confirmacao_em_modal(self):
+        self._login(self.admin)
+
+        response = self.client.get(reverse("usuarios"))
+
+        self.assertContains(
+            response, f'<dialog id="confirmar-desativacao-{self.voluntario.id_usuario}"'
+        )
+        self.assertContains(response, "Desativar o acesso de Maria Voluntária?")
+        self.assertNotContains(
+            response, f'<dialog id="confirmar-desativacao-{self.admin.id_usuario}"'
+        )
+
+    def test_alternar_status_mostra_notificacao(self):
+        self._login(self.admin)
+        url = reverse("usuario_alternar_status", args=[self.voluntario.id_usuario])
+
+        response = self.client.post(url, follow=True)
+        self.assertContains(response, "Acesso de Maria Voluntária desativado.")
+
+        response = self.client.post(url, follow=True)
+        self.assertContains(response, "Acesso de Maria Voluntária reativado.")
+
 
 class DoadorTestCase(TestCase):
     def setUp(self):
@@ -423,6 +462,19 @@ class DoadorTestCase(TestCase):
         doador = Doador.objects.first()
         self.assertEqual(doador.nome, "João da Silva")
         self.assertEqual(doador.cpf_cnpj, "123.456.789-01")
+
+    def test_cadastro_mostra_notificacao_na_listagem(self):
+        response = self.client.post(
+            reverse("doador_create"),
+            {"nome": "João da Silva", "cpf_cnpj": "123.456.789-01"},
+            follow=True,
+        )
+
+        self.assertContains(response, 'role="status"')
+        self.assertContains(response, "Doador cadastrado com sucesso!")
+
+        response = self.client.get(reverse("doador_list"))
+        self.assertNotContains(response, "Doador cadastrado com sucesso!")
 
     def test_cadastrar_doador_campos_opcionais_vazios(self):
         response = self.client.post(
@@ -655,6 +707,183 @@ class FamiliaTestCase(TestCase):
         self.assertNotContains(response_search, "Maria Santos")
 
 
+class DoadoresEFamiliasComHtmxTests(TestCase):
+    """Cadastro em modal e busca sem recarregar em Doadores e Famílias."""
+
+    HTMX = {"HTTP_HX_REQUEST": "true"}
+
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+        )
+        self.voluntario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+        )
+        self.client.force_login(self.admin)
+
+    def _familia(self, nome="Ana Paula Ferreira"):
+        return Familia.objects.create(
+            nome_responsavel=nome, endereco="Rua das Flores, 120", num_membros=5
+        )
+
+    def test_lista_de_doadores_abre_o_cadastro_no_modal(self):
+        response = self.client.get(reverse("doador_list"))
+
+        self.assertContains(response, f'hx-get="{reverse("doador_create")}"')
+        self.assertContains(response, "+ Novo doador")
+        self.assertNotContains(response, f'action="{reverse("doador_create")}"')
+
+    def test_novo_doador_no_modal_devolve_so_o_formulario(self):
+        response = self.client.get(reverse("doador_create"), **self.HTMX)
+
+        self.assertNotContains(response, "<html")
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertContains(response, "Novo doador")
+        self.assertContains(response, f'hx-post="{reverse("doador_create")}"')
+
+    def test_salvar_doador_no_modal_fecha_e_atualiza_a_lista(self):
+        response = self.client.post(
+            reverse("doador_create"),
+            {"nome": "Padaria Pão Quente", "cpf_cnpj": "123.456.789-01"},
+            **self.HTMX,
+        )
+
+        self.assertEqual(response["HX-Trigger"], "registro-salvo")
+        self.assertContains(response, "Doador cadastrado com sucesso!")
+        self.assertTrue(Doador.objects.filter(nome="Padaria Pão Quente").exists())
+
+    def test_cpf_duplicado_aparece_dentro_do_modal(self):
+        Doador.objects.create(nome="Mercado Central", cpf_cnpj="123.456.789-01")
+
+        response = self.client.post(
+            reverse("doador_create"),
+            {"nome": "Outro", "cpf_cnpj": "123.456.789-01"},
+            **self.HTMX,
+        )
+
+        self.assertNotIn("HX-Trigger", response)
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertContains(response, 'class="text-xs text-error"')
+
+    def test_editar_doador_no_modal(self):
+        doador = Doador.objects.create(nome="Mercado Central", cpf_cnpj="123.456.789-01")
+
+        response = self.client.get(reverse("doador_update", args=[doador.pk]), **self.HTMX)
+
+        self.assertContains(response, "Editar doador")
+        self.assertContains(response, 'value="Mercado Central"')
+
+    def test_pagina_de_cadastro_de_doador_tem_titulo_de_cadastro(self):
+        response = self.client.get(reverse("doador_create"))
+
+        self.assertContains(response, "<title>Cadastrar Doador | Conecta Social</title>")
+        self.assertNotContains(response, "Editar Doador")
+
+    def test_busca_de_doadores_com_htmx_devolve_so_a_lista(self):
+        Doador.objects.create(nome="Carlos Silva", cpf_cnpj="111.111.111-11")
+        Doador.objects.create(nome="Ana Pereira", cpf_cnpj="222.222.222-22")
+
+        response = self.client.get(reverse("doador_list"), {"q": "carl"}, **self.HTMX)
+
+        self.assertContains(response, 'id="doador-lista"')
+        self.assertContains(response, "Carlos Silva")
+        self.assertNotContains(response, "Ana Pereira")
+        self.assertNotContains(response, 'id="sidebar"')
+        self.assertIn("HX-Request", response["Vary"])
+
+    def test_doador_tem_atalho_para_suas_doacoes(self):
+        doador = Doador.objects.create(nome="Mercado Central", cpf_cnpj="123.456.789-01")
+
+        response = self.client.get(reverse("doador_list"))
+
+        self.assertContains(response, f'href="{reverse("doacao_list")}?id_doador={doador.pk}"')
+
+    def test_voluntario_cadastra_doador_mas_nao_edita(self):
+        doador = Doador.objects.create(nome="Mercado Central", cpf_cnpj="123.456.789-01")
+        self.client.force_login(self.voluntario)
+
+        response = self.client.get(reverse("doador_list"))
+
+        self.assertContains(response, "+ Novo doador")
+        self.assertNotContains(response, reverse("doador_update", args=[doador.pk]))
+
+    def test_doadores_vazio_e_busca_sem_resultado(self):
+        response = self.client.get(reverse("doador_list"))
+        self.assertContains(response, "Nenhum doador cadastrado ainda.")
+        self.assertContains(response, "Cadastrar doador")
+
+        Doador.objects.create(nome="Mercado Central", cpf_cnpj="123.456.789-01")
+        response = self.client.get(reverse("doador_list"), {"q": "xyz"})
+        self.assertContains(response, "Nenhum doador encontrado para “xyz”.")
+
+    def test_lista_de_familias_abre_o_cadastro_no_modal(self):
+        response = self.client.get(reverse("familia_list"))
+
+        self.assertContains(response, f'hx-get="{reverse("familia_create")}"')
+        self.assertContains(response, "+ Nova família")
+        self.assertNotContains(response, f'action="{reverse("familia_create")}"')
+
+    def test_familia_no_modal(self):
+        response = self.client.get(reverse("familia_create"), **self.HTMX)
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertNotContains(response, "<html")
+
+        response = self.client.post(
+            reverse("familia_create"),
+            {
+                "nome_responsavel": "Ana Paula Ferreira",
+                "endereco": "Rua das Flores, 120",
+                "telefone": "",
+                "num_membros": 5,
+            },
+            **self.HTMX,
+        )
+        self.assertEqual(response["HX-Trigger"], "registro-salvo")
+        self.assertContains(response, "Família cadastrada com sucesso!")
+
+    def test_busca_de_familias_com_htmx_devolve_so_a_lista(self):
+        self._familia("Ana Paula Ferreira")
+        self._familia("Carlos Henrique Santos")
+
+        response = self.client.get(reverse("familia_list"), {"q": "ana"}, **self.HTMX)
+
+        self.assertContains(response, 'id="familia-lista"')
+        self.assertContains(response, "Ana Paula Ferreira")
+        self.assertNotContains(response, "Carlos Henrique Santos")
+        self.assertNotContains(response, 'id="sidebar"')
+
+    def test_familia_tem_atalho_para_distribuir(self):
+        familia = self._familia()
+
+        response = self.client.get(reverse("familia_list"))
+
+        self.assertContains(
+            response, f'href="{reverse("distribuicao_create")}?familia={familia.pk}"'
+        )
+
+    def test_atalho_de_distribuir_ja_seleciona_a_familia(self):
+        familia = self._familia()
+
+        response = self.client.get(reverse("distribuicao_create"), {"familia": familia.pk})
+
+        self.assertContains(response, f'<option value="{familia.pk}" selected>')
+
+    def test_familias_vazio_e_busca_sem_resultado(self):
+        response = self.client.get(reverse("familia_list"))
+        self.assertContains(response, "Nenhuma família cadastrada ainda.")
+        self.assertContains(response, "Cadastrar família")
+
+        self._familia()
+        response = self.client.get(reverse("familia_list"), {"q": "xyz"})
+        self.assertContains(response, "Nenhuma família encontrada para “xyz”.")
+
+
 class CategoriaTestCase(TestCase):
     def setUp(self):
         self.admin = Usuario.objects.create(
@@ -800,6 +1029,197 @@ class ItemTestCase(TestCase):
         self.assertEqual(item.nome, "Macarrão Integral")
 
 
+class ItensECategoriasComHtmxTests(TestCase):
+    """Cadastro em modal e busca sem recarregar; sem htmx, as páginas continuam funcionando."""
+
+    HTMX = {"HTTP_HX_REQUEST": "true"}
+
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+        )
+        self.voluntario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+        )
+        self.categoria = CategoriaItem.objects.create(nome="Alimento")
+        self.unidade = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.doador = Doador.objects.create(nome="Mercado Central", cpf_cnpj="123.456.789-01")
+        self.client.force_login(self.admin)
+
+    def _item(self, nome, minimo=0):
+        return Item.objects.create(
+            nome=nome, categoria=self.categoria, unidade_medida=self.unidade, estoque_minimo=minimo
+        )
+
+    def _doar(self, item, quantidade):
+        Doacao.objects.create(
+            doador=self.doador,
+            item=item,
+            registrado_por=self.admin,
+            quantidade=Decimal(quantidade),
+            data=timezone.localdate(),
+        )
+
+    def _dados_item(self, **extras):
+        return {
+            "nome": "Arroz 5kg",
+            "categoria": self.categoria.pk,
+            "unidade_medida": self.unidade.pk,
+            "estoque_minimo": 10,
+            **extras,
+        }
+
+    def test_novo_item_no_modal_devolve_so_o_formulario(self):
+        response = self.client.get(reverse("item_create"), **self.HTMX)
+
+        self.assertNotContains(response, "<html")
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertContains(response, f'hx-post="{reverse("item_create")}"')
+
+    def test_salvar_no_modal_fecha_e_pede_para_a_lista_atualizar(self):
+        response = self.client.post(reverse("item_create"), self._dados_item(), **self.HTMX)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["HX-Trigger"], "registro-salvo")
+        self.assertEqual(response["HX-Reswap"], "none")
+        self.assertContains(response, 'hx-swap-oob="innerHTML"')
+        self.assertContains(response, "Item cadastrado com sucesso!")
+        self.assertTrue(Item.objects.filter(nome="Arroz 5kg").exists())
+
+    def test_erro_no_modal_reapresenta_o_formulario_com_a_mensagem(self):
+        response = self.client.post(
+            reverse("item_create"), self._dados_item(estoque_minimo=-1), **self.HTMX
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("HX-Trigger", response)
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertContains(response, 'class="text-xs text-error"')
+        self.assertFalse(Item.objects.exists())
+
+    def test_editar_no_modal_mostra_o_saldo_atual(self):
+        item = self._item("Feijão 1kg")
+        self._doar(item, "12")
+
+        response = self.client.get(reverse("item_update", args=[item.pk]), **self.HTMX)
+
+        self.assertContains(response, "Editar item")
+        self.assertContains(response, "Saldo atual: <strong>12 kg</strong>")
+
+    def test_busca_com_htmx_devolve_so_a_lista(self):
+        self._item("Arroz")
+        self._item("Feijão")
+
+        response = self.client.get(reverse("item_list"), {"q": "arr"}, **self.HTMX)
+
+        self.assertContains(response, 'id="item-lista"')
+        self.assertContains(response, "Arroz")
+        self.assertNotContains(response, "Feijão")
+        self.assertNotContains(response, 'id="sidebar"')
+        self.assertIn("HX-Request", response["Vary"])
+
+    def test_sessao_expirada_no_htmx_leva_a_pagina_de_login(self):
+        self.client.logout()
+
+        response = self.client.get(reverse("item_list"), {"q": "arr"}, **self.HTMX)
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response["HX-Redirect"], reverse("login"))
+
+    def test_restauracao_do_historico_recebe_a_pagina_inteira(self):
+        response = self.client.get(
+            reverse("item_list"), HTTP_HX_REQUEST="true", HTTP_HX_HISTORY_RESTORE_REQUEST="true"
+        )
+
+        self.assertContains(response, 'id="sidebar"')
+
+    def test_filtro_de_baixo_estoque(self):
+        self._item("Arroz", minimo=5)
+        self._doar(self._item("Feijão", minimo=5), "20")
+
+        response = self.client.get(reverse("item_list"), {"estoque": "baixo"})
+
+        self.assertContains(response, "Arroz")
+        self.assertNotContains(response, "Feijão")
+        self.assertContains(response, "Baixo estoque (1)")
+
+    def test_paginacao_preserva_busca_e_filtro(self):
+        for indice in range(21):
+            self._item(f"Arroz {indice:02d}", minimo=5)
+
+        response = self.client.get(reverse("item_list"), {"q": "Arroz", "estoque": "baixo"})
+
+        self.assertContains(response, "?q=Arroz&amp;estoque=baixo&amp;page=2")
+
+    def test_linhas_tem_atalhos_de_doacao_e_distribuicao(self):
+        item = self._item("Arroz")
+
+        response = self.client.get(reverse("item_list"))
+
+        self.assertContains(response, f'href="{reverse("doacao_create")}?item={item.pk}"')
+        self.assertContains(response, f'href="{reverse("distribuicao_create")}?item={item.pk}"')
+
+    def test_voluntario_nao_ve_cadastro_nem_edicao(self):
+        item = self._item("Arroz")
+        self.client.force_login(self.voluntario)
+
+        response = self.client.get(reverse("item_list"))
+
+        self.assertNotContains(response, reverse("item_create"))
+        self.assertNotContains(response, reverse("item_update", args=[item.pk]))
+        self.assertContains(response, f'href="{reverse("doacao_create")}?item={item.pk}"')
+
+    def test_lista_vazia_oferece_cadastro(self):
+        response = self.client.get(reverse("item_list"))
+
+        self.assertContains(response, "Nenhum item cadastrado ainda.")
+        self.assertContains(response, "Cadastrar item")
+
+    def test_busca_sem_resultado_oferece_limpar(self):
+        self._item("Arroz")
+
+        response = self.client.get(reverse("item_list"), {"q": "xyz"})
+
+        self.assertContains(response, "Nenhum item encontrado para “xyz”.")
+        self.assertContains(response, "Limpar filtros")
+
+    def test_abas_ligam_itens_e_categorias(self):
+        for nome_url in ("item_list", "categoria_list"):
+            with self.subTest(pagina=nome_url):
+                response = self.client.get(reverse(nome_url))
+
+                self.assertContains(response, f'href="{reverse("item_list")}"')
+                self.assertContains(response, f'href="{reverse("categoria_list")}"')
+                self.assertContains(response, 'aria-current="page"')
+
+    def test_categoria_no_modal(self):
+        response = self.client.get(reverse("categoria_create"), **self.HTMX)
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertNotContains(response, "<html")
+
+        response = self.client.post(
+            reverse("categoria_create"), {"nome": "Higiene", "descricao": ""}, **self.HTMX
+        )
+        self.assertEqual(response["HX-Trigger"], "registro-salvo")
+        self.assertContains(response, "Categoria cadastrada com sucesso!")
+
+    def test_busca_de_categorias_com_htmx_devolve_so_a_lista(self):
+        CategoriaItem.objects.create(nome="Higiene")
+
+        response = self.client.get(reverse("categoria_list"), {"q": "hig"}, **self.HTMX)
+
+        self.assertContains(response, 'id="categoria-lista"')
+        self.assertContains(response, "Higiene")
+        self.assertNotContains(response, "Alimento")
+        self.assertNotContains(response, 'id="sidebar"')
+
+
 class DoacaoTestCase(TestCase):
     def setUp(self):
         self.voluntario = Usuario.objects.create(
@@ -849,6 +1269,26 @@ class DoacaoTestCase(TestCase):
         self.assertEqual(doacao.registrado_por, self.voluntario)
         self.item.refresh_from_db()
         self.assertEqual(self.item.saldo_atual, Decimal("5"))
+
+    def test_atalho_da_lista_de_itens_ja_seleciona_o_item(self):
+        response = self.client.get(reverse("doacao_create"), {"item": self.item.pk})
+
+        self.assertContains(response, f'<option value="{self.item.pk}" selected>')
+
+    def test_registro_mostra_notificacao_no_proprio_formulario(self):
+        response = self.client.post(
+            reverse("doacao_create"),
+            {
+                "doador": self.doador.pk,
+                "item": self.item.pk,
+                "quantidade": "5",
+                "data": timezone.localdate().isoformat(),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.redirect_chain, [(reverse("doacao_create"), 302)])
+        self.assertContains(response, "Doação registrada com sucesso!")
 
     def test_cadastrar_doacao_quantidade_zero_ou_negativa_invalida(self):
         for quantidade in ["0", "-3"]:
@@ -960,6 +1400,11 @@ class DistribuicaoTestCase(TestCase):
 
     def _login(self, usuario, senha="senha-teste"):
         self.client.post(reverse("login"), {"email": usuario.email, "senha": senha})
+
+    def test_atalho_da_lista_de_itens_ja_seleciona_o_item(self):
+        response = self.client.get(reverse("distribuicao_create"), {"item": self.item.pk})
+
+        self.assertContains(response, f'<option value="{self.item.pk}" selected>')
 
     def test_registrar_distribuicao_com_sucesso(self):
         response = self.client.post(
@@ -1379,6 +1824,162 @@ class DistribuicaoListTestCase(TestCase):
         self.assertRedirects(response, reverse("login"))
 
 
+class MovimentacoesComHtmxTests(TestCase):
+    """Doação e distribuição em modal, históricos sem recarregar e escolha no painel."""
+
+    HTMX = {"HTTP_HX_REQUEST": "true"}
+
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Admin Teste",
+            email="admin@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+        )
+        self.doador = Doador.objects.create(nome="Mercado Central", cpf_cnpj="123.456.789-01")
+        self.familia = Familia.objects.create(
+            nome_responsavel="Ana Paula Ferreira", endereco="Rua A, 1", num_membros=4
+        )
+        self.item = Item.objects.create(
+            nome="Arroz 5kg",
+            categoria=CategoriaItem.objects.create(nome="Alimento"),
+            unidade_medida=UnidadeMedida.objects.create(nome="Pacote", sigla="pct"),
+            estoque_minimo=2,
+        )
+        self.client.force_login(self.admin)
+
+    def _doar(self, quantidade, data=None):
+        return Doacao.objects.create(
+            doador=self.doador,
+            item=self.item,
+            registrado_por=self.admin,
+            quantidade=Decimal(quantidade),
+            data=data or timezone.localdate(),
+        )
+
+    def _dados(self, pessoa, **extras):
+        return {
+            pessoa[0]: pessoa[1],
+            "item": self.item.pk,
+            "quantidade": "3",
+            "data": timezone.localdate().isoformat(),
+            **extras,
+        }
+
+    def test_doacao_no_modal_com_item_ja_escolhido(self):
+        response = self.client.get(reverse("doacao_create"), {"item": self.item.pk}, **self.HTMX)
+
+        self.assertNotContains(response, "<html")
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertContains(response, "Registrar doação")
+        self.assertContains(response, f'<option value="{self.item.pk}" selected>')
+        self.assertNotContains(response, "Voltar")
+
+    def test_registrar_doacao_no_modal_fecha_e_avisa_as_listas(self):
+        response = self.client.post(
+            reverse("doacao_create"), self._dados(("doador", self.doador.pk)), **self.HTMX
+        )
+
+        self.assertEqual(response["HX-Trigger"], "registro-salvo")
+        self.assertContains(response, "Doação registrada com sucesso!")
+        self.assertEqual(self.item.saldo_atual, Decimal("3"))
+
+    def test_distribuicao_no_modal_mostra_saldo_e_aviso(self):
+        self._doar("10")
+
+        response = self.client.get(
+            reverse("distribuicao_create"), {"familia": self.familia.pk}, **self.HTMX
+        )
+
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertContains(response, 'id="distribuicao-itens-saldo"')
+        self.assertContains(response, 'id="distribuicao-form-aviso-saldo"')
+        self.assertContains(response, f'<option value="{self.familia.pk}" selected>')
+
+    def test_distribuicao_acima_do_saldo_continua_no_modal(self):
+        self._doar("2")
+
+        response = self.client.post(
+            reverse("distribuicao_create"),
+            self._dados(("familia", self.familia.pk), quantidade="5"),
+            **self.HTMX,
+        )
+
+        self.assertNotIn("HX-Trigger", response)
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertFalse(Distribuicao.objects.exists())
+
+    def test_escolha_de_movimentacao(self):
+        response = self.client.get(reverse("movimentacao_nova"))
+        self.assertContains(response, 'id="sidebar"')
+        self.assertContains(response, f'href="{reverse("doacao_create")}"')
+        self.assertContains(response, f'href="{reverse("distribuicao_create")}"')
+
+        response = self.client.get(reverse("movimentacao_nova"), **self.HTMX)
+        self.assertNotContains(response, "<html")
+        self.assertContains(response, 'id="modal-titulo"')
+        self.assertContains(response, f'hx-get="{reverse("doacao_create")}?escolha=1"')
+
+    def test_formulario_aberto_pela_escolha_tem_voltar(self):
+        response = self.client.get(reverse("doacao_create"), {"escolha": "1"}, **self.HTMX)
+
+        self.assertContains(response, f'hx-get="{reverse("movimentacao_nova")}"')
+        self.assertContains(response, "Voltar")
+        self.assertContains(response, f'hx-post="{reverse("doacao_create")}?escolha=1"')
+
+    def test_painel_abre_a_escolha_no_modal_e_se_atualiza(self):
+        response = self.client.get(reverse("painel"))
+
+        self.assertContains(response, f'hx-get="{reverse("movimentacao_nova")}"')
+        self.assertContains(response, 'hx-trigger="registro-salvo from:body"')
+
+    def test_atalhos_das_listas_abrem_o_modal(self):
+        response = self.client.get(reverse("item_list"))
+        self.assertContains(response, f'hx-get="{reverse("doacao_create")}?item={self.item.pk}"')
+        self.assertContains(
+            response, f'hx-get="{reverse("distribuicao_create")}?item={self.item.pk}"'
+        )
+
+        response = self.client.get(reverse("familia_list"))
+        self.assertContains(
+            response, f'hx-get="{reverse("distribuicao_create")}?familia={self.familia.pk}"'
+        )
+
+    def test_historico_de_doacoes_com_htmx_devolve_so_o_card(self):
+        self._doar("4")
+
+        response = self.client.get(reverse("doacao_list"), **self.HTMX)
+
+        self.assertContains(response, 'id="doacao-card"')
+        self.assertContains(response, "1 doação")
+        self.assertNotContains(response, 'id="sidebar"')
+        self.assertIn("HX-Request", response["Vary"])
+
+    def test_atalho_este_mes_preenche_o_periodo(self):
+        hoje = timezone.localdate()
+        self._doar("4", data=hoje.replace(day=1))
+        self._doar("6", data=hoje.replace(day=1) - timedelta(days=1))
+
+        response = self.client.get(reverse("doacao_list"), {"periodo": "mes"})
+
+        self.assertEqual(len(response.context["page_obj"]), 1)
+        self.assertEqual(response.context["data_inicio"], hoje.replace(day=1).isoformat())
+        self.assertEqual(response.context["data_fim"], hoje.isoformat())
+        self.assertContains(response, 'value="mes" aria-pressed="true"')
+        self.assertContains(response, "Limpar filtros")
+
+    def test_historico_de_distribuicoes_exporta_com_os_filtros_atuais(self):
+        response = self.client.get(
+            reverse("distribuicao_list"), {"id_familia": self.familia.pk}, **self.HTMX
+        )
+
+        self.assertContains(response, 'id="distribuicao-card"')
+        self.assertContains(
+            response, f'href="{reverse("distribuicao_exportar_csv")}?id_familia={self.familia.pk}'
+        )
+        self.assertContains(response, "Nenhuma distribuição encontrada.")
+
+
 class PainelTests(TestCase):
     HOJE = date(2026, 10, 15)
 
@@ -1533,6 +2134,14 @@ class PainelTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, usuario.nome.split()[0])
 
+    def test_ver_todos_abre_os_itens_em_alerta(self):
+        self._item("Leite em pó", minimo=10)
+        self.client.force_login(self.voluntario)
+
+        response = self.client.get(reverse("painel"))
+
+        self.assertContains(response, f'href="{reverse("item_list")}?estoque=baixo"')
+
     def test_painel_renderiza_categorias_alertas_e_atalhos(self):
         self._doar(self._item("Arroz"), 60)
         self._doar(self._item("Leite em pó", minimo=10, unidade=self.pct), 4)
@@ -1597,6 +2206,21 @@ class LayoutBaseTests(SimpleTestCase):
                 self.assertLess(conteudo.index("css/tailwind.css"), conteudo.index("css/app.css"))
                 self.assertNotIn("cdn.tailwindcss.com", conteudo)
                 self.assertNotIn("daisyui", conteudo)
+
+    def test_painel_carrega_htmx_local_e_o_modal_compartilhado(self):
+        conteudo = (settings.BASE_DIR / "templates" / "dashboard_base.html").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("js/htmx.min.js", conteudo)
+        self.assertIn('<dialog id="modal"', conteudo)
+        self.assertNotIn("unpkg.com", conteudo)
+
+    def test_bases_com_formulario_travam_o_botao_de_envio(self):
+        for nome in ("auth_base.html", "dashboard_base.html"):
+            with self.subTest(template=nome):
+                conteudo = (settings.BASE_DIR / "templates" / nome).read_text(encoding="utf-8")
+                self.assertIn("js/formularios.js", conteudo)
 
     def test_app_css_ativa_view_transition(self):
         conteudo = (settings.BASE_DIR / "static" / "css" / "app.css").read_text(encoding="utf-8")

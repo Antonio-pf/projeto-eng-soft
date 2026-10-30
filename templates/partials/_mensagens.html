@@ -1,0 +1,13 @@
+{# Sempre presente para o htmx trocar só o conteúdo (oob) depois de salvar num modal. #}
+<div id="mensagens" class="toast toast-end pointer-events-none z-50" aria-live="polite"{% if oob %} hx-swap-oob="innerHTML"{% endif %}>
+    {% for message in messages %}
+    <div role="status" class="toast-conecta pointer-events-auto flex items-center gap-3 rounded-lg border border-l-4 border-gray-200 {% if message.level_tag == 'error' %}border-l-error{% else %}border-l-secondary{% endif %} bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-lg">
+        {% if message.level_tag == 'error' %}
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="shrink-0 text-error" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+        {% else %}
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-secondary" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        {% endif %}
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>

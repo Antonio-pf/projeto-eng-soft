@@ -6,12 +6,15 @@
 {% block page_title %}Painel{% endblock %}
 
 {% block content %}
-<div class="flex w-full flex-col gap-[22px] text-conecta-title">
+{# Depois de registrar uma movimentação no modal, o painel recarrega só este bloco (hx-select). #}
+<div id="painel-conteudo" class="flex w-full flex-col gap-[22px] text-conecta-title"
+     hx-get="{% url 'painel' %}" hx-trigger="registro-salvo from:body" hx-select="#painel-conteudo"
+     hx-target="this" hx-swap="outerHTML" hx-disinherit="*">
     <header class="flex flex-col gap-[22px]">
         <p class="text-[11px] font-bold uppercase text-conecta-muted">{{ agora|date:"l, j \d\e F" }}</p>
         <h2 class="text-[28px] font-bold leading-tight lg:text-[32px]">{{ saudacao }}, {{ primeiro_nome }}</h2>
         <p class="text-[15px] text-conecta-muted">Aqui está o pulso das doações da sua rede.</p>
-        <a href="{% url 'distribuicao_create' %}"
+        <a href="{% url 'movimentacao_nova' %}" hx-get="{% url 'movimentacao_nova' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
            class="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[13px] font-medium text-white transition-colors hover:bg-primary/90 sm:w-[220px]">
             +&nbsp;&nbsp;Nova movimentação
         </a>
@@ -72,7 +75,7 @@
             <p class="text-[13px] font-medium">Nenhum item no estoque mínimo.</p>
             {% endfor %}
             {% if resumo.itens_em_alerta %}
-            <a href="{% url 'item_list' %}" class="mt-auto pt-2 text-[13px] font-medium text-primary underline-offset-4 hover:underline">
+            <a href="{% url 'item_list' %}?estoque=baixo" class="mt-auto pt-2 text-[13px] font-medium text-primary underline-offset-4 hover:underline">
                 Ver todos ({{ resumo.itens_em_alerta }})
             </a>
             {% endif %}

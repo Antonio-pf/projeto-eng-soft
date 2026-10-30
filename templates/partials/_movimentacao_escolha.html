@@ -1,0 +1,19 @@
+{# Escolha entre doação e distribuição: no modal do painel (parcial) ou na página movimentacao_nova.html. #}
+{% if parcial %}
+<h3 id="modal-titulo" class="mb-1 text-lg font-bold text-gray-700">Nova movimentação</h3>
+<p class="mb-4 text-sm text-gray-500">O que você quer registrar?</p>
+{% endif %}
+<div class="grid gap-3 sm:grid-cols-2">
+    <a href="{% url 'doacao_create' %}" hx-get="{% url 'doacao_create' %}?escolha=1" hx-target="#modal-conteudo" hx-swap="innerHTML"
+       class="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-secondary hover:bg-[#eaf5ee]">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>
+        <span class="text-base font-bold text-gray-700">Doação</span>
+        <span class="text-sm text-gray-500">Entrada de itens no estoque</span>
+    </a>
+    <a href="{% url 'distribuicao_create' %}" hx-get="{% url 'distribuicao_create' %}?escolha=1" hx-target="#modal-conteudo" hx-swap="innerHTML"
+       class="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-[#e76f51] hover:bg-[#fcece8]">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-conecta-alert" aria-hidden="true"><path d="M12 21V9m0 0-4 4m4-4 4 4M4 3h16"/></svg>
+        <span class="text-base font-bold text-gray-700">Distribuição</span>
+        <span class="text-sm text-gray-500">Saída de itens para uma família</span>
+    </a>
+</div>

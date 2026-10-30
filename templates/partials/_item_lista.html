@@ -1,0 +1,90 @@
+{# Trecho trocado pelo htmx na busca, no filtro, na paginação e depois de salvar no modal (registro-salvo). #}
+<div id="item-lista" hx-get="{% url 'item_list' %}" hx-trigger="registro-salvo from:body" hx-include="#item-busca"
+     hx-target="this" hx-swap="outerHTML" hx-disinherit="*">
+    {% if parcial %}
+    <span id="total-em-alerta" hx-swap-oob="innerHTML">Baixo estoque ({{ total_em_alerta }})</span>
+    {% endif %}
+    {% include "partials/_esqueleto_tabela.html" %}
+
+    <div class="lista-dados">
+        {% if page_obj %}
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[720px]">
+                <thead>
+                    <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                        <th class="px-4 py-3 font-semibold">Item</th>
+                        <th class="px-4 py-3 font-semibold">Categoria</th>
+                        <th class="px-4 py-3 font-semibold">Unidade</th>
+                        <th class="px-4 py-3 font-semibold">Saldo</th>
+                        <th class="px-4 py-3 font-semibold">Mín</th>
+                        <th class="px-4 py-3 font-semibold">Status</th>
+                        <th class="px-4 py-3 font-semibold">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for item in page_obj %}
+                    <tr>
+                        <td class="px-4 py-4 text-sm font-medium text-gray-700{% if item.saldo <= item.estoque_minimo %} shadow-[inset_3px_0_0_#e76f51]{% endif %}">{{ item.nome }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">{{ item.categoria.nome }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">{{ item.unidade_medida.sigla }}</td>
+                        <td class="px-4 py-4 text-sm font-semibold text-gray-700">{{ item.saldo|floatformat:"-2" }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">{{ item.estoque_minimo }}</td>
+                        <td class="px-4 py-4 text-sm">
+                            {% if item.saldo <= item.estoque_minimo %}
+                            <span class="inline-block whitespace-nowrap rounded bg-yellow-100 px-2 py-0.5 text-[13px] font-semibold text-yellow-700">Baixo Estoque</span>
+                            {% else %}
+                            <span class="inline-block whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-[13px] font-semibold text-primary">Ok</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 text-sm">
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'doacao_create' %}?item={{ item.pk }}" hx-get="{% url 'doacao_create' %}?item={{ item.pk }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                                   class="btn btn-outline btn-xs">Doar</a>
+                                <a href="{% url 'distribuicao_create' %}?item={{ item.pk }}" hx-get="{% url 'distribuicao_create' %}?item={{ item.pk }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                                   class="btn btn-outline btn-xs">Distribuir</a>
+                                {% if usuario_logado.perfil == "administrador" %}
+                                <a href="{% url 'item_update' item.pk %}" hx-get="{% url 'item_update' item.pk %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                                   class="btn btn-ghost btn-xs">Editar</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-center" hx-boost="true" hx-target="#item-lista" hx-swap="outerHTML" hx-indicator="#item-card">
+            <div class="join">
+                {% if page_obj.has_previous %}
+                <a href="{% querystring page=page_obj.previous_page_number %}" class="join-item btn btn-sm">«</a>
+                {% else %}
+                <button class="join-item btn btn-sm btn-disabled">«</button>
+                {% endif %}
+                <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+                {% if page_obj.has_next %}
+                <a href="{% querystring page=page_obj.next_page_number %}" class="join-item btn btn-sm">»</a>
+                {% else %}
+                <button class="join-item btn btn-sm btn-disabled">»</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="flex flex-col items-center gap-3 py-12 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+            {% if query or estoque %}
+            <p class="text-sm font-medium text-gray-700">Nenhum item encontrado{% if query %} para “{{ query }}”{% endif %}.</p>
+            <a href="{% url 'item_list' %}" class="btn btn-ghost btn-sm rounded-md">Limpar filtros</a>
+            {% else %}
+            <p class="text-sm font-medium text-gray-700">Nenhum item cadastrado ainda.</p>
+            {% if usuario_logado.perfil == "administrador" %}
+            <a href="{% url 'item_create' %}" hx-get="{% url 'item_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+               class="btn btn-secondary btn-sm rounded-md">Cadastrar item</a>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>

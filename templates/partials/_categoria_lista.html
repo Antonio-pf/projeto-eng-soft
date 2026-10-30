@@ -1,0 +1,69 @@
+{# Trecho trocado pelo htmx na busca, na paginação e depois de salvar no modal (registro-salvo). #}
+<div id="categoria-lista" hx-get="{% url 'categoria_list' %}" hx-trigger="registro-salvo from:body" hx-include="#categoria-busca"
+     hx-target="this" hx-swap="outerHTML" hx-disinherit="*">
+    {% include "partials/_esqueleto_tabela.html" %}
+
+    <div class="lista-dados">
+        {% if page_obj %}
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[560px]">
+                <thead>
+                    <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                        <th class="px-4 py-3 font-semibold">Nome</th>
+                        <th class="px-4 py-3 font-semibold">Descrição</th>
+                        {% if usuario_logado.perfil == "administrador" %}
+                        <th class="px-4 py-3 font-semibold">Ações</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for categoria in page_obj %}
+                    <tr>
+                        <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ categoria.nome }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">{{ categoria.descricao|default:"-" }}</td>
+                        {% if usuario_logado.perfil == "administrador" %}
+                        <td class="px-4 py-4 text-sm">
+                            <a href="{% url 'categoria_update' categoria.pk %}" hx-get="{% url 'categoria_update' categoria.pk %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                               class="btn btn-outline btn-xs">Editar</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-center" hx-boost="true" hx-target="#categoria-lista" hx-swap="outerHTML" hx-indicator="#categoria-card">
+            <div class="join">
+                {% if page_obj.has_previous %}
+                <a href="{% querystring page=page_obj.previous_page_number %}" class="join-item btn btn-sm">«</a>
+                {% else %}
+                <button class="join-item btn btn-sm btn-disabled">«</button>
+                {% endif %}
+                <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+                {% if page_obj.has_next %}
+                <a href="{% querystring page=page_obj.next_page_number %}" class="join-item btn btn-sm">»</a>
+                {% else %}
+                <button class="join-item btn btn-sm btn-disabled">»</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="flex flex-col items-center gap-3 py-12 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
+            {% if query %}
+            <p class="text-sm font-medium text-gray-700">Nenhuma categoria encontrada para “{{ query }}”.</p>
+            <a href="{% url 'categoria_list' %}" class="btn btn-ghost btn-sm rounded-md">Limpar busca</a>
+            {% else %}
+            <p class="text-sm font-medium text-gray-700">Nenhuma categoria cadastrada ainda.</p>
+            {% if usuario_logado.perfil == "administrador" %}
+            <a href="{% url 'categoria_create' %}" hx-get="{% url 'categoria_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+               class="btn btn-secondary btn-sm rounded-md">Cadastrar categoria</a>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>

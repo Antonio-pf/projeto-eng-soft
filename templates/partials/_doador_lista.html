@@ -1,0 +1,72 @@
+{# Trecho trocado pelo htmx na busca, na paginação e depois de salvar no modal (registro-salvo). #}
+<div id="doador-lista" hx-get="{% url 'doador_list' %}" hx-trigger="registro-salvo from:body" hx-include="#doador-busca"
+     hx-target="this" hx-swap="outerHTML" hx-disinherit="*">
+    {% include "partials/_esqueleto_tabela.html" %}
+
+    <div class="lista-dados">
+        {% if page_obj %}
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[640px]">
+                <thead>
+                    <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                        <th class="px-4 py-3 font-semibold">Nome</th>
+                        <th class="px-4 py-3 font-semibold">CPF/CNPJ</th>
+                        <th class="px-4 py-3 font-semibold">Telefone</th>
+                        <th class="px-4 py-3 font-semibold">E-mail</th>
+                        <th class="px-4 py-3 font-semibold">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for doador in page_obj %}
+                    <tr>
+                        <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ doador.nome }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">{{ doador.cpf_cnpj }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">{{ doador.telefone|default:"-" }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">{{ doador.email|default:"-" }}</td>
+                        <td class="px-4 py-4 text-sm">
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'doacao_list' %}?id_doador={{ doador.pk }}" class="btn btn-outline btn-xs">Ver doações</a>
+                                {% if usuario_logado.perfil == "administrador" %}
+                                <a href="{% url 'doador_update' doador.pk %}" hx-get="{% url 'doador_update' doador.pk %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                                   class="btn btn-ghost btn-xs">Editar</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-center" hx-boost="true" hx-target="#doador-lista" hx-swap="outerHTML" hx-indicator="#doador-card">
+            <div class="join">
+                {% if page_obj.has_previous %}
+                <a href="{% querystring page=page_obj.previous_page_number %}" class="join-item btn btn-sm">«</a>
+                {% else %}
+                <button class="join-item btn btn-sm btn-disabled">«</button>
+                {% endif %}
+                <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
+                {% if page_obj.has_next %}
+                <a href="{% querystring page=page_obj.next_page_number %}" class="join-item btn btn-sm">»</a>
+                {% else %}
+                <button class="join-item btn btn-sm btn-disabled">»</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="flex flex-col items-center gap-3 py-12 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            {% if query %}
+            <p class="text-sm font-medium text-gray-700">Nenhum doador encontrado para “{{ query }}”.</p>
+            <a href="{% url 'doador_list' %}" class="btn btn-ghost btn-sm rounded-md">Limpar busca</a>
+            {% else %}
+            <p class="text-sm font-medium text-gray-700">Nenhum doador cadastrado ainda.</p>
+            <a href="{% url 'doador_create' %}" hx-get="{% url 'doador_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+               class="btn btn-secondary btn-sm rounded-md">Cadastrar doador</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
