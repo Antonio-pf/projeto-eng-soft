@@ -1,6 +1,6 @@
 # Plano de Testes — Conecta Social
 
-**Versão:** 1.1 (E4 — Semana 4, 11/09/2026)  
+**Versão:** 1.2 (29/10/2026, fim da Sprint 4). Versão inicial 1.1 na E4, em 11/09/2026  
 **Equipe:**
 - Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
 - Daniel Souza Monteiro de Carvalho — RA 2840482211052
@@ -36,13 +36,14 @@ Nenhum PR é aceito na `main` se:
 - (c) Falhar qualquer teste crítico de autenticação, autorização, validação, integridade do saldo ou consulta agregada;
 - (d) Uma funcionalidade alterar dados sem teste de integração correspondente ou sem preservar as restrições do banco;
 - (e) O build, a migração do banco ou a execução da CI falhar;
-- (f) O arquivo `requirements.txt` for alterado sem atualização do `README.md`.
+- (f) O arquivo `requirements.txt` for alterado sem atualização do `README.md`;
+- (g) Um model for alterado sem a atualização correspondente do `db/schema.sql` e do dicionário de dados do `docs/der.md` (o CT32 quebra no CI se as colunas divergirem).
 
 ---
 
 ## 3. Casos de teste planejados
 
-> A partir da E5, cada caso marcado como "implementado" precisa de evidência de execução correspondente em `docs/sprints/sprint-N-evidencias-teste.md`. Nesta versão de E4, os casos abaixo são apenas planejados.
+> A partir da E5, cada caso implementado precisa de evidência de execução em `docs/sprints/sprint-N-evidencias-teste.md`. A situação atual de cada caso está na [seção 4](#4-situação-dos-casos-de-teste). Os casos CT29 a CT33 foram incluídos na versão 1.2.
 
 | ID   | História (E2) | Cenário                                                                 | Entrada                                                                    | Resultado esperado                                                                                          | Prioridade |
 |------|--------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|------------|
@@ -74,5 +75,61 @@ Nenhum PR é aceito na `main` se:
 | CT26 | #17          | Exibição do saldo disponível no formulário de distribuição              | seleção do item X; saldo atualizado antes da seleção                     | Formulário exibe o saldo mais recente do item X antes do envio                                             | Média      |
 | CT27 | #18          | Histórico de distribuições filtrável por família e período               | família selecionada; intervalo de datas; filtros isolados e combinados     | Lista exibe data, família, item, quantidade e usuário que registrou, respeitando os filtros               | Média      |
 | CT28 | #22          | Relatório de doações por doador e item                                  | doações de vários doadores no período                                     | Relatório agrupa por doador e item, exibe os totais e permite filtro por período                          | Média      |
+| CT29 | #14, #16      | Banco recusa movimentação com quantidade menor ou igual a zero          | gravação direta, sem formulário, de doação e distribuição com quantidade 0 e -1| O banco rejeita com erro de integridade (`CHECK quantidade > 0`)                                            | Alta       |
+| CT30 | #8            | Banco recusa família sem membros                                        | gravação direta de família com `num_membros` = 0                           | O banco rejeita com erro de integridade (`CHECK num_membros >= 1`)                                          | Média      |
+| CT31 | #3            | Banco recusa perfil diferente de Administrador e Voluntário             | gravação direta de usuário com perfil `gestor`                             | O banco rejeita com erro de integridade (`CHECK perfil IN (...)`)                                           | Alta       |
+| CT32 | — (E3)        | Banco criado pelas migrations igual ao `db/schema.sql`                  | colunas de cada tabela nos models e no `db/schema.sql`                     | As 8 tabelas têm as mesmas colunas, com os mesmos nomes, nos dois                                           | Média      |
+| CT33 | #24           | Painel com doações do mês, famílias atendidas e movimentações recentes  | doações e distribuições no mês atual e no anterior, incluindo canceladas   | Cards mostram as doações não canceladas do mês com a variação, as famílias distintas atendidas e as 5 últimas movimentações não canceladas| Média      |
 
 ---
+
+## 4. Situação dos casos de teste
+
+Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 29/10/2026: **28 passaram, 2 parciais e 3 não executados**. Os testes automatizados rodam com `python manage.py test` (125 testes) e no CI a cada PR, no SQLite e no PostgreSQL.
+
+| ID | História | Situação | Quando | Evidência |
+|---|---|---|---|---|
+| CT01 | #1 | 🟡 Parcial | Sprint 1 | Login válido: `test_login_valido_redireciona_para_painel`. A expiração da sessão está configurada em `conecta/settings.py`, mas não tem teste automatizado |
+| CT02 | #1 | ✅ Passou | Sprint 1 | `AutenticarTests` (senha errada e e-mail inexistente) e `test_login_invalido_mostra_erro_generico_e_nao_autentica` |
+| CT03 | #3 | ✅ Passou | Sprint 1 | `UsuarioFormTests` e `UsuariosViewTests` (cadastro, listagem e 403 para Voluntário) |
+| CT04 | #3 | ✅ Passou | Sprint 1 | `test_email_duplicado_e_rejeitado` e `test_email_duplicado_mostra_erro_e_nao_duplica` |
+| CT05 | #5 | ✅ Passou | Sprint 2 | `DoadorTestCase.test_cpf_formato_invalido` |
+| CT06 | #5 | ✅ Passou | Sprint 2 | `DoadorTestCase.test_cpf_duplicado` |
+| CT07 | #8 | ✅ Passou | Sprint 2 | `FamiliaTestCase`: cadastro, número de membros inválido e telefone opcional |
+| CT08 | #9 | 🟡 Parcial | Sprint 2 | Busca: `test_listar_e_buscar_familias`. A paginação de 20 por página funciona, mas não tem teste automatizado |
+| CT09 | #10 | ✅ Passou | Sprint 2 | `CategoriaTestCase` |
+| CT10 | #11 | ✅ Passou | Sprint 2 | `test_cadastrar_item_com_sucesso` e `test_cadastrar_item_estoque_minimo_invalido` |
+| CT11 | #14 | ✅ Passou | Sprint 2 | `DoacaoTestCase`. A data padrão foi corrigida na Sprint 3 (PR #38) |
+| CT12 | #16 | ✅ Passou | Sprint 2 | `test_registrar_distribuicao_com_sucesso` e `test_registrar_distribuicao_saldo_exatamente_igual_permitida` |
+| CT13 | #16 | ✅ Passou | Sprint 2 | `test_registrar_distribuicao_saldo_insuficiente_bloqueada` |
+| CT14 | #12 | ✅ Passou | Sprint 2 | `test_listar_itens_com_saldo_e_destaque` |
+| CT15 | #20 | ✅ Passou | Sprint 4 | `PainelTests.test_ct15_total_da_categoria_soma_os_saldos_e_reflete_movimentacao` (PR #47) |
+| CT16 | #21 | ✅ Passou | Sprint 4 | `DistribuicaoRelatorioTestCase.test_ct16_relatorio_distribuicoes_filtra_por_periodo` (PR #53) |
+| CT17 | #21 | ✅ Passou | Sprint 4 | `DistribuicaoRelatorioTestCase.test_ct17_relatorio_distribuicoes_filtra_por_familia` (PR #53) |
+| CT18 | #2 | ✅ Passou | Sprint 1 | `test_logout_limpa_sessao_e_bloqueia_painel` e `test_painel_sem_sessao_redireciona_para_login` |
+| CT19 | #4 | ✅ Passou | Sprint 1 | `test_usuario_inativo_retorna_none` e `test_usuario_desativado_nao_consegue_fazer_login` |
+| CT20 | #19 | ⬜ Não executado | — | A #19 não foi implementada |
+| CT21 | #23 | ⬜ Não executado | — | Só o link de exportação tem teste (`test_exportar_csv_leva_os_filtros_do_relatorio`). O conteúdo do CSV não tem teste automatizado nem execução manual registrada |
+| CT22 | #6 | ✅ Passou | Sprint 2 | `test_listar_doadores`, `test_buscar_doador_por_nome` e `test_paginacao_doadores` |
+| CT23 | #7 | ✅ Passou | Sprint 2 | `DoadorUpdateTestCase` |
+| CT24 | #13 | ✅ Passou | Sprint 2 | `ItemTestCase.test_editar_item` |
+| CT25 | #15 | ✅ Passou | Sprint 2 | `DoacaoListTestCase`: filtros por doador e período, isolados e combinados |
+| CT26 | #17 | ✅ Passou | Sprint 2 | `test_formulario_exibe_saldo_inline_na_opcao_do_item`. A interação em JavaScript foi validada manualmente |
+| CT27 | #18 | ✅ Passou | Sprint 2 | `DistribuicaoListTestCase`: filtros por família e período, isolados e combinados |
+| CT28 | #22 | ✅ Passou | Sprint 4 | `DoacaoListTestCase`: `test_totais_*` (PR #49) |
+| CT29 | #14, #16 | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_banco_recusa_movimentacao_com_quantidade_menor_ou_igual_a_zero` (PR #55) |
+| CT30 | #8 | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_banco_recusa_familia_sem_membros` (PR #55) |
+| CT31 | #3 | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_banco_recusa_perfil_fora_dos_dois_perfis` (PR #55) |
+| CT32 | — (E3) | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_colunas_das_migrations_iguais_ao_schema_sql` (PR #55) |
+| CT33 | #24 | ⬜ Não executado | — | A #24 não foi implementada |
+
+Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da sessão), CT08 (paginação de famílias), CT21 (conteúdo do CSV), CT20 e CT33 (dependem da #19 e da #24).
+
+---
+
+## 5. Histórico de versões
+
+| Versão | Data | O que mudou |
+|---|---|---|
+| 1.1 | 11/09/2026 | Versão inicial da E4: estratégia, critério de bloqueio de merge e casos CT01 a CT28 |
+| 1.2 | 29/10/2026 | Situação de cada caso nas Sprints 1 a 4 (seção 4); critério (g) de bloqueio; casos CT29 a CT32, para as validações no banco e o alinhamento com o `db/schema.sql`; caso CT33, para a #24 |
