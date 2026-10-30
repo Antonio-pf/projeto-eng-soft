@@ -1,7 +1,7 @@
 # Relatório de Entrega — Sprint 3 — Conecta Social
 
 **Período:** 03/10/2026 a 16/10/2026 (Sprint 3, semanas 9–10)
-**Sprint Review:** [data e participantes da Review da Sprint 3 — confirmar com a equipe]
+**Sprint Review:** 16/10/2026, encontro online. Participantes: [confirmar com a equipe]
 
 **Equipe:**
 - Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007

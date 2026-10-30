@@ -1,6 +1,6 @@
 # Ata de Retrospectiva — Sprint 4 — Conecta Social
 
-**Data:** [dd/mm/aaaa da retrospectiva da Sprint 4 — confirmar com a equipe]
+**Data:** 23/10/2026, encontro online
 **Presentes:** [confirmar quem esteve presente] Alexandre Ulhoa (RA 2840482423007) — Daniel Carvalho (RA 2840482211052) — Antonio Felipe (RA 2840482211003) — Luiz Henrique (RA 2840482423005)
 
 > Rascunho preparado em 28/10/2026 e atualizado em 29/10/2026 a partir do histórico do repositório e do board. As seções 2, 3 e 4 precisam ser revistas e completadas pela equipe em conjunto, depois da Review.
