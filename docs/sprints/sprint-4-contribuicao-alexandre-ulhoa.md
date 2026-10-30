@@ -2,13 +2,14 @@
 
 **Papel nesta sprint:** [Facilitador / PO / Dados / Qualidade]
 
-> Rascunho. Até 28/10/2026 não há commit, PR ou revisão de Alexandre no repositório na Sprint 4. Alexandre deve preencher com o que fez, linkando PRs, commits, issues ou outros registros, e abrir o PR deste arquivo com a própria conta.
+> Rascunho. Não há commit, PR ou revisão em nome de Alexandre no repositório na Sprint 4. A participação na história #21 com Antonio Felipe foi registrada por Antonio Felipe. Alexandre deve revisar, descrever o que fez, completar os demais itens e abrir o PR deste arquivo com a própria conta.
 
 ## 1. O que fiz
 
 | Item | PR/commit | Status |
 |---|---|---|
-| [itens da sprint, com PR, commit ou outro registro verificável] | | |
+| História #21 (relatório de distribuições filtrável por período e família), junto com Antonio Felipe | Issue #22 do board, em que Alexandre constava como responsável; código integrado pelo PR #53, sem commit em seu nome | Concluído, integrado em 29/10/2026 |
+| [outros itens da sprint, com PR, commit ou outro registro verificável] | | |
 
 ## 2. Rituais que participei
 

@@ -1,7 +1,7 @@
 # Relatório de Entrega — Sprint 4 — Conecta Social
 
 **Período:** 17/10/2026 a 30/10/2026 (Sprint 4, semanas 11–12)
-**Sprint Review:** [data e participantes da Review da Sprint 4 — confirmar com a equipe]
+**Sprint Review:** 23/10/2026, encontro online. Participantes: [confirmar com a equipe]
 
 **Equipe:**
 - Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
@@ -19,7 +19,7 @@ O backlog não registra um planejamento próprio da Sprint 4. A sprint ficou com
 |---|---|---|---|
 | #20 — Painel com total de itens em estoque por categoria | Sim (remanescente da Sprint 3) | Sim | PR #47, integrado em 28/10/2026 sem revisão registrada. Mostra os indicadores "Itens em estoque" e "Itens em alerta", o estoque por categoria com o percentual de itens acima do mínimo e os pontos de atenção (até 5 itens de menor saldo), seguindo o frame `2603:39` do protótipo |
 | #22 — Histórico de doações por doador com totais por item | Sim (remanescente da Sprint 3) | Sim | PR #49 (Daniel Souza), revisado e aprovado por Antonio Felipe e integrado em 28/10/2026. A tela `/doacoes/` ganhou a tabela "Totais por doador e item", que respeita os filtros de doador e período e exclui as doações canceladas |
-| #21 — Relatório de distribuições filtrável por período e família | Sim (remanescente da Sprint 3) | Sim | PR #53, integrado em 29/10/2026 sem revisão registrada. Luiz Henrique refez a implementação a partir da `main` atual, sem a pasta `venv/` (commit `56ce3c6`): rota `/distribuicoes/relatorio/`, agrupamento por família e item, filtros por período e família e 5 testes. Antonio Felipe alinhou a tela ao protótipo, com o resumo por unidade, o link de exportação CSV com os filtros aplicados e o item no menu lateral, ajustou esses testes e acrescentou mais 9 (commit `d8c463f`) |
+| #21 — Relatório de distribuições filtrável por período e família | Sim (remanescente da Sprint 3) | Sim | PR #53, integrado em 29/10/2026 sem revisão registrada. Luiz Henrique refez a implementação a partir da `main` atual, sem a pasta `venv/` (commit `56ce3c6`): rota `/distribuicoes/relatorio/`, agrupamento por família e item, filtros por período e família e 5 testes. Antonio Felipe, com a participação de Alexandre Ulhoa, alinhou a tela ao protótipo, com o resumo por unidade, o link de exportação CSV com os filtros aplicados e o item no menu lateral, ajustou esses testes e acrescentou mais 9 (commit `d8c463f`) |
 | #19 — Cancelar uma movimentação registrada por engano | Sim (remanescente da Sprint 3) | Não | Não iniciada. Issue reaberta e card em "Todo" desde 28/10/2026 |
 | #24 — Painel com doações recebidas, famílias atendidas e movimentações recentes | [confirmar] | Não | Ganhou a issue #50 e entrou no board em "Todo" em 28/10/2026 |
 | Correções da E4 pedidas pelo professor (README no setup nativo e link único do protótipo) | Sim | Sim | PR #46, integrado em 28/10/2026 sem revisão registrada |
