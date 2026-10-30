@@ -1,3 +1,4 @@
+import re
 import runpy
 import sys
 from datetime import date, timedelta
@@ -7,7 +8,7 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -1883,3 +1884,82 @@ class FiltrosInvalidosTests(TestCase):
                     reverse(url_name), {parametro: "abc", "data_inicio": "2026-02-30"}
                 )
                 self.assertEqual(response.status_code, 200)
+
+
+class SchemaBancoTests(TestCase):
+    """O banco criado pelas migrations precisa bater com o db/schema.sql da E3."""
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Voluntário Schema",
+            email="schema@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+        )
+        categoria = CategoriaItem.objects.create(nome="Alimento")
+        unidade = UnidadeMedida.objects.create(nome="Pacote", sigla="pct")
+        self.item = Item.objects.create(
+            nome="Arroz 5kg", categoria=categoria, unidade_medida=unidade
+        )
+        self.doador = Doador.objects.create(nome="Doador Schema", cpf_cnpj="123.456.789-00")
+        self.familia = Familia.objects.create(
+            nome_responsavel="Família Schema", endereco="Rua A, 1", num_membros=2
+        )
+
+    def assertBancoRecusa(self, model, **campos):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            model.objects.create(**campos)
+
+    def test_colunas_das_migrations_iguais_ao_schema_sql(self):
+        ddl = (settings.BASE_DIR / "db" / "schema.sql").read_text(encoding="utf-8")
+        for model in (
+            Usuario,
+            Doador,
+            Familia,
+            CategoriaItem,
+            UnidadeMedida,
+            Item,
+            Doacao,
+            Distribuicao,
+        ):
+            tabela = model._meta.db_table
+            with self.subTest(tabela=tabela):
+                bloco = re.search(rf"CREATE TABLE {tabela} \((.*?)\n\);", ddl, re.S)
+                self.assertIsNotNone(bloco, f"tabela {tabela} não está no schema.sql")
+                colunas_ddl = {linha.split()[0] for linha in bloco.group(1).strip().splitlines()}
+                colunas_model = {campo.column for campo in model._meta.concrete_fields}
+                self.assertEqual(colunas_model, colunas_ddl)
+
+    def test_banco_recusa_movimentacao_com_quantidade_menor_ou_igual_a_zero(self):
+        for quantidade in (Decimal("0"), Decimal("-1")):
+            with self.subTest(quantidade=quantidade):
+                self.assertBancoRecusa(
+                    Doacao,
+                    doador=self.doador,
+                    item=self.item,
+                    registrado_por=self.usuario,
+                    quantidade=quantidade,
+                    data=date.today(),
+                )
+                self.assertBancoRecusa(
+                    Distribuicao,
+                    familia=self.familia,
+                    item=self.item,
+                    registrado_por=self.usuario,
+                    quantidade=quantidade,
+                    data=date.today(),
+                )
+
+    def test_banco_recusa_familia_sem_membros(self):
+        self.assertBancoRecusa(
+            Familia, nome_responsavel="Família Vazia", endereco="Rua B, 2", num_membros=0
+        )
+
+    def test_banco_recusa_perfil_fora_dos_dois_perfis(self):
+        self.assertBancoRecusa(
+            Usuario,
+            nome="Perfil Inválido",
+            email="gestor@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil="gestor",
+        )

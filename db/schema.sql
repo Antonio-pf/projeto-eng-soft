@@ -27,86 +27,87 @@ DROP TABLE IF EXISTS usuario           CASCADE;
 
 -- Sem ENUM nativo: Django armazena perfil como VARCHAR + CHECK, evitando
 -- conflito entre o tipo PostgreSQL e as migrations do framework.
+-- Campos de texto opcionais guardam '' (string vazia) em vez de NULL, como o Django.
 
 -- --------------------------------------------------------
 -- Tabelas
 -- --------------------------------------------------------
 
 CREATE TABLE usuario (
-    id_usuario      SERIAL          PRIMARY KEY,
+    id_usuario      BIGSERIAL       PRIMARY KEY,
     nome            VARCHAR(150)    NOT NULL,
     email           VARCHAR(255)    NOT NULL UNIQUE,
     senha_hash      VARCHAR(255)    NOT NULL,
     perfil          VARCHAR(15)     NOT NULL CHECK (perfil IN ('administrador', 'voluntario')),
     ativo           BOOLEAN         NOT NULL DEFAULT TRUE,
-    criado_em       TIMESTAMP       NOT NULL DEFAULT NOW()
+    criado_em       TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE doador (
-    id_doador       SERIAL          PRIMARY KEY,
+    id_doador       BIGSERIAL       PRIMARY KEY,
     nome            VARCHAR(150)    NOT NULL,
     cpf_cnpj        VARCHAR(18)     NOT NULL UNIQUE,
-    telefone        VARCHAR(20),
-    email           VARCHAR(255),
-    criado_em       TIMESTAMP       NOT NULL DEFAULT NOW()
+    telefone        VARCHAR(20)     NOT NULL DEFAULT '',
+    email           VARCHAR(255)    NOT NULL DEFAULT '',
+    criado_em       TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE familia (
-    id_familia          SERIAL          PRIMARY KEY,
+    id_familia          BIGSERIAL       PRIMARY KEY,
     nome_responsavel    VARCHAR(150)    NOT NULL,
     endereco            TEXT            NOT NULL,
-    telefone            VARCHAR(20),
+    telefone            VARCHAR(20)     NOT NULL DEFAULT '',
     num_membros         INTEGER         NOT NULL CHECK (num_membros >= 1),
-    criado_em           TIMESTAMP       NOT NULL DEFAULT NOW()
+    criado_em           TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE categoria_item (
-    id_categoria_item   SERIAL          PRIMARY KEY,
+    id_categoria_item   BIGSERIAL       PRIMARY KEY,
     nome                VARCHAR(100)    NOT NULL UNIQUE,
-    descricao           TEXT
+    descricao           TEXT            NOT NULL DEFAULT ''
 );
 
 CREATE TABLE unidade_medida (
-    id_unidade_medida   SERIAL          PRIMARY KEY,
+    id_unidade_medida   BIGSERIAL       PRIMARY KEY,
     nome                VARCHAR(50)     NOT NULL UNIQUE,
     sigla               VARCHAR(10)     NOT NULL UNIQUE
 );
 
 CREATE TABLE item (
-    id_item             SERIAL          PRIMARY KEY,
+    id_item             BIGSERIAL       PRIMARY KEY,
     nome                VARCHAR(150)    NOT NULL,
-    id_categoria_item   INTEGER         NOT NULL REFERENCES categoria_item(id_categoria_item),
-    id_unidade_medida   INTEGER         NOT NULL REFERENCES unidade_medida(id_unidade_medida),
-    estoque_minimo      NUMERIC(10,2)   NOT NULL DEFAULT 0 CHECK (estoque_minimo >= 0),
-    criado_em           TIMESTAMP       NOT NULL DEFAULT NOW()
+    id_categoria_item   BIGINT          NOT NULL REFERENCES categoria_item(id_categoria_item),
+    id_unidade_medida   BIGINT          NOT NULL REFERENCES unidade_medida(id_unidade_medida),
+    estoque_minimo      INTEGER         NOT NULL DEFAULT 0 CHECK (estoque_minimo >= 0),
+    criado_em           TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
 -- saldo_atual não é persistido em item (mantém 3FN) — calculado via ORM.
 
 CREATE TABLE doacao (
-    id_doacao           SERIAL          PRIMARY KEY,
-    id_doador           INTEGER         NOT NULL REFERENCES doador(id_doador),
-    id_item             INTEGER         NOT NULL REFERENCES item(id_item),
-    id_registrado_por   INTEGER         NOT NULL REFERENCES usuario(id_usuario),
+    id_doacao           BIGSERIAL       PRIMARY KEY,
+    id_doador           BIGINT          NOT NULL REFERENCES doador(id_doador),
+    id_item             BIGINT          NOT NULL REFERENCES item(id_item),
+    id_registrado_por   BIGINT          NOT NULL REFERENCES usuario(id_usuario),
     quantidade          NUMERIC(10,2)   NOT NULL CHECK (quantidade > 0),
     data                DATE            NOT NULL,
     cancelado           BOOLEAN         NOT NULL DEFAULT FALSE,
-    criado_em           TIMESTAMP       NOT NULL DEFAULT NOW(),
-    cancelado_em        TIMESTAMP,
-    id_cancelado_por    INTEGER         REFERENCES usuario(id_usuario)
+    criado_em           TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    cancelado_em        TIMESTAMPTZ,
+    id_cancelado_por    BIGINT          REFERENCES usuario(id_usuario)
 );
 
 CREATE TABLE distribuicao (
-    id_distribuicao     SERIAL          PRIMARY KEY,
-    id_familia          INTEGER         NOT NULL REFERENCES familia(id_familia),
-    id_item             INTEGER         NOT NULL REFERENCES item(id_item),
-    id_registrado_por   INTEGER         NOT NULL REFERENCES usuario(id_usuario),
+    id_distribuicao     BIGSERIAL       PRIMARY KEY,
+    id_familia          BIGINT          NOT NULL REFERENCES familia(id_familia),
+    id_item             BIGINT          NOT NULL REFERENCES item(id_item),
+    id_registrado_por   BIGINT          NOT NULL REFERENCES usuario(id_usuario),
     quantidade          NUMERIC(10,2)   NOT NULL CHECK (quantidade > 0),
     data                DATE            NOT NULL,
     cancelado           BOOLEAN         NOT NULL DEFAULT FALSE,
-    criado_em           TIMESTAMP       NOT NULL DEFAULT NOW(),
-    cancelado_em        TIMESTAMP,
-    id_cancelado_por    INTEGER         REFERENCES usuario(id_usuario)
+    criado_em           TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    cancelado_em        TIMESTAMPTZ,
+    id_cancelado_por    BIGINT          REFERENCES usuario(id_usuario)
 );
 
 -- --------------------------------------------------------
@@ -163,13 +164,13 @@ INSERT INTO item (nome, id_categoria_item, id_unidade_medida, estoque_minimo) VA
 INSERT INTO doador (nome, cpf_cnpj, telefone, email) VALUES
     ('Carlos Mendonça',        '123.456.789-00',      '(11) 99001-1234', 'carlos@email.com'),
     ('Supermercado Bom Preço', '12.345.678/0001-99',  '(11) 3200-5678', 'doacoes@bompreco.com.br'),
-    ('Ana Paula Ramos',        '987.654.321-00',      '(11) 97654-3210', NULL);
+    ('Ana Paula Ramos',        '987.654.321-00',      '(11) 97654-3210', '');
 
 -- Famílias
 INSERT INTO familia (nome_responsavel, endereco, telefone, num_membros) VALUES
     ('Josefa Santos',   'Rua das Flores 45, Bairro Esperança',      '(11) 98765-0001', 4),
     ('Roberto Lima',    'Av. Principal 200, Apto 3, Bairro Centro', '(11) 98765-0002', 6),
-    ('Maria das Dores', 'Rua Boa Vista 12, Bairro São Pedro',       NULL,              3);
+    ('Maria das Dores', 'Rua Boa Vista 12, Bairro São Pedro',       '',                3);
 
 -- Doações (entradas de estoque)
 INSERT INTO doacao (id_doador, id_item, id_registrado_por, quantidade, data) VALUES

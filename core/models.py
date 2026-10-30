@@ -50,6 +50,12 @@ class Usuario(AbstractBaseUser):
 
     class Meta:
         db_table = "usuario"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(perfil__in=["administrador", "voluntario"]),
+                name="usuario_perfil_check",
+            )
+        ]
         verbose_name = "usuário"
         verbose_name_plural = "usuários"
 
@@ -83,11 +89,16 @@ class Familia(models.Model):
     nome_responsavel = models.CharField(max_length=150)
     endereco = models.TextField()
     telefone = models.CharField(max_length=20, blank=True)
-    num_membros = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    num_membros = models.IntegerField(validators=[MinValueValidator(1)])
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "familia"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(num_membros__gte=1), name="familia_num_membros_check"
+            )
+        ]
         verbose_name = "família"
         verbose_name_plural = "famílias"
 
@@ -142,8 +153,12 @@ class ItemQuerySet(models.QuerySet):
 class Item(models.Model):
     id_item = models.BigAutoField(primary_key=True)
     nome = models.CharField(max_length=150)
-    categoria = models.ForeignKey(CategoriaItem, on_delete=models.PROTECT)
-    unidade_medida = models.ForeignKey(UnidadeMedida, on_delete=models.PROTECT)
+    categoria = models.ForeignKey(
+        CategoriaItem, on_delete=models.PROTECT, db_column="id_categoria_item"
+    )
+    unidade_medida = models.ForeignKey(
+        UnidadeMedida, on_delete=models.PROTECT, db_column="id_unidade_medida"
+    )
     estoque_minimo = models.PositiveIntegerField(
         default=0,
         validators=[MinValueValidator(0)],
@@ -193,10 +208,13 @@ class MovimentacaoQuerySet(models.QuerySet):
 
 class Doacao(models.Model):
     id_doacao = models.BigAutoField(primary_key=True)
-    doador = models.ForeignKey(Doador, on_delete=models.PROTECT)
-    item = models.ForeignKey(Item, on_delete=models.PROTECT)
+    doador = models.ForeignKey(Doador, on_delete=models.PROTECT, db_column="id_doador")
+    item = models.ForeignKey(Item, on_delete=models.PROTECT, db_column="id_item")
     registrado_por = models.ForeignKey(
-        Usuario, on_delete=models.PROTECT, related_name="doacoes_registradas"
+        Usuario,
+        on_delete=models.PROTECT,
+        related_name="doacoes_registradas",
+        db_column="id_registrado_por",
     )
     quantidade = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)]
@@ -211,6 +229,7 @@ class Doacao(models.Model):
         related_name="doacoes_canceladas",
         null=True,
         blank=True,
+        db_column="id_cancelado_por",
     )
 
     objects = MovimentacaoQuerySet.as_manager()
@@ -222,18 +241,22 @@ class Doacao(models.Model):
             models.Index(fields=["doador"], name="idx_doacao_id_doador"),
             models.Index(fields=["data"], name="idx_doacao_data"),
         ]
+        constraints = [
+            models.CheckConstraint(condition=Q(quantidade__gt=0), name="doacao_quantidade_check")
+        ]
         verbose_name = "doação"
         verbose_name_plural = "doações"
 
 
 class Distribuicao(models.Model):
     id_distribuicao = models.BigAutoField(primary_key=True)
-    familia = models.ForeignKey(Familia, on_delete=models.PROTECT)
-    item = models.ForeignKey(Item, on_delete=models.PROTECT)
+    familia = models.ForeignKey(Familia, on_delete=models.PROTECT, db_column="id_familia")
+    item = models.ForeignKey(Item, on_delete=models.PROTECT, db_column="id_item")
     registrado_por = models.ForeignKey(
         Usuario,
         on_delete=models.PROTECT,
         related_name="distribuicoes_registradas",
+        db_column="id_registrado_por",
     )
     quantidade = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)]
@@ -248,6 +271,7 @@ class Distribuicao(models.Model):
         related_name="distribuicoes_canceladas",
         null=True,
         blank=True,
+        db_column="id_cancelado_por",
     )
 
     objects = MovimentacaoQuerySet.as_manager()
@@ -258,6 +282,11 @@ class Distribuicao(models.Model):
             models.Index(fields=["item"], name="idx_dist_id_item"),
             models.Index(fields=["familia"], name="idx_dist_id_familia"),
             models.Index(fields=["data"], name="idx_dist_data"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(quantidade__gt=0), name="distribuicao_quantidade_check"
+            )
         ]
         verbose_name = "distribuição"
         verbose_name_plural = "distribuições"
