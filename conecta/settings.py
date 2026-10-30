@@ -70,6 +70,27 @@ SESSION_COOKIE_AGE = 1800  # 30 min — sessão expira após inatividade (histó
 SESSION_SAVE_EVERY_REQUEST = True  # renova a expiração a cada requisição ativa
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
+# Em produção (DEBUG=False) o sistema só funciona por HTTPS. O Render encerra o
+# HTTPS no proxy e informa o protocolo original no cabeçalho X-Forwarded-Proto.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = "test" not in sys.argv  # o cliente de testes faz requisições HTTP
+    SECURE_REDIRECT_EXEMPT = [r"^health/$"]  # o health check do Render pode chegar por HTTP
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 ano
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # Um subdomínio de onrender.com não pode entrar na lista de preload dos navegadores.
+    SILENCED_SYSTEM_CHECKS = ["security.W021"]
+    # Sem DEBUG, o padrão do Django só manda os erros por e-mail aos ADMINS, que o
+    # projeto não tem; assim os erros 500 aparecem nos logs do Render.
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "handlers": {"console": {"class": "logging.StreamHandler"}},
+        "loggers": {"django": {"handlers": ["console"], "level": "ERROR"}},
+    }
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

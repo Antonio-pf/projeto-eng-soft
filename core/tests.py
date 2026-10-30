@@ -1,5 +1,7 @@
+import os
 import re
 import runpy
+import subprocess
 import sys
 from datetime import date, timedelta
 from decimal import Decimal
@@ -2246,6 +2248,71 @@ class LayoutRenderizadoTests(TestCase):
 
         self.assertContains(response, "/static/css/tailwind.css")
         self.assertNotContains(response, "cdn.tailwindcss.com")
+
+
+class SegurancaProducaoTests(TestCase):
+    """Em produção o sistema só funciona por HTTPS; em desenvolvimento continua em HTTP."""
+
+    def carregar_settings(self, debug):
+        caminho_settings = settings.BASE_DIR / "conecta" / "settings.py"
+        with (
+            mock.patch.object(sys, "argv", ["manage.py", "runserver"]),
+            mock.patch.dict(os.environ, {"DEBUG": debug}),
+        ):
+            return runpy.run_path(str(caminho_settings))
+
+    def test_producao_exige_https_e_cookies_seguros(self):
+        config = self.carregar_settings(debug="False")
+
+        self.assertTrue(config["SECURE_SSL_REDIRECT"])
+        self.assertTrue(config["SESSION_COOKIE_SECURE"])
+        self.assertTrue(config["CSRF_COOKIE_SECURE"])
+        self.assertGreater(config["SECURE_HSTS_SECONDS"], 0)
+
+    def test_desenvolvimento_continua_em_http(self):
+        config = self.carregar_settings(debug="True")
+
+        self.assertFalse(config.get("SECURE_SSL_REDIRECT", False))
+        self.assertFalse(config.get("SESSION_COOKIE_SECURE", False))
+        self.assertFalse(config.get("CSRF_COOKIE_SECURE", False))
+
+    def test_http_redireciona_para_https_exceto_o_health_check(self):
+        config = self.carregar_settings(debug="False")
+
+        with self.settings(
+            SECURE_SSL_REDIRECT=True,
+            SECURE_PROXY_SSL_HEADER=config["SECURE_PROXY_SSL_HEADER"],
+            SECURE_REDIRECT_EXEMPT=config["SECURE_REDIRECT_EXEMPT"],
+        ):
+            login_http = self.client.get(reverse("login"))
+            login_pelo_proxy = self.client.get(
+                reverse("login"), headers={"X-Forwarded-Proto": "https"}
+            )
+            health_http = self.client.get(reverse("health"))
+
+        self.assertRedirects(
+            login_http, "https://testserver/login/", status_code=301, fetch_redirect_response=False
+        )
+        # Requisição que chegou por HTTPS no proxy do Render não entra em loop de redirecionamento.
+        self.assertEqual(login_pelo_proxy.status_code, 200)
+        self.assertEqual(health_http.status_code, 200)
+
+    def test_producao_escreve_os_erros_no_console(self):
+        # Processo separado para não trocar a configuração de logs da suíte de testes.
+        codigo = (
+            "import django, logging; django.setup(); "
+            "logging.getLogger('django.request').error('erro de teste')"
+        )
+        resultado = subprocess.run(
+            [sys.executable, "-c", codigo],
+            cwd=settings.BASE_DIR,
+            env={**os.environ, "DEBUG": "False", "DJANGO_SETTINGS_MODULE": "conecta.settings"},
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        self.assertIn("erro de teste", resultado.stderr)
 
 
 class DistribuicaoRelatorioTestCase(TestCase):
