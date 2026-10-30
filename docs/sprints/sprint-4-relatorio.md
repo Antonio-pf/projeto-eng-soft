@@ -1,7 +1,7 @@
 # Relatório de Entrega — Sprint 4 — Conecta Social
 
 **Período:** 17/10/2026 a 30/10/2026 (Sprint 4, semanas 11–12)
-**Sprint Review:** 23/10/2026, encontro online. Participantes: [confirmar com a equipe]
+**Sprint Review:** 23/10/2026, encontro online. Participantes: Alexandre Ulhoa, Daniel Carvalho, Antonio Felipe e Luiz Henrique
 
 **Equipe:**
 - Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
@@ -54,12 +54,12 @@ Acesse `http://127.0.0.1:8000/login/` com um dos usuários de teste do `seed` (l
 
 Link do board: https://github.com/users/Antonio-pf/projects/11
 
-[Print do board no fim da Sprint 4 — capturar até 30/10]
+![Board do projeto ao fim da Sprint 4](assets/sprint-4-board.png)
 
-Mudanças de status na Sprint 4, até 29/10/2026:
+Mudanças de status na Sprint 4, até 30/10/2026:
 
-- **Done:** #20 (painel) e #22 (totais por doador), as duas movidas depois do merge de 28/10/2026.
-- **In Progress:** #21 (relatório de distribuições). O código entrou na `main` em 29/10/2026 (PR #53), mas a issue continua aberta e o card ainda não foi movido para "Done". [mover até 30/10]
+- **Done:** #20 (painel) e #22 (totais por doador), as duas movidas depois do merge de 28/10/2026, e #21 (relatório de distribuições), que entrou na `main` em 29/10/2026 pelo PR #53.
+- **In Progress:** nenhum card.
 - **Todo:** #19 (cancelar movimentação), que teve a issue reaberta em 28/10/2026, e #24, que ganhou a issue #50.
 
 ## 4. Evidências de teste
@@ -79,7 +79,7 @@ Detalhe completo em [`sprint-4-evidencias-teste.md`](sprint-4-evidencias-teste.m
 ## 6. Riscos/impedimentos para a próxima sprint
 
 - **#19 sem início:** se não for implementada, o corte precisa ser negociado com o professor e registrado. Abandonar a história em silêncio gera penalidade.
-- **Revisão e merge semanal:** a `main` ficou de 09/10 a 28/10/2026 sem merge. Dos seis PRs integrados na sprint, só o #49 teve revisão registrada: #46, #47, #51, #53 e #54 entraram sem aprovação de outro integrante.
+- **Revisão e merge semanal:** a `main` ficou de 09/10 a 28/10/2026 sem merge. Dos 11 PRs integrados entre 28/10 e 30/10/2026, só o #49 teve revisão registrada. Os outros 10 entraram sem aprovação de outro integrante.
 - **Deploy:** o banco novo do Render é gratuito e expira em 30 dias, por volta de 27/11/2026. A apresentação final é em 13/11/2026.
 - **Próximas entregas:** E9 (relatório de testes executados e termo de aceite do cliente, 06/11/2026) e E10 (documentação final, manual do usuário e apresentação, 13/11/2026). Nenhuma das duas foi iniciada.
 
@@ -98,7 +98,7 @@ O cronograma da disciplina reserva a Sprint 4 para os requisitos não funcionais
 | A05 — Injeção | As consultas usam o ORM do Django, com parâmetros, e não há SQL escrito à mão nas views. Os templates escapam o HTML, e o código não usa `\|safe` nem `mark_safe`. Todo formulário tem token CSRF | Busca no código em 30/10/2026 | A exportação CSV não neutraliza textos que começam com `=`, `+`, `-` ou `@`, que o Excel pode tratar como fórmula |
 | A06 — Design inseguro | O formulário não deixa distribuir mais do que há em estoque, e o banco tem os CHECK do DDL (PR #55) | `test_registrar_distribuicao_saldo_insuficiente_bloqueada`, `SchemaBancoTests` | Duas distribuições do mesmo item enviadas ao mesmo tempo podem passar juntas pela checagem de saldo, porque não há bloqueio na transação. Risco baixo com poucos voluntários |
 | A07 — Falhas de autenticação | Login por e-mail e senha com mensagem de erro genérica. Validadores de senha do Django (mínimo de 8 caracteres, recusa senha comum, só de números ou parecida com os dados do usuário). A sessão expira após 30 min sem uso ou ao fechar o navegador | `test_login_invalido_mostra_erro_generico_e_nao_autentica`, `test_senha_fraca_e_rejeitada` | Sem limite de tentativas de login. A expiração da sessão (CT01) ainda não tem teste |
-| A08 — Falhas de integridade de software ou dados | O CI (lint e testes) roda em todo PR e passou em todos os merges da sprint, inclusive os dos PRs #55 e #56. As migrations são versionadas, e os CHECK, UNIQUE e FK do banco seguem o DDL (PR #55) | GitHub Actions | 8 dos 9 PRs integrados entre 28/10 e 30/10/2026 não tiveram revisão de outro integrante |
+| A08 — Falhas de integridade de software ou dados | O CI (lint e testes) roda em todo PR e passou em todos os merges da sprint, inclusive os dos PRs #55 e #56. As migrations são versionadas, e os CHECK, UNIQUE e FK do banco seguem o DDL (PR #55) | GitHub Actions | 10 dos 11 PRs integrados entre 28/10 e 30/10/2026 não tiveram revisão de outro integrante |
 | A09 — Falhas de registro e alerta | Cada doação e distribuição guarda quem registrou (`registrado_por`), e o modelo já tem os campos de cancelamento (`cancelado_por`, `cancelado_em`). Com `DEBUG=False`, a configuração padrão do Django não escrevia os erros 500 no console, e eles não apareciam nos logs do Render (conferido em 30/10/2026). O PR #58 passa a escrevê-los | `core/models.py`, `test_producao_escreve_os_erros_no_console` | Tentativas de login com falha não são registradas, e não há alerta |
 | A10 — Tratamento incorreto de condições excepcionais | Filtros inválidos nas listas são ignorados em vez de derrubar a página (PR #54). Registro inexistente responde 404. Em produção, o erro não mostra detalhes técnicos na tela | `test_pessoa_e_data_invalidas_nao_derrubam_as_listas` | Não há páginas próprias de erro 404 e 500; aparece a página padrão do Django, sem o layout do sistema |
 
