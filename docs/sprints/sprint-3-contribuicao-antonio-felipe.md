@@ -13,7 +13,7 @@
 | Remoção dos artefatos do AI-DLC do versionamento (`.gitignore` com `aidlc-docs/`, `.claude/skills/` e `CLAUDE.md`) | `23181f1`, `b5b8b75` — PR #48 | Concluído |
 | PR do relatório individual da Sprint 2 de Luiz Henrique, a partir do texto dele | `40b7867` — PR #44 | Concluído |
 
-Uso de IA generativa: a história #20 e a página inicial foram implementadas com apoio de IA (Claude Code). O uso está declarado na descrição do PR #47; a descrição do PR #42 não tem a declaração. Consigo explicar o código linha a linha.
+Uso de IA generativa: a história #20 e a página inicial foram implementadas com apoio de IA.
 
 ## 2. Rituais que participei
 
@@ -21,7 +21,7 @@ Uso de IA generativa: a história #20 e a página inicial foram implementadas co
 - [x] Sprint Review
 - [x] Retrospectiva
 
-Encontro online em 16/10/2026 (sexta-feira), com a weekly, a Sprint Review e a retrospectiva da Sprint 3.
+Encontro online em 16/10/2026 (sexta-feira), com a weekly, a Sprint Review e a retrospectiva da Sprint 3 para alinhamento.
 
 ## 3. PRs de colegas que revisei
 
