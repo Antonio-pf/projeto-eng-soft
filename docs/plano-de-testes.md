@@ -85,7 +85,7 @@ Nenhum PR é aceito na `main` se:
 
 ## 4. Situação dos casos de teste
 
-Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 02/11/2026: **29 passaram, 2 parciais e 2 não executados**. Os testes automatizados rodam com `python manage.py test` (192 testes) e no CI a cada PR, no SQLite e no PostgreSQL.
+Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 02/11/2026: **30 passaram, 2 parciais e 1 não executado**. Os testes automatizados rodam com `python manage.py test` (213 testes) e no CI a cada PR, no SQLite e no PostgreSQL.
 
 | ID | História | Situação | Quando | Evidência |
 |---|---|---|---|---|
@@ -108,7 +108,7 @@ Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 
 | CT17 | #21 | ✅ Passou | Sprint 4 | `DistribuicaoRelatorioTestCase.test_ct17_relatorio_distribuicoes_filtra_por_familia` (PR #53) |
 | CT18 | #2 | ✅ Passou | Sprint 1 | `test_logout_limpa_sessao_e_bloqueia_painel` e `test_painel_sem_sessao_redireciona_para_login` |
 | CT19 | #4 | ✅ Passou | Sprint 1 | `test_usuario_inativo_retorna_none` e `test_usuario_desativado_nao_consegue_fazer_login` |
-| CT20 | #19 | ⬜ Não executado | — | A #19 não foi implementada |
+| CT20 | #19 | ✅ Passou | 02/11/2026 | `CancelarMovimentacaoModeloTests.test_ct20_cancelar_doacao_reverte_saldo_e_preserva_registro` e `CancelarMovimentacaoViewTests.test_ct20_voluntario_nao_pode_cancelar`. Saldo negativo, cancelamento repetido, permissões e históricos em `CancelarMovimentacaoModeloTests`, `CancelarMovimentacaoViewTests` e `HistoricoComCanceladasTests` |
 | CT21 | #23 | ⬜ Não executado | — | Só o link de exportação tem teste (`test_exportar_csv_leva_os_filtros_do_relatorio`). O conteúdo do CSV não tem teste automatizado nem execução manual registrada |
 | CT22 | #6 | ✅ Passou | Sprint 2 | `test_listar_doadores`, `test_buscar_doador_por_nome` e `test_paginacao_doadores` |
 | CT23 | #7 | ✅ Passou | Sprint 2 | `DoadorUpdateTestCase` |
@@ -123,7 +123,7 @@ Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 
 | CT32 | — (E3) | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_colunas_das_migrations_iguais_ao_schema_sql` (PR #55) |
 | CT33 | #24 | ✅ Passou | 02/11/2026 | `PainelTests.test_ct33_painel_do_mes_conta_doacoes_familias_e_lista_recentes`. Período equivalente do mês anterior, famílias distintas, ordem e limite das movimentações recentes e renderização para os dois perfis nos demais testes de `PainelTests` |
 
-Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da sessão), CT08 (paginação de famílias), CT21 (conteúdo do CSV) e CT20 (depende da #19).
+Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da sessão), CT08 (paginação de famílias) e CT21 (conteúdo do CSV).
 
 ---
 

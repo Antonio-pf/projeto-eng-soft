@@ -32,6 +32,7 @@ urlpatterns = [
     path("movimentacoes/nova/", views.movimentacao_nova, name="movimentacao_nova"),
     path("doacoes/nova/", views.doacao_create, name="doacao_create"),
     path("doacoes/", views.doacao_list, name="doacao_list"),
+    path("doacoes/<int:pk>/cancelar/", views.doacao_cancelar, name="doacao_cancelar"),
     path(
         "distribuicoes/nova/",
         views.distribuicao_create,
@@ -51,5 +52,10 @@ urlpatterns = [
         "distribuicoes/",
         views.distribuicao_list,
         name="distribuicao_list",
+    ),
+    path(
+        "distribuicoes/<int:pk>/cancelar/",
+        views.distribuicao_cancelar,
+        name="distribuicao_cancelar",
     ),
 ]
