@@ -9,11 +9,11 @@
 - Antonio Pires Felipe — RA 2840482211003
 - Luiz Henrique Neres — RA 2840482423005
 
-> Rascunho escrito em 28/10/2026 e atualizado em 29/10/2026, com a `main` no commit `58ef94a` (merges dos PRs #54, #53 e #51).
+> Escrito em 28/10/2026 e atualizado em 31/10/2026, com a `main` no commit `2e91330` (merge do PR #59).
 
 ## 1. Planejado vs. entregue
 
-O backlog não registra um planejamento próprio da Sprint 4. A sprint ficou com as histórias que sobraram da Sprint 3 (#19 a #22) e com a #24, que estava sem sprint. [confirmar com a equipe o que foi planejado]
+O backlog não registra um planejamento próprio da Sprint 4. A sprint ficou com as histórias que sobraram da Sprint 3 (#19 a #22). A #24, que estava sem sprint no backlog, ganhou issue e card em 28/10/2026.
 
 | História (E2) | Planejada para esta sprint? | Entregue? | Observação |
 |---|---|---|---|
@@ -21,12 +21,14 @@ O backlog não registra um planejamento próprio da Sprint 4. A sprint ficou com
 | #22 — Histórico de doações por doador com totais por item | Sim (remanescente da Sprint 3) | Sim | PR #49 (Daniel Souza), revisado e aprovado por Antonio Felipe e integrado em 28/10/2026. A tela `/doacoes/` ganhou a tabela "Totais por doador e item", que respeita os filtros de doador e período e exclui as doações canceladas |
 | #21 — Relatório de distribuições filtrável por período e família | Sim (remanescente da Sprint 3) | Sim | PR #53, integrado em 29/10/2026 sem revisão registrada. Luiz Henrique refez a implementação a partir da `main` atual, sem a pasta `venv/` (commit `56ce3c6`): rota `/distribuicoes/relatorio/`, agrupamento por família e item, filtros por período e família e 5 testes. Antonio Felipe, com a participação de Alexandre Ulhoa, alinhou a tela ao protótipo, com o resumo por unidade, o link de exportação CSV com os filtros aplicados e o item no menu lateral, ajustou esses testes e acrescentou mais 9 (commit `d8c463f`) |
 | #19 — Cancelar uma movimentação registrada por engano | Sim (remanescente da Sprint 3) | Não | Não iniciada. Issue reaberta e card em "Todo" desde 28/10/2026 |
-| #24 — Painel com doações recebidas, famílias atendidas e movimentações recentes | [confirmar] | Não | Ganhou a issue #50 e entrou no board em "Todo" em 28/10/2026 |
+| #24 — Painel com doações recebidas, famílias atendidas e movimentações recentes | Não (sem sprint no backlog) | Não | Ganhou a issue #50 e entrou no board em "Todo" em 28/10/2026 |
 | Requisitos não funcionais do cronograma: segurança (OWASP), LGPD e preparação de deploy | Sim (cronograma da disciplina) | Em parte | Inventário e lacunas na [seção 7](#7-segurança-lgpd-e-preparação-de-deploy). HTTPS obrigatório, cookies seguros, HSTS e registro dos erros 500 no PR #58 (branch `fix/seguranca-producao`). A LGPD ainda não tem aviso ao titular nem base legal registrada |
 | Correções da E4 pedidas pelo professor (README no setup nativo e link único do protótipo) | Sim | Sim | PR #46, integrado em 28/10/2026 sem revisão registrada |
 | Correções de forma da E2 e da E3 (título da seção de escopo no termo de aceite e RAs no DDL) | Não | Sim | PR #51 (Antonio Felipe), integrado em 29/10/2026 sem revisão registrada |
 | Simplificação de filtros, formulários e painel, com filtros inválidos nas listas ignorados em vez de gerar erro | Não | Sim | PR #54 (Antonio Felipe), integrado em 29/10/2026 sem revisão registrada, com 1 teste novo |
-| Documentos da Sprint 3 (E7), entregues com atraso | Não | Em andamento | Branch `docs/sprint-3` |
+| Alinhamento do banco ao DDL e ao DER: colunas de chave estrangeira com os nomes do DDL e os CHECK que só existiam no `db/schema.sql` | Não | Sim | PR #55, integrado em 29/10/2026 sem revisão registrada, com 4 testes (CT29 a CT32) |
+| Cadastros e movimentações em modal, busca sem recarregar e notificações nos formulários (htmx) | Não | Sim | PR #56, integrado em 30/10/2026 sem revisão registrada, com 53 testes novos |
+| Documentos da Sprint 3 (E7), entregues com atraso | Não | Sim | PRs #52, #57 e #59, integrados em 29/10 e 30/10/2026 |
 
 ## 2. Incremento funcional demonstrável
 
@@ -36,7 +38,19 @@ O sistema está no ar em https://conecta-social-wcxa.onrender.com/. Em 28/10/202
 - **Relatório de distribuições (#21), em `/distribuicoes/relatorio/`:** tabela agrupada por família e item, com categoria, quantidade total, número de distribuições e data do último registro; filtros por período e família, isolados ou combinados; resumo com os totais por unidade e o número de famílias e distribuições; e o botão de exportação CSV, que leva os mesmos filtros. Fica no menu lateral, no grupo Movimentações.
 - **Totais por doador e item (#22), em `/doacoes/`:** abaixo dos filtros, a tabela agrupa as doações do período por doador e item, com o total doado, a unidade e o número de doações registradas. Os totais consideram todos os registros filtrados, não só os da página atual.
 
-[GIF ou prints das telas do painel, do relatório de distribuições e dos totais por doador rodando no deploy — gravar até 30/10]
+Os GIFs abaixo foram gravados em 02/11/2026 rodando o sistema localmente, com a `main` no commit `2e91330` (o mesmo código do deploy), os dados do comando `seed` e o perfil Administrador.
+
+**Login e painel (#20):** os indicadores, o estoque por categoria e os pontos de atenção:
+
+![Login e painel](assets/conecta-social-sprint4-painel.gif)
+
+**Relatório de distribuições (#21):** o relatório completo, depois filtrado pelo período de 01/09 a 02/09/2026 e pela família Roberto Lima, com o resumo atualizado a cada filtro:
+
+![Relatório de distribuições](assets/conecta-social-sprint4-relatorio-distribuicoes.gif)
+
+**Totais por doador e item (#22):** a tela de doações e a tabela de totais abaixo dos filtros:
+
+![Totais por doador e item](assets/conecta-social-sprint4-totais-por-doador.gif)
 
 **Como reproduzir localmente** (passo a passo completo no [`README.md`](../../README.md)):
 
@@ -64,7 +78,7 @@ Mudanças de status na Sprint 4, até 30/10/2026:
 
 ## 4. Evidências de teste
 
-121 testes automatizados (`python manage.py test`), 100% passando no commit `58ef94a`, executados em 29/10/2026. São 31 novos nesta sprint: 13 do painel (#20), 3 dos totais por doador (#22), 14 do relatório de distribuições (#21) e 1 dos filtros inválidos (PR #54). Casos do plano de testes que passaram: CT15 (#20), CT16 e CT17 (#21) e CT28 (#22). Continuam pendentes CT20 (#19), CT21 (#23), CT01 e CT08. O CI (jobs `lint` e `test`) passou em todos os merges de 28/10 e 29/10/2026.
+182 testes automatizados (`python manage.py test`), 100% passando no commit `2e91330`, executados em 31/10/2026. São 92 novos nesta sprint: 13 do painel (#20), 3 dos totais por doador (#22), 14 do relatório de distribuições (#21), 1 dos filtros inválidos (PR #54), 4 das validações no banco (PR #55), 53 das telas com modal e notificações (PR #56) e 4 de segurança em produção (PR #58). Casos do plano de testes que passaram: CT15 (#20), CT16 e CT17 (#21), CT28 (#22) e CT29 a CT32 (validações no banco e alinhamento com o DDL). Continuam pendentes CT20 (#19), CT21 (#23), CT33 (#24), CT01 e CT08. O CI (jobs `lint` e `test`) passou em todos os merges de 28/10 a 30/10/2026.
 Detalhe completo em [`sprint-4-evidencias-teste.md`](sprint-4-evidencias-teste.md).
 
 ## 5. Retrospectiva e contribuição individual
