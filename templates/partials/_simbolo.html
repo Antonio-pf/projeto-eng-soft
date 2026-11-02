@@ -1,0 +1,11 @@
+{% comment %}
+Símbolo da marca: um arco que acolhe um ponto (a ONG acolhendo quem recebe a doação).
+Uso: {% include "partials/_simbolo.html" with classe="size-7 text-white" ponto="text-accent" %}
+- classe: tamanho e cor do arco (o arco usa a cor do texto).
+- ponto: cor do ponto, também por classe de texto.
+Fica ao lado do nome "conecta", que já é lido; por isso o SVG é decorativo (aria-hidden).
+{% endcomment %}
+<svg class="shrink-0 {{ classe }}" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+    <path d="M28 9.3A23 23 0 1 0 54.7 36L48.1 32.7A14.5 14.5 0 1 1 31.3 15.9Z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    <circle class="{{ ponto }}" cx="42.3" cy="21.7" r="7.5" fill="currentColor"/>
+</svg>

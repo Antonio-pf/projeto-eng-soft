@@ -1,7 +1,10 @@
 {% load static %}
 <aside id="sidebar" class="flex min-h-full w-[242px] flex-col justify-between bg-primary px-4 pb-7 pt-8">
     <div class="flex flex-col gap-6">
-        <p class="text-[22px] font-bold text-white">conecta</p>
+        <p class="flex items-center gap-2 text-[22px] font-bold text-white">
+            {% include "partials/_simbolo.html" with classe="size-7" ponto="text-accent" %}
+            conecta
+        </p>
 
         <nav class="flex flex-col gap-1.5">
             <a href="{% url 'painel' %}"
