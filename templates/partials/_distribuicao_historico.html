@@ -27,6 +27,9 @@
         <a href="{% url 'distribuicao_exportar_csv' %}{% querystring page=None %}" class="btn btn-outline btn-sm ml-auto rounded-md">Exportar CSV</a>
     </div>
 
+    {# Depois de cancelar no modal, recarrega o card na mesma página e com os mesmos filtros. #}
+    <div hidden hx-get="{% url 'distribuicao_list' %}{% querystring %}" hx-trigger="movimentacao-cancelada from:body" hx-target="#distribuicao-card" hx-swap="outerHTML"></div>
+
     {% include "partials/_esqueleto_tabela.html" %}
 
     <div class="lista-dados">
@@ -40,16 +43,38 @@
                         <th class="px-4 py-3 font-semibold">Item</th>
                         <th class="px-4 py-3 font-semibold">Quantidade</th>
                         <th class="px-4 py-3 font-semibold">Usuário</th>
+                        {% if usuario_logado.perfil == "administrador" %}
+                        <th class="px-4 py-3 font-semibold"><span class="sr-only">Ações</span></th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     {% for distribuicao in page_obj %}
-                    <tr>
+                    <tr{% if distribuicao.cancelado %} class="bg-gray-50"{% endif %}>
                         <td class="px-4 py-4 text-sm text-gray-500">{{ distribuicao.data|date:"d/m/Y" }}</td>
                         <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ distribuicao.familia.nome_responsavel }}</td>
                         <td class="px-4 py-4 text-sm text-gray-500">{{ distribuicao.item.nome }}</td>
-                        <td class="px-4 py-4 text-sm text-gray-500">{{ distribuicao.quantidade }}</td>
-                        <td class="px-4 py-4 text-sm text-gray-500">{{ distribuicao.registrado_por.nome }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500{% if distribuicao.cancelado %} line-through{% endif %}">{{ distribuicao.quantidade }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">
+                            {{ distribuicao.registrado_por.nome }}
+                            {% if distribuicao.cancelado %}
+                            <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                                <span class="rounded bg-red-100 px-2 py-0.5 font-semibold text-error" data-testid="distribuicao-historico-cancelada-badge">Cancelada</span>
+                                <span>{% if distribuicao.cancelado_por %}por {{ distribuicao.cancelado_por.nome }}{% endif %}{% if distribuicao.cancelado_em %} em {{ distribuicao.cancelado_em|date:"d/m/Y H:i" }}{% endif %}</span>
+                            </div>
+                            {% endif %}
+                        </td>
+                        {% if usuario_logado.perfil == "administrador" %}
+                        <td class="px-4 py-4 text-right">
+                            {% if not distribuicao.cancelado %}
+                            {% url 'distribuicao_cancelar' distribuicao.pk as url_cancelar %}
+                            <a href="{{ url_cancelar }}" hx-get="{{ url_cancelar }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                               data-testid="distribuicao-historico-cancelar-button"
+                               aria-label="Cancelar distribuição para {{ distribuicao.familia.nome_responsavel }} em {{ distribuicao.data|date:'d/m/Y' }}"
+                               class="btn btn-ghost btn-sm rounded-md text-error">Cancelar</a>
+                            {% endif %}
+                        </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
