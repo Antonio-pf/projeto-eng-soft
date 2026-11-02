@@ -85,7 +85,7 @@ Nenhum PR é aceito na `main` se:
 
 ## 4. Situação dos casos de teste
 
-Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 29/10/2026: **28 passaram, 2 parciais e 3 não executados**. Os testes automatizados rodam com `python manage.py test` (125 testes) e no CI a cada PR, no SQLite e no PostgreSQL.
+Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 02/11/2026: **29 passaram, 2 parciais e 2 não executados**. Os testes automatizados rodam com `python manage.py test` (192 testes) e no CI a cada PR, no SQLite e no PostgreSQL.
 
 | ID | História | Situação | Quando | Evidência |
 |---|---|---|---|---|
@@ -121,9 +121,9 @@ Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 
 | CT30 | #8 | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_banco_recusa_familia_sem_membros` (PR #55) |
 | CT31 | #3 | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_banco_recusa_perfil_fora_dos_dois_perfis` (PR #55) |
 | CT32 | — (E3) | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_colunas_das_migrations_iguais_ao_schema_sql` (PR #55) |
-| CT33 | #24 | ⬜ Não executado | — | A #24 não foi implementada |
+| CT33 | #24 | ✅ Passou | 02/11/2026 | `PainelTests.test_ct33_painel_do_mes_conta_doacoes_familias_e_lista_recentes`. Período equivalente do mês anterior, famílias distintas, ordem e limite das movimentações recentes e renderização para os dois perfis nos demais testes de `PainelTests` |
 
-Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da sessão), CT08 (paginação de famílias), CT21 (conteúdo do CSV), CT20 e CT33 (dependem da #19 e da #24).
+Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da sessão), CT08 (paginação de famílias), CT21 (conteúdo do CSV) e CT20 (depende da #19).
 
 ---
 

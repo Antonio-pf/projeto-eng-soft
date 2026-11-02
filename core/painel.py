@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db.models import Count, Q, Sum
@@ -20,6 +21,78 @@ def texto_variacao(variacao):
     if variacao < 0:
         return f"−{-variacao} este mês"
     return "Sem variação este mês"
+
+
+def texto_variacao_mes_anterior(variacao):
+    if variacao > 0:
+        return f"+{variacao} em relação ao mês anterior"
+    if variacao < 0:
+        return f"−{-variacao} em relação ao mês anterior"
+    return "Igual ao mês anterior"
+
+
+def periodo_equivalente_do_mes_anterior(hoje):
+    """Do dia 1 ao mesmo dia do mês anterior, limitado ao fim dele (31/03 -> 01/02 a 28/02)."""
+    fim_do_mes_anterior = hoje.replace(day=1) - timedelta(days=1)
+    inicio = fim_do_mes_anterior.replace(day=1)
+    fim = fim_do_mes_anterior.replace(day=min(hoje.day, fim_do_mes_anterior.day))
+    return inicio, fim
+
+
+def _doacoes_e_familias_do_mes(hoje):
+    inicio_do_mes = hoje.replace(day=1)
+    doacoes = Doacao.objects.ativas().aggregate(
+        no_mes=Count("pk", filter=Q(data__range=(inicio_do_mes, hoje))),
+        no_mes_anterior=Count(
+            "pk", filter=Q(data__range=periodo_equivalente_do_mes_anterior(hoje))
+        ),
+    )
+    familias_atendidas = (
+        Distribuicao.objects.ativas()
+        .filter(data__range=(inicio_do_mes, hoje))
+        .aggregate(total=Count("familia", distinct=True))["total"]
+    )
+    variacao = doacoes["no_mes"] - doacoes["no_mes_anterior"]
+    return {
+        "doacoes_no_mes": doacoes["no_mes"],
+        "variacao_doacoes": variacao,
+        "texto_variacao_doacoes": texto_variacao_mes_anterior(variacao),
+        "familias_atendidas": familias_atendidas,
+    }
+
+
+def movimentacoes_recentes(limite=5):
+    """Últimas doações e distribuições não canceladas, pela data e depois pela hora do registro."""
+    ordem = ("-data", "-criado_em", "-pk")
+    doacoes = (
+        Doacao.objects.ativas()
+        .select_related("doador", "item__unidade_medida")
+        .order_by(*ordem)[:limite]
+    )
+    distribuicoes = (
+        Distribuicao.objects.ativas()
+        .select_related("familia", "item__unidade_medida")
+        .order_by(*ordem)[:limite]
+    )
+    linhas = [_linha_recente(doacao, "Doação", True, doacao.doador.nome) for doacao in doacoes] + [
+        _linha_recente(distribuicao, "Distribuição", False, distribuicao.familia.nome_responsavel)
+        for distribuicao in distribuicoes
+    ]
+    linhas.sort(key=lambda linha: (linha["data"], linha["criado_em"]), reverse=True)
+    return linhas[:limite]
+
+
+def _linha_recente(movimentacao, tipo, entrada, pessoa):
+    return {
+        "tipo": tipo,
+        "entrada": entrada,
+        "pessoa": pessoa,
+        "item": movimentacao.item.nome,
+        "quantidade": movimentacao.quantidade,
+        "sigla": movimentacao.item.unidade_medida.sigla,
+        "data": movimentacao.data,
+        "criado_em": movimentacao.criado_em,
+    }
 
 
 def montar_resumo(hoje):
@@ -44,6 +117,8 @@ def montar_resumo(hoje):
         "itens_em_alerta": contagens["itens_em_alerta"],
         "pontos_de_atencao": list(pontos_de_atencao),
         "categorias": _estoque_por_categoria(),
+        **_doacoes_e_familias_do_mes(hoje),
+        "movimentacoes_recentes": movimentacoes_recentes(),
     }
 
 

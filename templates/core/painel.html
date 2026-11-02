@@ -20,7 +20,7 @@
         </a>
     </header>
 
-    <section aria-label="Indicadores" class="grid gap-3 sm:grid-cols-2">
+    <section aria-label="Indicadores" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div class="flex flex-col gap-[7px] rounded-xl bg-conecta-mint p-[18px]">
             <p class="text-[12px] font-medium text-conecta-muted">Itens em estoque</p>
             <p class="text-[28px] font-bold leading-none">{{ resumo.itens_em_estoque }}</p>
@@ -34,6 +34,16 @@
             {% else %}
             <p class="text-[12px] font-medium text-primary">Tudo em dia</p>
             {% endif %}
+        </div>
+        <div data-testid="painel-doacoes-recebidas-card" class="flex flex-col gap-[7px] rounded-xl bg-white p-[18px]">
+            <p class="text-[12px] font-medium text-conecta-muted">Doações recebidas</p>
+            <p class="text-[28px] font-bold leading-none">{{ resumo.doacoes_no_mes }}</p>
+            <p class="text-[12px] font-medium {% if resumo.variacao_doacoes > 0 %}text-primary{% elif resumo.variacao_doacoes < 0 %}text-conecta-alert{% else %}text-conecta-muted{% endif %}">{{ resumo.texto_variacao_doacoes }}</p>
+        </div>
+        <div data-testid="painel-familias-atendidas-card" class="flex flex-col gap-[7px] rounded-xl bg-white p-[18px]">
+            <p class="text-[12px] font-medium text-conecta-muted">Famílias atendidas</p>
+            <p class="text-[28px] font-bold leading-none">{{ resumo.familias_atendidas }}</p>
+            <p class="text-[12px] font-medium text-conecta-muted">Neste mês</p>
         </div>
     </section>
 
@@ -81,5 +91,37 @@
             {% endif %}
         </section>
     </div>
+
+    <section data-testid="painel-movimentacoes-recentes" class="flex flex-col gap-[14px] rounded-xl bg-white p-[22px]">
+        <div class="flex flex-col gap-[14px]">
+            <h3 class="text-[19px] font-bold">Movimentações recentes</h3>
+            <p class="text-[13px] text-conecta-muted">As 5 últimas doações e distribuições, sem as canceladas.</p>
+        </div>
+        {% if resumo.movimentacoes_recentes %}
+        <ul data-testid="painel-movimentacoes-recentes-lista" class="flex flex-col divide-y divide-gray-100">
+            {% for movimentacao in resumo.movimentacoes_recentes %}
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-3 text-[13px]">
+                {% if movimentacao.entrada %}
+                <span class="w-[64px] shrink-0 rounded bg-conecta-mint px-2 py-0.5 text-center text-[11px] font-semibold text-primary">Entrada</span>
+                {% else %}
+                <span class="w-[64px] shrink-0 rounded bg-gray-100 px-2 py-0.5 text-center text-[11px] font-semibold text-gray-600">Saída</span>
+                {% endif %}
+                <span class="min-w-0 flex-1">
+                    <span class="font-medium">{{ movimentacao.tipo }}</span>
+                    <span class="text-conecta-muted">· {{ movimentacao.pessoa }} · {{ movimentacao.item }}</span>
+                </span>
+                <span class="font-medium">{{ movimentacao.quantidade|floatformat:"-2" }} {{ movimentacao.sigla }}</span>
+                <span class="w-[72px] text-right text-conecta-muted">{{ movimentacao.data|date:"d/m/Y" }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-[13px] font-medium">Nenhuma movimentação registrada.</p>
+        {% endif %}
+        <div class="flex flex-wrap gap-4 text-[13px] font-medium">
+            <a href="{% url 'doacao_list' %}" data-testid="painel-movimentacoes-recentes-ver-doacoes-link" class="text-primary underline-offset-4 hover:underline">Ver doações</a>
+            <a href="{% url 'distribuicao_list' %}" data-testid="painel-movimentacoes-recentes-ver-distribuicoes-link" class="text-primary underline-offset-4 hover:underline">Ver distribuições</a>
+        </div>
+    </section>
 </div>
 {% endblock %}
