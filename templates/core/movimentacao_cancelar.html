@@ -1,0 +1,14 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Cancelar {{ rotulo|lower }} | Conecta Social{% endblock %}
+
+{% block page_title %}Cancelar {{ rotulo|lower }}{% endblock %}
+{% block page_subtitle %}
+<p class="text-sm text-gray-500">O registro não é apagado: fica no histórico, marcado como cancelado</p>
+{% endblock %}
+
+{% block content %}
+<section class="w-full max-w-[700px] rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+    {% include "partials/_movimentacao_cancelar.html" %}
+</section>
+{% endblock %}

@@ -3,14 +3,16 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.cache import patch_vary_headers
 from django.utils.dateparse import parse_date
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
 from core.decorators import admin_obrigatorio, login_obrigatorio
 from core.forms import (
@@ -60,13 +62,13 @@ def _render(request, template, parcial, contexto):
     return response
 
 
-def _salvo(request, mensagem, destino):
-    """Sem htmx, redireciona; no modal, mostra o toast e dispara registro-salvo."""
+def _salvo(request, mensagem, destino, evento="registro-salvo"):
+    """Sem htmx, redireciona; no modal, mostra o toast e dispara o evento htmx."""
     messages.success(request, mensagem)
     if not _parcial(request):
         return redirect(destino)
     response = render(request, "partials/_mensagens.html", {"oob": True})
-    response["HX-Trigger"] = "registro-salvo"
+    response["HX-Trigger"] = evento
     response["HX-Reswap"] = "none"
     return response
 
@@ -413,19 +415,19 @@ def _filtrar(movimentacoes, request, campo_pessoa, parametro):
 
 @login_obrigatorio
 def doacao_list(request):
+    # As canceladas continuam na lista, marcadas, para mostrar que o histórico foi preservado.
     doacoes_list, filtros = _filtrar(
-        Doacao.objects.filter(cancelado=False)
-        .select_related("doador", "item", "registrado_por")
-        .order_by("-data", "-pk"),
+        Doacao.objects.select_related("doador", "item", "registrado_por", "cancelado_por").order_by(
+            "-data", "-pk"
+        ),
         request,
         "doador_id",
         "id_doador",
     )
 
     totais_por_doador = (
-        doacoes_list.values(
-            "doador_id", "doador__nome", "item_id", "item__nome", "item__unidade_medida__sigla"
-        )
+        doacoes_list.ativas()
+        .values("doador_id", "doador__nome", "item_id", "item__nome", "item__unidade_medida__sigla")
         .annotate(total=Sum("quantidade"))
         .order_by("doador__nome", "doador_id", "item__nome", "item_id")
     )
@@ -474,9 +476,9 @@ def distribuicao_create(request):
 @login_obrigatorio
 def distribuicao_list(request):
     distribuicoes_list, filtros = _filtrar(
-        Distribuicao.objects.filter(cancelado=False)
-        .select_related("familia", "item", "registrado_por")
-        .order_by("-data"),
+        Distribuicao.objects.select_related(
+            "familia", "item", "registrado_por", "cancelado_por"
+        ).order_by("-data"),
         request,
         "familia_id",
         "id_familia",
@@ -494,6 +496,69 @@ def distribuicao_list(request):
             "familias": Familia.objects.order_by("nome_responsavel"),
             **filtros,
         },
+    )
+
+
+def _cancelar(request, movimentacao, *, rotulo, pessoa_rotulo, pessoa, url, destino):
+    """GET mostra a confirmação; POST cancela ou mostra no próprio diálogo por que não pode."""
+    if request.method == "POST":
+        try:
+            movimentacao.cancelar(request.user)
+        except ValidationError as erro:
+            motivo = erro.messages[0]
+        else:
+            return _salvo(request, f"{rotulo} cancelada.", destino, evento="movimentacao-cancelada")
+    else:
+        motivo = movimentacao.motivo_para_nao_cancelar()
+    return _render(
+        request,
+        "core/movimentacao_cancelar.html",
+        "partials/_movimentacao_cancelar.html",
+        {
+            "movimentacao": movimentacao,
+            "rotulo": rotulo,
+            "pessoa_rotulo": pessoa_rotulo,
+            "pessoa": pessoa,
+            "url_cancelar": url,
+            "destino": destino,
+            "motivo": motivo,
+        },
+    )
+
+
+@login_obrigatorio
+@admin_obrigatorio
+@require_http_methods(["GET", "POST"])
+def doacao_cancelar(request, pk):
+    doacao = get_object_or_404(
+        Doacao.objects.select_related("doador", "item__unidade_medida"), pk=pk
+    )
+    return _cancelar(
+        request,
+        doacao,
+        rotulo="Doação",
+        pessoa_rotulo="Doador",
+        pessoa=doacao.doador.nome,
+        url=reverse("doacao_cancelar", args=[pk]),
+        destino="doacao_list",
+    )
+
+
+@login_obrigatorio
+@admin_obrigatorio
+@require_http_methods(["GET", "POST"])
+def distribuicao_cancelar(request, pk):
+    distribuicao = get_object_or_404(
+        Distribuicao.objects.select_related("familia", "item__unidade_medida"), pk=pk
+    )
+    return _cancelar(
+        request,
+        distribuicao,
+        rotulo="Distribuição",
+        pessoa_rotulo="Família",
+        pessoa=distribuicao.familia.nome_responsavel,
+        url=reverse("distribuicao_cancelar", args=[pk]),
+        destino="distribuicao_list",
     )
 
 

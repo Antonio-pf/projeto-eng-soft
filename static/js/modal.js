@@ -10,7 +10,10 @@
         }
     });
 
-    document.addEventListener("registro-salvo", function () {
-        document.getElementById("modal").close();
+    // Fecha quando o servidor avisa que salvou um cadastro ou cancelou uma movimentação.
+    ["registro-salvo", "movimentacao-cancelada"].forEach(function (evento) {
+        document.addEventListener(evento, function () {
+            document.getElementById("modal").close();
+        });
     });
 })();

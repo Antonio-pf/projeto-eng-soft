@@ -25,6 +25,9 @@
         {% endif %}
     </div>
 
+    {# Depois de cancelar no modal, recarrega o card na mesma página e com os mesmos filtros. #}
+    <div hidden hx-get="{% url 'doacao_list' %}{% querystring %}" hx-trigger="movimentacao-cancelada from:body" hx-target="#doacao-card" hx-swap="outerHTML"></div>
+
     {% include "partials/_esqueleto_tabela.html" %}
 
     <div class="lista-dados">
@@ -63,16 +66,38 @@
                         <th class="px-4 py-3 font-semibold">Item</th>
                         <th class="px-4 py-3 font-semibold">Quantidade</th>
                         <th class="px-4 py-3 font-semibold">Usuário</th>
+                        {% if usuario_logado.perfil == "administrador" %}
+                        <th class="px-4 py-3 font-semibold"><span class="sr-only">Ações</span></th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     {% for doacao in page_obj %}
-                    <tr>
+                    <tr{% if doacao.cancelado %} class="bg-gray-50"{% endif %}>
                         <td class="px-4 py-4 text-sm text-gray-500">{{ doacao.data|date:"d/m/Y" }}</td>
                         <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ doacao.doador.nome }}</td>
                         <td class="px-4 py-4 text-sm text-gray-500">{{ doacao.item.nome }}</td>
-                        <td class="px-4 py-4 text-sm text-gray-500">{{ doacao.quantidade }}</td>
-                        <td class="px-4 py-4 text-sm text-gray-500">{{ doacao.registrado_por.nome }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500{% if doacao.cancelado %} line-through{% endif %}">{{ doacao.quantidade }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">
+                            {{ doacao.registrado_por.nome }}
+                            {% if doacao.cancelado %}
+                            <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                                <span class="rounded bg-red-100 px-2 py-0.5 font-semibold text-error" data-testid="doacao-historico-cancelada-badge">Cancelada</span>
+                                <span>{% if doacao.cancelado_por %}por {{ doacao.cancelado_por.nome }}{% endif %}{% if doacao.cancelado_em %} em {{ doacao.cancelado_em|date:"d/m/Y H:i" }}{% endif %}</span>
+                            </div>
+                            {% endif %}
+                        </td>
+                        {% if usuario_logado.perfil == "administrador" %}
+                        <td class="px-4 py-4 text-right">
+                            {% if not doacao.cancelado %}
+                            {% url 'doacao_cancelar' doacao.pk as url_cancelar %}
+                            <a href="{{ url_cancelar }}" hx-get="{{ url_cancelar }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                               data-testid="doacao-historico-cancelar-button"
+                               aria-label="Cancelar doação de {{ doacao.doador.nome }} em {{ doacao.data|date:'d/m/Y' }}"
+                               class="btn btn-ghost btn-sm rounded-md text-error">Cancelar</a>
+                            {% endif %}
+                        </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>

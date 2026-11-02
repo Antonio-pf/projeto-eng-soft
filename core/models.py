@@ -1,8 +1,11 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
+from django.template.defaultfilters import floatformat
+from django.utils import timezone
 
 
 class UsuarioManager(BaseUserManager):
@@ -206,7 +209,32 @@ class MovimentacaoQuerySet(models.QuerySet):
         )
 
 
-class Doacao(models.Model):
+class MovimentacaoCancelavel:
+    """Cancelamento (estorno) de doação ou distribuição: nada é apagado, só fica marcado."""
+
+    def motivo_para_nao_cancelar(self):
+        """Texto que explica por que a movimentação não pode ser cancelada, ou None."""
+        if self.cancelado:
+            return "Esta movimentação já foi cancelada."
+        return None
+
+    def cancelar(self, usuario):
+        with transaction.atomic():
+            # Relê com bloqueio para que dois cancelamentos ao mesmo tempo não gravem duas vezes.
+            atual = type(self).objects.select_for_update().get(pk=self.pk)
+            motivo = atual.motivo_para_nao_cancelar()
+            if motivo:
+                raise ValidationError(motivo)
+            atual.cancelado = True
+            atual.cancelado_em = timezone.now()
+            atual.cancelado_por = usuario
+            atual.save(update_fields=["cancelado", "cancelado_em", "cancelado_por"])
+        self.cancelado = True
+        self.cancelado_em = atual.cancelado_em
+        self.cancelado_por = usuario
+
+
+class Doacao(MovimentacaoCancelavel, models.Model):
     id_doacao = models.BigAutoField(primary_key=True)
     doador = models.ForeignKey(Doador, on_delete=models.PROTECT, db_column="id_doador")
     item = models.ForeignKey(Item, on_delete=models.PROTECT, db_column="id_item")
@@ -247,8 +275,23 @@ class Doacao(models.Model):
         verbose_name = "doação"
         verbose_name_plural = "doações"
 
+    def motivo_para_nao_cancelar(self):
+        motivo = super().motivo_para_nao_cancelar()
+        if motivo:
+            return motivo
+        # Se parte da doação já foi distribuída, cancelar deixaria o saldo negativo.
+        saldo = self.item.saldo_atual
+        if saldo - self.quantidade < 0:
+            sigla = self.item.unidade_medida.sigla
+            return (
+                f"Não é possível cancelar: o saldo de {self.item} ficaria negativo "
+                f"(disponível {floatformat(saldo, -2)} {sigla}, "
+                f"doação {floatformat(self.quantidade, -2)} {sigla})."
+            )
+        return None
 
-class Distribuicao(models.Model):
+
+class Distribuicao(MovimentacaoCancelavel, models.Model):
     id_distribuicao = models.BigAutoField(primary_key=True)
     familia = models.ForeignKey(Familia, on_delete=models.PROTECT, db_column="id_familia")
     item = models.ForeignKey(Item, on_delete=models.PROTECT, db_column="id_item")

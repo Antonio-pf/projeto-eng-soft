@@ -10,6 +10,7 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
@@ -1666,13 +1667,15 @@ class DoacaoListTestCase(TestCase):
         response = self.client.get(reverse("doacao_list"))
         self.assertEqual(response.status_code, 200)
         doacoes = list(response.context["page_obj"])
-        self.assertEqual(len(doacoes), 2)
-        self.assertNotIn(self.doacao_cancelada, doacoes)
+        # A cancelada continua no histórico, marcada (#19); os totais é que a excluem.
+        self.assertEqual(len(doacoes), 3)
+        self.assertIn(self.doacao_cancelada, doacoes)
+        self.assertContains(response, 'data-testid="doacao-historico-cancelada-badge"', count=1)
 
     def test_filtro_por_doador_isolado(self):
         response = self.client.get(reverse("doacao_list"), {"id_doador": self.doador1.pk})
         doacoes = list(response.context["page_obj"])
-        self.assertEqual(doacoes, [self.doacao_antiga])
+        self.assertEqual(doacoes, [self.doacao_cancelada, self.doacao_antiga])
 
     def test_filtro_por_periodo_isolado(self):
         response = self.client.get(
@@ -1697,7 +1700,7 @@ class DoacaoListTestCase(TestCase):
         response = self.client.get(reverse("doacao_list"), {"data_inicio": "data-invalida"})
         self.assertEqual(response.status_code, 200)
         doacoes = list(response.context["page_obj"])
-        self.assertEqual(len(doacoes), 2)
+        self.assertEqual(len(doacoes), 3)
 
     def test_paginacao_lista_doacoes(self):
         for _ in range(25):
@@ -1773,8 +1776,12 @@ class DistribuicaoListTestCase(TestCase):
         response = self.client.get(reverse("distribuicao_list"))
         self.assertEqual(response.status_code, 200)
         distribuicoes = list(response.context["page_obj"])
-        self.assertEqual(len(distribuicoes), 2)
-        self.assertNotIn(self.distribuicao_cancelada, distribuicoes)
+        # A cancelada continua no histórico, marcada (#19).
+        self.assertEqual(len(distribuicoes), 3)
+        self.assertIn(self.distribuicao_cancelada, distribuicoes)
+        self.assertContains(
+            response, 'data-testid="distribuicao-historico-cancelada-badge"', count=1
+        )
 
     def test_filtro_por_familia_isolado(self):
         response = self.client.get(reverse("distribuicao_list"), {"id_familia": self.familia2.pk})
@@ -1804,7 +1811,7 @@ class DistribuicaoListTestCase(TestCase):
         response = self.client.get(reverse("distribuicao_list"), {"data_fim": "data-invalida"})
         self.assertEqual(response.status_code, 200)
         distribuicoes = list(response.context["page_obj"])
-        self.assertEqual(len(distribuicoes), 2)
+        self.assertEqual(len(distribuicoes), 3)
 
     def test_paginacao_lista_distribuicoes(self):
         for _ in range(25):
@@ -2654,3 +2661,357 @@ class SchemaBancoTests(TestCase):
             password=make_password("senha-teste"),
             perfil="gestor",
         )
+
+
+class CenarioCancelamentoMixin:
+    """Administrador, voluntário e um item com doador e família para os testes da #19."""
+
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Ana Admin",
+            email="ana-cancela@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+        )
+        self.voluntario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria-cancela@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+        )
+        self.doador = Doador.objects.create(nome="Mercado Bom Preço", cpf_cnpj="321.654.987-00")
+        self.familia = Familia.objects.create(
+            nome_responsavel="Família Souza", endereco="Rua C, 10", num_membros=3
+        )
+        categoria = CategoriaItem.objects.create(nome="Alimento Cancelamento")
+        unidade = UnidadeMedida.objects.create(nome="Quilograma Cancelamento", sigla="kgc")
+        self.item = Item.objects.create(nome="Arroz", categoria=categoria, unidade_medida=unidade)
+
+    def _doar(self, quantidade, data=None):
+        return Doacao.objects.create(
+            doador=self.doador,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal(quantidade),
+            data=data or date(2026, 10, 20),
+        )
+
+    def _distribuir(self, quantidade, data=None):
+        return Distribuicao.objects.create(
+            familia=self.familia,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal(quantidade),
+            data=data or date(2026, 10, 21),
+        )
+
+    def _login(self, usuario):
+        self.client.post(reverse("login"), {"email": usuario.email, "senha": "senha-teste"})
+
+
+class CancelarMovimentacaoModeloTests(CenarioCancelamentoMixin, TestCase):
+    """CT20 (#19): a regra de cancelamento no modelo."""
+
+    def test_ct20_cancelar_doacao_reverte_saldo_e_preserva_registro(self):
+        self._doar(10)
+        doacao = self._doar(5)
+        self.assertEqual(self.item.saldo_atual, 15)
+
+        doacao.cancelar(self.admin)
+
+        self.assertEqual(self.item.saldo_atual, 10)
+        doacao.refresh_from_db()
+        self.assertTrue(doacao.cancelado)
+        self.assertEqual(doacao.cancelado_por, self.admin)
+        self.assertIsNotNone(doacao.cancelado_em)
+        self.assertEqual(doacao.quantidade, Decimal("5"))
+        self.assertEqual(Doacao.objects.count(), 2)
+
+    def test_cancelar_distribuicao_devolve_quantidade_ao_saldo(self):
+        self._doar(10)
+        distribuicao = self._distribuir(4)
+        self.assertEqual(self.item.saldo_atual, 6)
+
+        distribuicao.cancelar(self.admin)
+
+        self.assertEqual(self.item.saldo_atual, 10)
+        distribuicao.refresh_from_db()
+        self.assertTrue(distribuicao.cancelado)
+        self.assertEqual(distribuicao.cancelado_por, self.admin)
+
+    def test_cancelar_doacao_bloqueado_quando_saldo_ficaria_negativo(self):
+        doacao = self._doar(10)
+        self._distribuir(8)
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            "Não é possível cancelar: o saldo de Arroz ficaria negativo "
+            "(disponível 2 kgc, doação 10 kgc).",
+        ):
+            doacao.cancelar(self.admin)
+
+        doacao.refresh_from_db()
+        self.assertFalse(doacao.cancelado)
+        self.assertIsNone(doacao.cancelado_em)
+        self.assertIsNone(doacao.cancelado_por)
+        self.assertEqual(self.item.saldo_atual, 2)
+
+    def test_cancelar_doacao_permitido_quando_saldo_fica_zero(self):
+        doacao = self._doar(10)
+        self._doar(5)
+        self._distribuir(5)
+
+        doacao.cancelar(self.admin)
+
+        self.assertEqual(self.item.saldo_atual, 0)
+
+    def test_cancelar_movimentacao_ja_cancelada_nao_altera_nada(self):
+        doacao = self._doar(5)
+        # Cópia lida antes do primeiro cancelamento, como numa segunda aba aberta.
+        copia_desatualizada = Doacao.objects.get(pk=doacao.pk)
+        doacao.cancelar(self.admin)
+        cancelado_em = Doacao.objects.get(pk=doacao.pk).cancelado_em
+        outro_admin = Usuario.objects.create(
+            nome="Bruno Admin",
+            email="bruno-cancela@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+        )
+
+        with self.assertRaisesMessage(ValidationError, "Esta movimentação já foi cancelada."):
+            copia_desatualizada.cancelar(outro_admin)
+
+        doacao.refresh_from_db()
+        self.assertEqual(doacao.cancelado_em, cancelado_em)
+        self.assertEqual(doacao.cancelado_por, self.admin)
+
+    def test_cancelar_distribuicao_libera_o_cancelamento_da_doacao(self):
+        doacao = self._doar(10)
+        distribuicao = self._distribuir(8)
+        self.assertIsNotNone(doacao.motivo_para_nao_cancelar())
+
+        distribuicao.cancelar(self.admin)
+
+        self.assertIsNone(doacao.motivo_para_nao_cancelar())
+        doacao.cancelar(self.admin)
+        self.assertEqual(self.item.saldo_atual, 0)
+
+
+class CancelarMovimentacaoViewTests(CenarioCancelamentoMixin, TestCase):
+    """CT20 (#19): cancelamento pelas telas, permissões e respostas para o htmx."""
+
+    HTMX = {"HTTP_HX_REQUEST": "true"}
+    BOTAO_CONFIRMAR = 'data-testid="movimentacao-cancelar-confirmar-button"'
+
+    def test_admin_ve_confirmacao_sem_alterar_nada(self):
+        doacao = self._doar(5)
+        self._login(self.admin)
+
+        response = self.client.get(reverse("doacao_cancelar", args=[doacao.pk]), **self.HTMX)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "partials/_movimentacao_cancelar.html")
+        self.assertTemplateNotUsed(response, "core/movimentacao_cancelar.html")
+        self.assertContains(response, "Mercado Bom Preço")
+        self.assertContains(response, "Arroz")
+        self.assertContains(response, self.BOTAO_CONFIRMAR)
+        doacao.refresh_from_db()
+        self.assertFalse(doacao.cancelado)
+
+    def test_sem_htmx_abre_a_pagina_inteira_com_volta_ao_historico(self):
+        distribuicao = self._distribuir(2)
+        self._login(self.admin)
+
+        response = self.client.get(reverse("distribuicao_cancelar", args=[distribuicao.pk]))
+
+        self.assertTemplateUsed(response, "core/movimentacao_cancelar.html")
+        self.assertContains(response, "Família Souza")
+        voltar = f'href="{reverse("distribuicao_list")}" data-testid="movimentacao-cancelar-voltar'
+        self.assertContains(response, voltar)
+
+    def test_ct20_admin_cancela_doacao_sem_htmx_e_volta_ao_historico(self):
+        doacao = self._doar(5)
+        self._login(self.admin)
+
+        response = self.client.post(reverse("doacao_cancelar", args=[doacao.pk]), follow=True)
+
+        self.assertRedirects(response, reverse("doacao_list"))
+        self.assertContains(response, "Doação cancelada.")
+        doacao.refresh_from_db()
+        self.assertTrue(doacao.cancelado)
+        self.assertEqual(doacao.cancelado_por, self.admin)
+
+    def test_admin_cancela_distribuicao_com_htmx_e_dispara_evento(self):
+        self._doar(10)
+        distribuicao = self._distribuir(4)
+        self._login(self.admin)
+
+        response = self.client.post(
+            reverse("distribuicao_cancelar", args=[distribuicao.pk]), **self.HTMX
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["HX-Trigger"], "movimentacao-cancelada")
+        self.assertEqual(response["HX-Reswap"], "none")
+        self.assertContains(response, "Distribuição cancelada.")
+        self.assertEqual(self.item.saldo_atual, 10)
+
+    def test_cancelamento_bloqueado_mostra_o_motivo_no_dialogo(self):
+        doacao = self._doar(10)
+        self._distribuir(8)
+        self._login(self.admin)
+
+        response = self.client.post(reverse("doacao_cancelar", args=[doacao.pk]), **self.HTMX)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("HX-Trigger", response)
+        self.assertContains(response, "o saldo de Arroz ficaria negativo")
+        self.assertNotContains(response, self.BOTAO_CONFIRMAR)
+        doacao.refresh_from_db()
+        self.assertFalse(doacao.cancelado)
+
+    def test_movimentacao_ja_cancelada_mostra_aviso_sem_confirmar(self):
+        doacao = self._doar(5)
+        doacao.cancelar(self.admin)
+        self._login(self.admin)
+
+        response = self.client.get(reverse("doacao_cancelar", args=[doacao.pk]), **self.HTMX)
+
+        self.assertContains(response, "Esta movimentação já foi cancelada.")
+        self.assertNotContains(response, self.BOTAO_CONFIRMAR)
+
+    def test_ct20_voluntario_nao_pode_cancelar(self):
+        doacao = self._doar(5)
+        distribuicao = self._distribuir(2)
+        self._login(self.voluntario)
+
+        for url in (
+            reverse("doacao_cancelar", args=[doacao.pk]),
+            reverse("distribuicao_cancelar", args=[distribuicao.pk]),
+        ):
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 403)
+                self.assertEqual(self.client.post(url).status_code, 403)
+
+        doacao.refresh_from_db()
+        distribuicao.refresh_from_db()
+        self.assertFalse(doacao.cancelado)
+        self.assertFalse(distribuicao.cancelado)
+
+    def test_anonimo_vai_para_o_login(self):
+        doacao = self._doar(5)
+        url = reverse("doacao_cancelar", args=[doacao.pk])
+
+        self.assertRedirects(self.client.post(url), reverse("login"))
+        response = self.client.post(url, **self.HTMX)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response["HX-Redirect"], reverse("login"))
+        doacao.refresh_from_db()
+        self.assertFalse(doacao.cancelado)
+
+    def test_movimentacao_inexistente_404_e_metodo_nao_permitido_405(self):
+        doacao = self._doar(5)
+        self._login(self.admin)
+
+        response = self.client.post(reverse("distribuicao_cancelar", args=[999999]))
+        self.assertEqual(response.status_code, 404)
+        response = self.client.put(reverse("doacao_cancelar", args=[doacao.pk]))
+        self.assertEqual(response.status_code, 405)
+
+
+class HistoricoComCanceladasTests(CenarioCancelamentoMixin, TestCase):
+    """#19: as canceladas seguem nos históricos, marcadas, e fora de totais, relatório e CSV."""
+
+    def _cancelada_em(self, movimentacao):
+        movimentacao.refresh_from_db()
+        return timezone.localtime(movimentacao.cancelado_em).strftime("%d/%m/%Y %H:%M")
+
+    def test_historico_de_doacoes_mostra_cancelada_com_selo_autor_e_data(self):
+        doacao = self._doar(5)
+        doacao.cancelar(self.admin)
+        self._login(self.voluntario)
+
+        response = self.client.get(reverse("doacao_list"))
+
+        self.assertIn(doacao, list(response.context["page_obj"]))
+        self.assertContains(response, 'data-testid="doacao-historico-cancelada-badge"')
+        self.assertContains(response, f"por Ana Admin em {self._cancelada_em(doacao)}")
+
+    def test_historico_de_distribuicoes_mostra_cancelada_com_selo_autor_e_data(self):
+        distribuicao = self._distribuir(2)
+        distribuicao.cancelar(self.admin)
+        self._login(self.voluntario)
+
+        response = self.client.get(reverse("distribuicao_list"))
+
+        self.assertIn(distribuicao, list(response.context["page_obj"]))
+        self.assertContains(response, 'data-testid="distribuicao-historico-cancelada-badge"')
+        self.assertContains(response, f"por Ana Admin em {self._cancelada_em(distribuicao)}")
+
+    def test_botao_cancelar_so_para_admin_e_so_nas_linhas_ativas(self):
+        ativa = self._doar(5)
+        cancelada = self._doar(3)
+        cancelada.cancelar(self.admin)
+        distribuicao = self._distribuir(1)
+
+        self._login(self.admin)
+        response = self.client.get(reverse("doacao_list"))
+        self.assertContains(response, f'href="{reverse("doacao_cancelar", args=[ativa.pk])}"')
+        self.assertNotContains(response, reverse("doacao_cancelar", args=[cancelada.pk]))
+        response = self.client.get(reverse("distribuicao_list"))
+        self.assertContains(
+            response, f'href="{reverse("distribuicao_cancelar", args=[distribuicao.pk])}"'
+        )
+
+        self.client.get(reverse("logout"))
+        self._login(self.voluntario)
+        for url in (reverse("doacao_list"), reverse("distribuicao_list")):
+            with self.subTest(url=url):
+                self.assertNotContains(self.client.get(url), "historico-cancelar-button")
+
+    def test_totais_por_doador_excluem_a_doacao_cancelada_pela_tela(self):
+        self._doar(10)
+        doacao = self._doar(5)
+        self._login(self.admin)
+        self.client.post(reverse("doacao_cancelar", args=[doacao.pk]))
+
+        response = self.client.get(reverse("doacao_list"))
+
+        self.assertEqual(len(response.context["page_obj"]), 2)
+        totais = [linha["total"] for linha in response.context["totais_por_doador"]]
+        self.assertEqual(totais, [Decimal("10")])
+
+    def test_relatorio_e_csv_excluem_a_distribuicao_cancelada_pela_tela(self):
+        self._doar(10)
+        self._distribuir(2)
+        distribuicao = self._distribuir(3, data=date(2026, 10, 22))
+        self._login(self.admin)
+        self.client.post(reverse("distribuicao_cancelar", args=[distribuicao.pk]))
+
+        relatorio = self.client.get(reverse("distribuicao_relatorio"))
+        quantidades = [linha["quantidade_total"] for linha in relatorio.context["linhas"]]
+        self.assertEqual(quantidades, [Decimal("2")])
+
+        csv = self.client.get(reverse("distribuicao_exportar_csv")).content.decode("utf-8-sig")
+        linhas = csv.strip().splitlines()
+        self.assertEqual(len(linhas), 2)
+        self.assertIn("2.00", linhas[1])
+
+    def test_card_recarrega_com_os_filtros_e_a_pagina_atuais_depois_de_cancelar(self):
+        self._doar(5)
+        self._distribuir(1)
+        self._login(self.admin)
+
+        casos = (
+            ("doacao_list", {"id_doador": self.doador.pk, "page": 1}),
+            ("distribuicao_list", {"id_familia": self.familia.pk, "page": 1}),
+        )
+        for nome, filtros in casos:
+            with self.subTest(lista=nome):
+                response = self.client.get(reverse(nome), filtros)
+                parametro, valor = next(iter(filtros.items()))
+                self.assertContains(
+                    response,
+                    f'hx-get="{reverse(nome)}?{parametro}={valor}&amp;page=1" '
+                    'hx-trigger="movimentacao-cancelada from:body"',
+                )
