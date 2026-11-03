@@ -28,7 +28,13 @@ from core.models import (
     UnidadeMedida,
     Usuario,
 )
-from core.painel import montar_resumo, saudacao
+from core.painel import (
+    montar_resumo,
+    movimentacoes_recentes,
+    periodo_equivalente_do_mes_anterior,
+    saudacao,
+    texto_variacao_mes_anterior,
+)
 
 
 class CoreSmokeTests(TestCase):
@@ -2187,8 +2193,176 @@ class PainelTests(TestCase):
             self._doar(self._item(f"Item {indice}", minimo=5), indice)
 
         self.assertEqual(consultas(), com_um_item)
-        with self.assertNumQueries(6):
+        # 6 do estoque + 2 de doações e famílias do mês + 2 das movimentações recentes (#24).
+        with self.assertNumQueries(10):
             montar_resumo(self.HOJE)
+
+    # --- #24: doações do mês, famílias atendidas e movimentações recentes (CT33) ---
+
+    def _familia(self, nome):
+        return Familia.objects.create(nome_responsavel=nome, endereco="Rua B, 5", num_membros=2)
+
+    def _distribuir_para(self, familia, item, quantidade, data=None, cancelado=False):
+        return Distribuicao.objects.create(
+            familia=familia,
+            item=item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal(quantidade),
+            data=data or self.HOJE,
+            cancelado=cancelado,
+        )
+
+    def test_ct33_painel_do_mes_conta_doacoes_familias_e_lista_recentes(self):
+        arroz = self._item("Arroz")
+        self._doar(arroz, 50, data=date(2026, 10, 1))
+        self._doar(arroz, 10, data=date(2026, 10, 15))
+        self._doar(arroz, 99, data=date(2026, 10, 14), cancelado=True)
+        self._doar(arroz, 20, data=date(2026, 9, 10))
+        self._doar(arroz, 30, data=date(2026, 9, 30))  # depois de 15/09: fora da comparação
+        lima, costa = self._familia("Família Lima"), self._familia("Família Costa")
+        self._distribuir(arroz, 2, data=date(2026, 10, 3))
+        self._distribuir(arroz, 3, data=date(2026, 10, 10))
+        self._distribuir_para(lima, arroz, 4, data=date(2026, 10, 12))
+        self._distribuir_para(costa, arroz, 8, data=date(2026, 10, 13), cancelado=True)
+        self._distribuir_para(costa, arroz, 1, data=date(2026, 9, 20))
+
+        resumo = montar_resumo(self.HOJE)
+
+        self.assertEqual(resumo["doacoes_no_mes"], 2)
+        self.assertEqual(resumo["variacao_doacoes"], 1)
+        self.assertEqual(resumo["texto_variacao_doacoes"], "+1 em relação ao mês anterior")
+        self.assertEqual(resumo["familias_atendidas"], 2)
+        self.assertEqual(
+            [
+                (linha["tipo"], linha["pessoa"], linha["quantidade"])
+                for linha in resumo["movimentacoes_recentes"]
+            ],
+            [
+                ("Doação", "João Doador", Decimal("10")),
+                ("Distribuição", "Família Lima", Decimal("4")),
+                ("Distribuição", "Família Silva", Decimal("3")),
+                ("Distribuição", "Família Silva", Decimal("2")),
+                ("Doação", "João Doador", Decimal("50")),
+            ],
+        )
+
+    def test_variacao_compara_com_o_mesmo_intervalo_do_mes_anterior(self):
+        arroz = self._item("Arroz")
+        self._doar(arroz, 1, data=date(2026, 9, 15))
+        self._doar(arroz, 1, data=date(2026, 9, 16))
+
+        resumo = montar_resumo(self.HOJE)
+
+        self.assertEqual(resumo["doacoes_no_mes"], 0)
+        self.assertEqual(resumo["variacao_doacoes"], -1)
+        self.assertEqual(resumo["texto_variacao_doacoes"], "−1 em relação ao mês anterior")
+
+    def test_periodo_equivalente_limita_ao_ultimo_dia_do_mes_anterior(self):
+        casos = {
+            date(2026, 3, 31): (date(2026, 2, 1), date(2026, 2, 28)),
+            date(2028, 3, 31): (date(2028, 2, 1), date(2028, 2, 29)),
+            date(2026, 1, 15): (date(2025, 12, 1), date(2025, 12, 15)),
+            date(2026, 11, 1): (date(2026, 10, 1), date(2026, 10, 1)),
+        }
+        for hoje, esperado in casos.items():
+            with self.subTest(hoje=hoje):
+                self.assertEqual(periodo_equivalente_do_mes_anterior(hoje), esperado)
+
+    def test_texto_da_variacao_de_doacoes(self):
+        self.assertEqual(texto_variacao_mes_anterior(3), "+3 em relação ao mês anterior")
+        self.assertEqual(texto_variacao_mes_anterior(-2), "−2 em relação ao mês anterior")
+        self.assertEqual(texto_variacao_mes_anterior(0), "Igual ao mês anterior")
+
+    def test_familias_atendidas_conta_familias_distintas_do_mes_sem_canceladas(self):
+        arroz = self._item("Arroz")
+        self._distribuir(arroz, 1)
+        self._distribuir(arroz, 1, data=date(2026, 10, 2))
+        self._distribuir_para(self._familia("Família Lima"), arroz, 1, data=date(2026, 9, 30))
+        self._distribuir_para(self._familia("Família Costa"), arroz, 1, cancelado=True)
+
+        self.assertEqual(montar_resumo(self.HOJE)["familias_atendidas"], 1)
+
+    def test_movimentacoes_recentes_ordenam_pela_data_e_desempatam_pelo_registro(self):
+        arroz = self._item("Arroz")
+        doacao_de_hoje = self._doar(arroz, 1)
+        distribuicao_de_hoje = self._distribuir(arroz, 2)
+        retroativa = self._doar(arroz, 3, data=date(2026, 10, 14))
+        agora = timezone.now()
+        Doacao.objects.filter(pk=doacao_de_hoje.pk).update(criado_em=agora - timedelta(hours=2))
+        Distribuicao.objects.filter(pk=distribuicao_de_hoje.pk).update(
+            criado_em=agora - timedelta(hours=1)
+        )
+        # Lançada por último, mas com data de ontem: fica abaixo das de hoje.
+        Doacao.objects.filter(pk=retroativa.pk).update(criado_em=agora)
+
+        recentes = movimentacoes_recentes()
+
+        self.assertEqual(
+            [(linha["entrada"], linha["quantidade"]) for linha in recentes],
+            [(False, Decimal("2")), (True, Decimal("1")), (True, Decimal("3"))],
+        )
+
+    def test_movimentacoes_recentes_limitam_a_cinco_e_ignoram_canceladas(self):
+        arroz = self._item("Arroz")
+        for dia in range(1, 5):
+            self._doar(arroz, dia, data=date(2026, 10, dia))
+            self._distribuir(arroz, 1, data=date(2026, 10, dia))
+        self._doar(arroz, 7, cancelado=True)
+        self._distribuir(arroz, 7, cancelado=True)
+
+        recentes = movimentacoes_recentes()
+
+        self.assertEqual(
+            [linha["data"] for linha in recentes],
+            [date(2026, 10, 4)] * 2 + [date(2026, 10, 3)] * 2 + [date(2026, 10, 2)],
+        )
+        self.assertNotIn(Decimal("7"), [linha["quantidade"] for linha in recentes])
+
+    def test_painel_mostra_doacoes_familias_e_recentes_para_os_dois_perfis(self):
+        # A view usa a data real; as movimentações precisam cair no mês corrente.
+        hoje = timezone.localdate()
+        arroz = self._item("Arroz")
+        self._doar(arroz, 12, data=hoje)
+        self._distribuir(arroz, 2, data=hoje)
+
+        for usuario in (self.voluntario, self.admin):
+            with self.subTest(perfil=usuario.perfil):
+                self.client.force_login(usuario)
+                response = self.client.get(reverse("painel"))
+
+                self.assertEqual(response.context["resumo"]["doacoes_no_mes"], 1)
+                self.assertEqual(response.context["resumo"]["familias_atendidas"], 1)
+                self.assertContains(response, 'data-testid="painel-doacoes-recebidas-card"')
+                self.assertContains(response, 'data-testid="painel-familias-atendidas-card"')
+                self.assertContains(response, "+1 em relação ao mês anterior")
+                self.assertContains(response, "João Doador")
+                self.assertContains(response, "Família Silva")
+                self.assertContains(response, 'data-testid="painel-movimentacoes-recentes-lista"')
+
+    def test_painel_sem_movimentacoes_mostra_estado_vazio_e_zeros(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("painel"))
+
+        self.assertEqual(response.context["resumo"]["doacoes_no_mes"], 0)
+        self.assertEqual(response.context["resumo"]["familias_atendidas"], 0)
+        self.assertContains(response, "Igual ao mês anterior")
+        self.assertContains(response, "Nenhuma movimentação registrada.")
+        self.assertNotContains(response, 'data-testid="painel-movimentacoes-recentes-lista"')
+
+    def test_painel_recarrega_os_novos_blocos_no_registro_salvo(self):
+        self.client.force_login(self.voluntario)
+
+        html = self.client.get(reverse("painel")).content.decode()
+
+        inicio, fim = html.index('id="painel-conteudo"'), html.index("</main>")
+        for testid in (
+            "painel-doacoes-recebidas-card",
+            "painel-familias-atendidas-card",
+            "painel-movimentacoes-recentes",
+        ):
+            with self.subTest(bloco=testid):
+                self.assertTrue(inicio < html.index(f'data-testid="{testid}"') < fim)
 
 
 class LayoutBaseTests(SimpleTestCase):
