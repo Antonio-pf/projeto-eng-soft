@@ -9,7 +9,9 @@
 | Item | PR/commit | Status |
 |---|---|---|
 | Atualização do relatório individual da Sprint 1 | `e9ce505` — PR #43 | Concluído |
-| [outros itens da sprint, com PR ou commit] | | |
+| Implementei a exportação do histórico de distribuições em CSV (história #23). | `12ecff3` | Concluído |
+| Adicionei o botão “Exportar CSV” à tela de histórico e mantive os filtros de família e período no download. | `12ecff3` | Concluído |
+| Organizei o arquivo com as colunas Data, Família, Item, Quantidade e Usuário e excluí as distribuições canceladas. | `12ecff3` | Concluído |
 
 ## 2. Rituais que participei
 
@@ -27,4 +29,6 @@
 
 ## 4. Dificuldades e o que aprendi
 
-[Escrever com as próprias palavras: dificuldades da sprint e o que aprendeu]
+Um desafio da implementação foi manter os mesmos filtros na tela e no arquivo baixado. Usei os parâmetros de família e período na consulta da exportação e trabalhei com a geração de um arquivo CSV para download em uma resposta do Django.
+
+[Revisar este trecho com as próprias palavras antes da entrega.]
