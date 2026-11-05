@@ -12,7 +12,9 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
+from django.contrib.sessions.models import Session
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
@@ -717,6 +719,57 @@ class FamiliaTestCase(TestCase):
         self.assertEqual(response_search.status_code, 200)
         self.assertContains(response_search, "João da Silva")
         self.assertNotContains(response_search, "Maria Santos")
+
+    def test_ct08_lista_de_familias_exibe_responsavel_endereco_e_membros(self):
+        Familia.objects.create(
+            nome_responsavel="Ana Pereira", endereco="Rua das Flores, 45", num_membros=5
+        )
+
+        response = self.client.get(reverse("familia_list"))
+
+        for coluna in ("Responsável", "Endereço", "Membros"):
+            self.assertContains(response, f'<th class="px-4 py-3 font-semibold">{coluna}</th>')
+        self.assertContains(response, "Ana Pereira")
+        self.assertContains(response, "Rua das Flores, 45")
+        self.assertContains(response, "5 membros")
+
+    def test_ct08_lista_de_familias_tem_no_maximo_20_por_pagina(self):
+        for indice in range(25):
+            Familia.objects.create(
+                nome_responsavel=f"Família {indice:02d}", endereco="Rua 1", num_membros=1
+            )
+
+        pagina_1 = self.client.get(reverse("familia_list"))
+        pagina_2 = self.client.get(reverse("familia_list"), {"page": 2})
+
+        self.assertEqual(len(pagina_1.context["page_obj"]), 20)
+        self.assertTrue(pagina_1.context["page_obj"].has_next())
+        self.assertEqual(len(pagina_2.context["page_obj"]), 5)
+        self.assertFalse(pagina_2.context["page_obj"].has_next())
+
+    def test_ct08_busca_de_familias_continua_paginada(self):
+        for indice in range(23):
+            Familia.objects.create(
+                nome_responsavel=f"Pereira {indice:02d}", endereco="Rua 1", num_membros=2
+            )
+        for sobrenome in ("Silva", "Souza", "Santos"):
+            Familia.objects.create(
+                nome_responsavel=f"Família {sobrenome}", endereco="Rua 2", num_membros=3
+            )
+
+        pagina_1 = self.client.get(reverse("familia_list"), {"q": "Pereira"})
+        pagina_2 = self.client.get(reverse("familia_list"), {"q": "Pereira", "page": 2})
+
+        self.assertEqual(pagina_1.context["page_obj"].paginator.count, 23)
+        self.assertEqual(len(pagina_1.context["page_obj"]), 20)
+        self.assertEqual(len(pagina_2.context["page_obj"]), 3)
+        nomes = [
+            familia.nome_responsavel
+            for pagina in (pagina_1, pagina_2)
+            for familia in pagina.context["page_obj"]
+        ]
+        self.assertEqual(len(set(nomes)), 23)
+        self.assertTrue(all(nome.startswith("Pereira") for nome in nomes))
 
 
 class DoadoresEFamiliasComHtmxTests(TestCase):
@@ -3378,3 +3431,90 @@ class ExportarCsvTests(TestCase):
         self.client.logout()
 
         self.assertRedirects(self._exportar(), reverse("login"))
+
+
+class ExpiracaoSessaoTests(TestCase):
+    """CT01 (#1): a sessão expira depois de 30 minutos sem atividade."""
+
+    HTMX = {"HTTP_HX_REQUEST": "true"}
+
+    def setUp(self):
+        Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("senha-correta"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"), {"email": "maria@conectasocial.org", "senha": "senha-correta"}
+        )
+        self.chave = self.client.session.session_key
+
+    def _prazo_restante(self):
+        expira_em = Session.objects.get(session_key=self.chave).expire_date
+        return (expira_em - timezone.now()).total_seconds()
+
+    def _expirar_em(self, prazo):
+        Session.objects.filter(session_key=self.chave).update(expire_date=timezone.now() + prazo)
+
+    def test_ct01_sessao_expira_apos_30_minutos_sem_atividade(self):
+        self.assertEqual(settings.SESSION_COOKIE_AGE, 30 * 60)
+        self.assertTrue(settings.SESSION_SAVE_EVERY_REQUEST)
+        self.assertTrue(settings.SESSION_EXPIRE_AT_BROWSER_CLOSE)
+        self.assertAlmostEqual(self._prazo_restante(), 30 * 60, delta=60)
+
+    def test_ct01_sessao_expirada_leva_ao_login(self):
+        self.assertEqual(self.client.get(reverse("painel")).status_code, 200)
+
+        self._expirar_em(timedelta(seconds=-1))
+
+        self.assertRedirects(self.client.get(reverse("painel")), reverse("login"))
+
+    def test_ct01_sessao_expirada_no_htmx_pede_redirecionamento_ao_login(self):
+        self._expirar_em(timedelta(seconds=-1))
+
+        response = self.client.get(reverse("familia_list"), **self.HTMX)
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response["HX-Redirect"], reverse("login"))
+
+    def test_ct01_requisicao_ativa_renova_o_prazo_da_sessao(self):
+        self._expirar_em(timedelta(seconds=60))
+
+        self.assertEqual(self.client.get(reverse("painel")).status_code, 200)
+
+        self.assertGreater(self._prazo_restante(), 29 * 60)
+
+
+class SeedCommandTests(TestCase):
+    """O comando seed cria os dados de exemplo e pode ser rodado de novo sem duplicar."""
+
+    MODELOS = (Usuario, Doador, Familia, CategoriaItem, UnidadeMedida, Item, Doacao, Distribuicao)
+
+    def _rodar_seed(self):
+        saida = io.StringIO()
+        call_command("seed", stdout=saida)
+        return saida.getvalue()
+
+    def test_seed_cria_os_dados_de_exemplo(self):
+        saida = self._rodar_seed()
+
+        self.assertIn("Dados iniciais criados ou atualizados com sucesso.", saida)
+        self.assertTrue(
+            Usuario.objects.filter(
+                email="admin@conectasocial.org", perfil=Usuario.Perfil.ADMINISTRADOR
+            ).exists()
+        )
+        self.assertTrue(Usuario.objects.filter(perfil=Usuario.Perfil.VOLUNTARIO).exists())
+        self.assertEqual(Item.objects.count(), 8)
+        self.assertTrue(Doacao.objects.exists())
+        self.assertTrue(Distribuicao.objects.exists())
+
+    def test_seed_pode_rodar_de_novo_sem_duplicar(self):
+        self._rodar_seed()
+        contagens = [modelo.objects.count() for modelo in self.MODELOS]
+
+        self._rodar_seed()
+
+        self.assertEqual([modelo.objects.count() for modelo in self.MODELOS], contagens)
