@@ -281,6 +281,15 @@ python manage.py check
 python manage.py test
 ```
 
+Para medir a cobertura dos testes (linhas e branches de `core` e `conecta`, configurada em `pyproject.toml`):
+
+```bash
+coverage run manage.py test
+coverage report
+```
+
+O `coverage report` falha se a cobertura ficar abaixo de 95%, que é o mínimo exigido no CI. Para ver as linhas não cobertas no navegador, rode `coverage html` e abra `htmlcov/index.html`.
+
 Para verificar se há alterações nos models sem migration correspondente:
 
 ```bash
@@ -294,7 +303,7 @@ pre-commit install
 pre-commit install --hook-type commit-msg
 ```
 
-O CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa Ruff, `manage.py check`, os testes Django e a validação das mensagens de commit em pushes para `main`.
+O CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa Ruff, `manage.py check`, os testes Django com a medição de cobertura (mínimo de 95%) e a validação das mensagens de commit em pushes para `main`.
 
 ## Protótipo navegável
 

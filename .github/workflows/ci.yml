@@ -91,7 +91,10 @@ jobs:
         run: python manage.py migrate
 
       - name: Tests
-        run: python manage.py test
+        run: coverage run manage.py test
+
+      - name: Coverage
+        run: coverage report
 
   docker:
     runs-on: ubuntu-latest

@@ -1,3 +1,5 @@
+import csv
+import io
 import os
 import re
 import runpy
@@ -10,7 +12,9 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
+from django.contrib.sessions.models import Session
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
@@ -35,6 +39,7 @@ from core.painel import (
     saudacao,
     texto_variacao_mes_anterior,
 )
+from core.views import _celula_csv
 
 
 class CoreSmokeTests(TestCase):
@@ -714,6 +719,57 @@ class FamiliaTestCase(TestCase):
         self.assertEqual(response_search.status_code, 200)
         self.assertContains(response_search, "João da Silva")
         self.assertNotContains(response_search, "Maria Santos")
+
+    def test_ct08_lista_de_familias_exibe_responsavel_endereco_e_membros(self):
+        Familia.objects.create(
+            nome_responsavel="Ana Pereira", endereco="Rua das Flores, 45", num_membros=5
+        )
+
+        response = self.client.get(reverse("familia_list"))
+
+        for coluna in ("Responsável", "Endereço", "Membros"):
+            self.assertContains(response, f'<th class="px-4 py-3 font-semibold">{coluna}</th>')
+        self.assertContains(response, "Ana Pereira")
+        self.assertContains(response, "Rua das Flores, 45")
+        self.assertContains(response, "5 membros")
+
+    def test_ct08_lista_de_familias_tem_no_maximo_20_por_pagina(self):
+        for indice in range(25):
+            Familia.objects.create(
+                nome_responsavel=f"Família {indice:02d}", endereco="Rua 1", num_membros=1
+            )
+
+        pagina_1 = self.client.get(reverse("familia_list"))
+        pagina_2 = self.client.get(reverse("familia_list"), {"page": 2})
+
+        self.assertEqual(len(pagina_1.context["page_obj"]), 20)
+        self.assertTrue(pagina_1.context["page_obj"].has_next())
+        self.assertEqual(len(pagina_2.context["page_obj"]), 5)
+        self.assertFalse(pagina_2.context["page_obj"].has_next())
+
+    def test_ct08_busca_de_familias_continua_paginada(self):
+        for indice in range(23):
+            Familia.objects.create(
+                nome_responsavel=f"Pereira {indice:02d}", endereco="Rua 1", num_membros=2
+            )
+        for sobrenome in ("Silva", "Souza", "Santos"):
+            Familia.objects.create(
+                nome_responsavel=f"Família {sobrenome}", endereco="Rua 2", num_membros=3
+            )
+
+        pagina_1 = self.client.get(reverse("familia_list"), {"q": "Pereira"})
+        pagina_2 = self.client.get(reverse("familia_list"), {"q": "Pereira", "page": 2})
+
+        self.assertEqual(pagina_1.context["page_obj"].paginator.count, 23)
+        self.assertEqual(len(pagina_1.context["page_obj"]), 20)
+        self.assertEqual(len(pagina_2.context["page_obj"]), 3)
+        nomes = [
+            familia.nome_responsavel
+            for pagina in (pagina_1, pagina_2)
+            for familia in pagina.context["page_obj"]
+        ]
+        self.assertEqual(len(set(nomes)), 23)
+        self.assertTrue(all(nome.startswith("Pereira") for nome in nomes))
 
 
 class DoadoresEFamiliasComHtmxTests(TestCase):
@@ -3189,3 +3245,276 @@ class HistoricoComCanceladasTests(CenarioCancelamentoMixin, TestCase):
                     f'hx-get="{reverse(nome)}?{parametro}={valor}&amp;page=1" '
                     'hx-trigger="movimentacao-cancelada from:body"',
                 )
+
+
+class ExportarCsvTests(TestCase):
+    """CT21 (#23): o CSV traz os mesmos dados e filtros da tela do relatório (#21)."""
+
+    CABECALHO = [
+        "Família",
+        "Item",
+        "Categoria",
+        "Qtd total",
+        "Unidade",
+        "Nº distribuições",
+        "Último registro",
+    ]
+
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Voluntária CSV",
+            email="csv@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"), {"email": "csv@conectasocial.org", "senha": "senha-teste"}
+        )
+        self.silva = Familia.objects.create(
+            nome_responsavel="Família Silva", endereco="Rua A, 123", num_membros=4
+        )
+        self.souza = Familia.objects.create(
+            nome_responsavel="Família Souza", endereco="Rua B, 456", num_membros=3
+        )
+        self.alimento = CategoriaItem.objects.create(nome="Alimento")
+        self.kg = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.arroz = Item.objects.create(
+            nome="Arroz", categoria=self.alimento, unidade_medida=self.kg
+        )
+        self.feijao = Item.objects.create(
+            nome="Feijão", categoria=self.alimento, unidade_medida=self.kg
+        )
+        hoje = timezone.localdate()
+        self.dias = {n: hoje - timedelta(days=n) for n in (5, 10, 20, 40)}
+        self._distribuir(self.silva, self.arroz, "2", self.dias[20])
+        self._distribuir(self.silva, self.arroz, "3", self.dias[5])
+        self._distribuir(self.silva, self.feijao, "1", self.dias[10])
+        self._distribuir(self.souza, self.arroz, "4", self.dias[40])
+
+    def _distribuir(self, familia, item, quantidade, data):
+        return Distribuicao.objects.create(
+            familia=familia,
+            item=item,
+            quantidade=Decimal(quantidade),
+            data=data,
+            registrado_por=self.voluntario,
+        )
+
+    def _exportar(self, filtros=None):
+        return self.client.get(reverse("distribuicao_exportar_csv"), filtros or {})
+
+    def _ler_csv(self, filtros=None):
+        texto = self._exportar(filtros).content.decode("utf-8")
+        return list(csv.reader(io.StringIO(texto.removeprefix("\ufeff"))))
+
+    def _linhas_da_tela(self, filtros=None):
+        relatorio = self.client.get(reverse("distribuicao_relatorio"), filtros or {})
+        return [
+            [
+                linha["familia__nome_responsavel"],
+                linha["item__nome"],
+                linha["item__categoria__nome"],
+                f"{linha['quantidade_total']:.2f}",
+                linha["item__unidade_medida__sigla"],
+                str(linha["numero_distribuicoes"]),
+                linha["ultimo_registro"].strftime("%d/%m/%Y"),
+            ]
+            for linha in relatorio.context["linhas"]
+        ]
+
+    def test_ct21_csv_tem_cabecalho_em_portugues(self):
+        response = self._exportar()
+
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertEqual(
+            response["Content-Disposition"], 'attachment; filename="relatorio_distribuicoes.csv"'
+        )
+        self.assertEqual(self._ler_csv()[0], self.CABECALHO)
+
+    def test_ct21_csv_tem_as_mesmas_linhas_da_tela(self):
+        linhas = self._ler_csv()[1:]
+
+        data = "%d/%m/%Y"
+        self.assertEqual(
+            linhas,
+            [
+                [
+                    "Família Silva",
+                    "Arroz",
+                    "Alimento",
+                    "5.00",
+                    "kg",
+                    "2",
+                    self.dias[5].strftime(data),
+                ],
+                [
+                    "Família Silva",
+                    "Feijão",
+                    "Alimento",
+                    "1.00",
+                    "kg",
+                    "1",
+                    self.dias[10].strftime(data),
+                ],
+                [
+                    "Família Souza",
+                    "Arroz",
+                    "Alimento",
+                    "4.00",
+                    "kg",
+                    "1",
+                    self.dias[40].strftime(data),
+                ],
+            ],
+        )
+        self.assertEqual(linhas, self._linhas_da_tela())
+
+    def test_ct21_csv_aplica_os_mesmos_filtros_da_tela(self):
+        periodo = {
+            "data_inicio": self.dias[20].isoformat(),
+            "data_fim": self.dias[10].isoformat(),
+        }
+        casos = {
+            "família": {"id_familia": self.silva.pk},
+            "período": periodo,
+            "família e período": {"id_familia": self.silva.pk, **periodo},
+        }
+        for nome, filtros in casos.items():
+            with self.subTest(filtro=nome):
+                linhas = self._ler_csv(filtros)[1:]
+                self.assertTrue(linhas)
+                self.assertEqual(linhas, self._linhas_da_tela(filtros))
+                self.assertLess(len(linhas), len(self._ler_csv()[1:]))
+
+    def test_csv_tem_um_unico_bom_no_inicio(self):
+        conteudo = self._exportar().content
+
+        self.assertTrue(conteudo.startswith(b"\xef\xbb\xbf"))
+        self.assertEqual(conteudo.count(b"\xef\xbb\xbf"), 1)
+
+    def test_csv_neutraliza_textos_que_viram_formula(self):
+        familia = Familia.objects.create(
+            nome_responsavel='=HYPERLINK("http://exemplo.com")', endereco="Rua C", num_membros=1
+        )
+        menos = Familia.objects.create(nome_responsavel="-5", endereco="Rua D", num_membros=1)
+        categoria = CategoriaItem.objects.create(nome="@admin")
+        item = Item.objects.create(nome="+SOMA(1;1)", categoria=categoria, unidade_medida=self.kg)
+        self._distribuir(familia, item, "1", self.dias[5])
+        self._distribuir(menos, self.arroz, "1", self.dias[5])
+
+        textos = [linha[:3] for linha in self._ler_csv()[1:]]
+
+        self.assertIn(["'" + familia.nome_responsavel, "'+SOMA(1;1)", "'@admin"], textos)
+        self.assertIn(["'-5", "Arroz", "Alimento"], textos)
+        self.assertIn(["Família Silva", "Arroz", "Alimento"], textos)
+
+    def test_celula_csv_so_altera_texto_que_comeca_com_caractere_de_formula(self):
+        casos = [
+            ("=1+1", "'=1+1"),
+            ("+55 16 3333-0000", "'+55 16 3333-0000"),
+            ("-3", "'-3"),
+            ("@usuario", "'@usuario"),
+            ("\tsoma", "'\tsoma"),
+            ("\rsoma", "'\rsoma"),
+            ("Arroz = bom", "Arroz = bom"),
+            ("Família Silva", "Família Silva"),
+            ("", ""),
+            (Decimal("-1"), Decimal("-1")),
+            (None, None),
+        ]
+        for valor, esperado in casos:
+            with self.subTest(valor=valor):
+                self.assertEqual(_celula_csv(valor), esperado)
+
+    def test_csv_exige_login(self):
+        self.client.logout()
+
+        self.assertRedirects(self._exportar(), reverse("login"))
+
+
+class ExpiracaoSessaoTests(TestCase):
+    """CT01 (#1): a sessão expira depois de 30 minutos sem atividade."""
+
+    HTMX = {"HTTP_HX_REQUEST": "true"}
+
+    def setUp(self):
+        Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria@conectasocial.org",
+            password=make_password("senha-correta"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"), {"email": "maria@conectasocial.org", "senha": "senha-correta"}
+        )
+        self.chave = self.client.session.session_key
+
+    def _prazo_restante(self):
+        expira_em = Session.objects.get(session_key=self.chave).expire_date
+        return (expira_em - timezone.now()).total_seconds()
+
+    def _expirar_em(self, prazo):
+        Session.objects.filter(session_key=self.chave).update(expire_date=timezone.now() + prazo)
+
+    def test_ct01_sessao_expira_apos_30_minutos_sem_atividade(self):
+        self.assertEqual(settings.SESSION_COOKIE_AGE, 30 * 60)
+        self.assertTrue(settings.SESSION_SAVE_EVERY_REQUEST)
+        self.assertTrue(settings.SESSION_EXPIRE_AT_BROWSER_CLOSE)
+        self.assertAlmostEqual(self._prazo_restante(), 30 * 60, delta=60)
+
+    def test_ct01_sessao_expirada_leva_ao_login(self):
+        self.assertEqual(self.client.get(reverse("painel")).status_code, 200)
+
+        self._expirar_em(timedelta(seconds=-1))
+
+        self.assertRedirects(self.client.get(reverse("painel")), reverse("login"))
+
+    def test_ct01_sessao_expirada_no_htmx_pede_redirecionamento_ao_login(self):
+        self._expirar_em(timedelta(seconds=-1))
+
+        response = self.client.get(reverse("familia_list"), **self.HTMX)
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response["HX-Redirect"], reverse("login"))
+
+    def test_ct01_requisicao_ativa_renova_o_prazo_da_sessao(self):
+        self._expirar_em(timedelta(seconds=60))
+
+        self.assertEqual(self.client.get(reverse("painel")).status_code, 200)
+
+        self.assertGreater(self._prazo_restante(), 29 * 60)
+
+
+class SeedCommandTests(TestCase):
+    """O comando seed cria os dados de exemplo e pode ser rodado de novo sem duplicar."""
+
+    MODELOS = (Usuario, Doador, Familia, CategoriaItem, UnidadeMedida, Item, Doacao, Distribuicao)
+
+    def _rodar_seed(self):
+        saida = io.StringIO()
+        call_command("seed", stdout=saida)
+        return saida.getvalue()
+
+    def test_seed_cria_os_dados_de_exemplo(self):
+        saida = self._rodar_seed()
+
+        self.assertIn("Dados iniciais criados ou atualizados com sucesso.", saida)
+        self.assertTrue(
+            Usuario.objects.filter(
+                email="admin@conectasocial.org", perfil=Usuario.Perfil.ADMINISTRADOR
+            ).exists()
+        )
+        self.assertTrue(Usuario.objects.filter(perfil=Usuario.Perfil.VOLUNTARIO).exists())
+        self.assertEqual(Item.objects.count(), 8)
+        self.assertTrue(Doacao.objects.exists())
+        self.assertTrue(Distribuicao.objects.exists())
+
+    def test_seed_pode_rodar_de_novo_sem_duplicar(self):
+        self._rodar_seed()
+        contagens = [modelo.objects.count() for modelo in self.MODELOS]
+
+        self._rodar_seed()
+
+        self.assertEqual([modelo.objects.count() for modelo in self.MODELOS], contagens)

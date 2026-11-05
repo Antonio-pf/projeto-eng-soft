@@ -562,40 +562,15 @@ def distribuicao_cancelar(request, pk):
     )
 
 
-@login_obrigatorio
-def distribuicao_exportar_csv(request):
-    distribuicoes, _ = _filtrar(
-        Distribuicao.objects.filter(cancelado=False)
-        .select_related("familia", "item", "registrado_por")
-        .order_by("-data"),
-        request,
-        "familia_id",
-        "id_familia",
-    )
+def _relatorio_de_distribuicoes(request):
+    """Linhas do relatório de distribuições (#21), usadas pela tela e pelo CSV (#23).
 
-    response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
-    response["Content-Disposition"] = 'attachment; filename="relatorio_distribuicoes.csv"'
-    writer = csv.writer(response)
-    writer.writerow(["Data", "Família", "Item", "Quantidade", "Usuário"])
-    for distribuicao in distribuicoes:
-        writer.writerow(
-            [
-                distribuicao.data.strftime("%d/%m/%Y"),
-                distribuicao.familia.nome_responsavel,
-                distribuicao.item.nome,
-                distribuicao.quantidade,
-                distribuicao.registrado_por.nome,
-            ]
-        )
-    return response
-
-
-@login_obrigatorio
-def distribuicao_relatorio(request):
+    As duas saídas leem a mesma consulta para que o arquivo exportado traga sempre
+    os mesmos dados e filtros que a tela mostra.
+    """
     distribuicoes, filtros = _filtrar(
         Distribuicao.objects.filter(cancelado=False), request, "familia_id", "id_familia"
     )
-
     linhas = (
         distribuicoes.values(
             "familia__id_familia",
@@ -612,6 +587,60 @@ def distribuicao_relatorio(request):
         )
         .order_by("familia__nome_responsavel", "item__nome")
     )
+    return distribuicoes, linhas, filtros
+
+
+# Planilhas tratam como fórmula a célula que começa com estes caracteres (OWASP, CSV injection).
+INICIOS_DE_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _celula_csv(valor):
+    """Põe um apóstrofo antes do texto que a planilha executaria como fórmula."""
+    if isinstance(valor, str) and valor.startswith(INICIOS_DE_FORMULA):
+        return f"'{valor}"
+    return valor
+
+
+@login_obrigatorio
+def distribuicao_exportar_csv(request):
+    _, linhas, _ = _relatorio_de_distribuicoes(request)
+
+    # Com charset utf-8-sig o Django codifica cada linha à parte e repete o BOM em todas;
+    # por isso o BOM, que faz o Excel ler os acentos, é escrito uma vez só.
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="relatorio_distribuicoes.csv"'
+    response.write("﻿")
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "Família",
+            "Item",
+            "Categoria",
+            "Qtd total",
+            "Unidade",
+            "Nº distribuições",
+            "Último registro",
+        ]
+    )
+    # A soma vem como 5 no SQLite e 5.00 no PostgreSQL; duas casas deixam o arquivo igual nos dois.
+    for linha in linhas:
+        writer.writerow(
+            [
+                _celula_csv(linha["familia__nome_responsavel"]),
+                _celula_csv(linha["item__nome"]),
+                _celula_csv(linha["item__categoria__nome"]),
+                f"{linha['quantidade_total']:.2f}",
+                _celula_csv(linha["item__unidade_medida__sigla"]),
+                linha["numero_distribuicoes"],
+                linha["ultimo_registro"].strftime("%d/%m/%Y"),
+            ]
+        )
+    return response
+
+
+@login_obrigatorio
+def distribuicao_relatorio(request):
+    distribuicoes, linhas, filtros = _relatorio_de_distribuicoes(request)
     # Somar kg com pacote não diz nada a quem lê o relatório, então o total sai por unidade.
     total_por_unidade = (
         distribuicoes.values("item__unidade_medida__sigla")
