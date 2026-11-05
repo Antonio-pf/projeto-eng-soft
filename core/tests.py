@@ -1,3 +1,5 @@
+import csv
+import io
 import os
 import re
 import runpy
@@ -35,6 +37,7 @@ from core.painel import (
     saudacao,
     texto_variacao_mes_anterior,
 )
+from core.views import _celula_csv
 
 
 class CoreSmokeTests(TestCase):
@@ -3189,3 +3192,189 @@ class HistoricoComCanceladasTests(CenarioCancelamentoMixin, TestCase):
                     f'hx-get="{reverse(nome)}?{parametro}={valor}&amp;page=1" '
                     'hx-trigger="movimentacao-cancelada from:body"',
                 )
+
+
+class ExportarCsvTests(TestCase):
+    """CT21 (#23): o CSV traz os mesmos dados e filtros da tela do relatório (#21)."""
+
+    CABECALHO = [
+        "Família",
+        "Item",
+        "Categoria",
+        "Qtd total",
+        "Unidade",
+        "Nº distribuições",
+        "Último registro",
+    ]
+
+    def setUp(self):
+        self.voluntario = Usuario.objects.create(
+            nome="Voluntária CSV",
+            email="csv@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"), {"email": "csv@conectasocial.org", "senha": "senha-teste"}
+        )
+        self.silva = Familia.objects.create(
+            nome_responsavel="Família Silva", endereco="Rua A, 123", num_membros=4
+        )
+        self.souza = Familia.objects.create(
+            nome_responsavel="Família Souza", endereco="Rua B, 456", num_membros=3
+        )
+        self.alimento = CategoriaItem.objects.create(nome="Alimento")
+        self.kg = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.arroz = Item.objects.create(
+            nome="Arroz", categoria=self.alimento, unidade_medida=self.kg
+        )
+        self.feijao = Item.objects.create(
+            nome="Feijão", categoria=self.alimento, unidade_medida=self.kg
+        )
+        hoje = timezone.localdate()
+        self.dias = {n: hoje - timedelta(days=n) for n in (5, 10, 20, 40)}
+        self._distribuir(self.silva, self.arroz, "2", self.dias[20])
+        self._distribuir(self.silva, self.arroz, "3", self.dias[5])
+        self._distribuir(self.silva, self.feijao, "1", self.dias[10])
+        self._distribuir(self.souza, self.arroz, "4", self.dias[40])
+
+    def _distribuir(self, familia, item, quantidade, data):
+        return Distribuicao.objects.create(
+            familia=familia,
+            item=item,
+            quantidade=Decimal(quantidade),
+            data=data,
+            registrado_por=self.voluntario,
+        )
+
+    def _exportar(self, filtros=None):
+        return self.client.get(reverse("distribuicao_exportar_csv"), filtros or {})
+
+    def _ler_csv(self, filtros=None):
+        texto = self._exportar(filtros).content.decode("utf-8")
+        return list(csv.reader(io.StringIO(texto.removeprefix("\ufeff"))))
+
+    def _linhas_da_tela(self, filtros=None):
+        relatorio = self.client.get(reverse("distribuicao_relatorio"), filtros or {})
+        return [
+            [
+                linha["familia__nome_responsavel"],
+                linha["item__nome"],
+                linha["item__categoria__nome"],
+                f"{linha['quantidade_total']:.2f}",
+                linha["item__unidade_medida__sigla"],
+                str(linha["numero_distribuicoes"]),
+                linha["ultimo_registro"].strftime("%d/%m/%Y"),
+            ]
+            for linha in relatorio.context["linhas"]
+        ]
+
+    def test_ct21_csv_tem_cabecalho_em_portugues(self):
+        response = self._exportar()
+
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertEqual(
+            response["Content-Disposition"], 'attachment; filename="relatorio_distribuicoes.csv"'
+        )
+        self.assertEqual(self._ler_csv()[0], self.CABECALHO)
+
+    def test_ct21_csv_tem_as_mesmas_linhas_da_tela(self):
+        linhas = self._ler_csv()[1:]
+
+        data = "%d/%m/%Y"
+        self.assertEqual(
+            linhas,
+            [
+                [
+                    "Família Silva",
+                    "Arroz",
+                    "Alimento",
+                    "5.00",
+                    "kg",
+                    "2",
+                    self.dias[5].strftime(data),
+                ],
+                [
+                    "Família Silva",
+                    "Feijão",
+                    "Alimento",
+                    "1.00",
+                    "kg",
+                    "1",
+                    self.dias[10].strftime(data),
+                ],
+                [
+                    "Família Souza",
+                    "Arroz",
+                    "Alimento",
+                    "4.00",
+                    "kg",
+                    "1",
+                    self.dias[40].strftime(data),
+                ],
+            ],
+        )
+        self.assertEqual(linhas, self._linhas_da_tela())
+
+    def test_ct21_csv_aplica_os_mesmos_filtros_da_tela(self):
+        periodo = {
+            "data_inicio": self.dias[20].isoformat(),
+            "data_fim": self.dias[10].isoformat(),
+        }
+        casos = {
+            "família": {"id_familia": self.silva.pk},
+            "período": periodo,
+            "família e período": {"id_familia": self.silva.pk, **periodo},
+        }
+        for nome, filtros in casos.items():
+            with self.subTest(filtro=nome):
+                linhas = self._ler_csv(filtros)[1:]
+                self.assertTrue(linhas)
+                self.assertEqual(linhas, self._linhas_da_tela(filtros))
+                self.assertLess(len(linhas), len(self._ler_csv()[1:]))
+
+    def test_csv_tem_um_unico_bom_no_inicio(self):
+        conteudo = self._exportar().content
+
+        self.assertTrue(conteudo.startswith(b"\xef\xbb\xbf"))
+        self.assertEqual(conteudo.count(b"\xef\xbb\xbf"), 1)
+
+    def test_csv_neutraliza_textos_que_viram_formula(self):
+        familia = Familia.objects.create(
+            nome_responsavel='=HYPERLINK("http://exemplo.com")', endereco="Rua C", num_membros=1
+        )
+        menos = Familia.objects.create(nome_responsavel="-5", endereco="Rua D", num_membros=1)
+        categoria = CategoriaItem.objects.create(nome="@admin")
+        item = Item.objects.create(nome="+SOMA(1;1)", categoria=categoria, unidade_medida=self.kg)
+        self._distribuir(familia, item, "1", self.dias[5])
+        self._distribuir(menos, self.arroz, "1", self.dias[5])
+
+        textos = [linha[:3] for linha in self._ler_csv()[1:]]
+
+        self.assertIn(["'" + familia.nome_responsavel, "'+SOMA(1;1)", "'@admin"], textos)
+        self.assertIn(["'-5", "Arroz", "Alimento"], textos)
+        self.assertIn(["Família Silva", "Arroz", "Alimento"], textos)
+
+    def test_celula_csv_so_altera_texto_que_comeca_com_caractere_de_formula(self):
+        casos = [
+            ("=1+1", "'=1+1"),
+            ("+55 16 3333-0000", "'+55 16 3333-0000"),
+            ("-3", "'-3"),
+            ("@usuario", "'@usuario"),
+            ("\tsoma", "'\tsoma"),
+            ("\rsoma", "'\rsoma"),
+            ("Arroz = bom", "Arroz = bom"),
+            ("Família Silva", "Família Silva"),
+            ("", ""),
+            (Decimal("-1"), Decimal("-1")),
+            (None, None),
+        ]
+        for valor, esperado in casos:
+            with self.subTest(valor=valor):
+                self.assertEqual(_celula_csv(valor), esperado)
+
+    def test_csv_exige_login(self):
+        self.client.logout()
+
+        self.assertRedirects(self._exportar(), reverse("login"))
