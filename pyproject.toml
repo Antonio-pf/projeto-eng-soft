@@ -8,3 +8,13 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.coverage.run]
+branch = true
+source = ["core", "conecta"]
+# asgi.py e wsgi.py só são carregados pelo servidor, nunca pelos testes.
+omit = ["*/migrations/*", "core/tests.py", "conecta/asgi.py", "conecta/wsgi.py"]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
