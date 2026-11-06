@@ -151,6 +151,17 @@ class LoginLogoutViewTests(TestCase):
         self.assertRedirects(response, reverse("painel"))
         self.assertEqual(int(self.client.session[SESSION_KEY]), self.usuario.id_usuario)
 
+    def test_painel_da_marca_mostra_o_fio_do_doador_a_familia(self):
+        response = self.client.get(reverse("login"))
+
+        self.assertContains(response, "Do doador à família, sem perder o fio.")
+        # O fio é decorativo: o leitor de tela lê só a frase.
+        self.assertRegex(
+            response.content.decode(), r'data-testid="fio-conecta"[^>]*aria-hidden="true"'
+        )
+        self.assertNotContains(response, "Equipe Conecta")
+        self.assertContains(response, f'href="{reverse("privacidade")}"')
+
     def test_login_invalido_mostra_erro_generico_e_nao_autentica(self):
         response = self.client.post(
             reverse("login"),

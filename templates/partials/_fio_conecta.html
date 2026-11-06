@@ -1,0 +1,46 @@
+{% comment %}
+Fio do painel de login: o mesmo fio do símbolo ligando Doador, ONG e Família.
+Cada ponto usa a cor de um dos três laços. É decorativo (aria-hidden): a frase ao lado já diz o que ele mostra.
+Ao abrir a página o fio se desenha e um brilho passa por ele; com "reduzir movimento" ligado, aparece pronto e parado.
+As animações e cores ficam em static/css/app.css (classes .fio-*).
+{% endcomment %}
+<svg data-testid="fio-conecta" class="fio-conecta block h-auto w-full overflow-visible" viewBox="0 0 300 120" aria-hidden="true" focusable="false">
+    <defs>
+        <linearGradient id="fio-conecta-cor" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+            <stop offset="0.5" stop-color="#6fcf97"/>
+            <stop offset="1" stop-color="#a8e6c1"/>
+        </linearGradient>
+        <radialGradient id="fio-conecta-luz">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+    </defs>
+    <path id="fio-conecta-caminho" class="fio-linha" pathLength="1" stroke="url(#fio-conecta-cor)" d="M-20 82 C10 82 30 66 50 66 S105 32 150 42 S215 96 250 76 S290 44 320 50"/>
+    <g class="fio-no fio-no-1">
+        <circle class="fio-laco-1" cx="50" cy="66" r="8.5"/>
+        <circle class="fio-miolo" cx="50" cy="66" r="3.2"/>
+        <text class="fio-nome" x="50" y="89">Doador</text>
+        <text class="fio-verbo" x="50" y="99">doa</text>
+    </g>
+    <g class="fio-no fio-no-2">
+        <circle class="fio-laco-2" cx="150" cy="42" r="10.5"/>
+        <circle class="fio-miolo" cx="150" cy="42" r="4"/>
+        <text class="fio-nome" x="150" y="13">ONG</text>
+        <text class="fio-verbo" x="150" y="23">organiza</text>
+    </g>
+    <g class="fio-no fio-no-3">
+        <circle class="fio-laco-3" cx="250" cy="76" r="8.5"/>
+        <circle class="fio-miolo" cx="250" cy="76" r="3.2"/>
+        <text class="fio-nome" x="250" y="99">Família</text>
+        <text class="fio-verbo" x="250" y="109">recebe</text>
+    </g>
+    <g class="fio-brilho" opacity="0">
+        <set attributeName="opacity" to="1" begin="2.8s" fill="freeze"/>
+        <animateMotion dur="5.5s" begin="2.8s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.7;1">
+            <mpath href="#fio-conecta-caminho"/>
+        </animateMotion>
+        <circle r="7" fill="url(#fio-conecta-luz)"/>
+        <circle r="2.4" fill="#ffffff"/>
+    </g>
+</svg>

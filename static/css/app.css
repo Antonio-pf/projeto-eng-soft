@@ -248,3 +248,75 @@ body {
         animation: none;
     }
 }
+
+/* Painel da marca no login: fundo com luz suave no canto e o fio de Doador, ONG e Família. */
+.painel-marca {
+    background-color: var(--conecta-deep);
+    background-image: radial-gradient(90% 70% at 15% 0%, #26786a 0%, var(--conecta-deep) 55%, #1b6155 100%);
+}
+
+.fio-linha {
+    fill: none;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+}
+
+/* Cada ponto tem a cor de um laço do símbolo (_simbolo.html, tom escuro). */
+.fio-laco-1 { fill: #ffffff; }
+.fio-laco-2 { fill: var(--conecta-light); }
+.fio-laco-3 { fill: #a8e6c1; }
+.fio-miolo { fill: var(--conecta-deep); }
+
+.fio-nome,
+.fio-verbo {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    text-anchor: middle;
+}
+
+.fio-nome {
+    font-size: 11px;
+    font-weight: 700;
+    fill: #ffffff;
+}
+
+/* No celular a faixa é curta: só os nomes, maiores para compensar a escala menor do desenho. */
+.fio-verbo {
+    display: none;
+    font-size: 6.5px;
+    font-weight: 500;
+    fill: var(--conecta-on-dark-muted);
+}
+
+@media (min-width: 1024px) {
+    .fio-nome { font-size: 8px; }
+    .fio-verbo { display: inline; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .fio-linha {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: fio-desenhar 2.4s cubic-bezier(0.45, 0.05, 0.25, 1) 0.3s forwards;
+    }
+
+    .fio-no {
+        animation: fio-aparecer 500ms ease-out both;
+    }
+
+    .fio-no-1 { animation-delay: 0.75s; }
+    .fio-no-2 { animation-delay: 1.4s; }
+    .fio-no-3 { animation-delay: 2.05s; }
+}
+
+/* O brilho é animação SVG (SMIL), que o CSS não pausa: some de vez para quem pede menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+    .fio-brilho { display: none; }
+}
+
+@keyframes fio-desenhar {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes fio-aparecer {
+    from { opacity: 0; }
+}

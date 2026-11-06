@@ -3,21 +3,19 @@
 {% block title %}Entrar | Conecta Social{% endblock %}
 
 {% block brand %}
-<p class="flex items-center gap-1.5 text-sm font-bold">
-    {% include "partials/_simbolo.html" with classe="size-5" tom="escuro" %}
+<p class="flex items-center gap-2 text-base font-bold">
+    {% include "partials/_simbolo.html" with classe="size-7" tom="escuro" %}
     conecta
 </p>
-<div class="text-3xl font-bold leading-tight sm:text-[34px]">
-    <p>Organizar recursos</p>
-    <p>também é uma forma</p>
-    <p>de cuidar.</p>
+{# O fio vai de borda a borda: a margem negativa desfaz o respiro lateral do painel. #}
+<div class="-mx-8 sm:-mx-12 lg:-mx-16">
+    {% include "partials/_fio_conecta.html" %}
 </div>
-<p class="max-w-sm text-conecta-on-dark-muted">
-    O Conecta Social ajuda equipes a transformar doações em atendimento, com clareza em cada etapa.
-</p>
-<div class="max-w-sm rounded-xl bg-conecta-quote p-5">
-    <p class="text-sm font-medium">Quando o estoque fica claro, o cuidado chega mais longe.</p>
-    <p class="mt-2 text-xs font-bold text-conecta-light">Equipe Conecta</p>
+<div>
+    <p class="max-w-md text-balance text-[26px] font-bold leading-[1.12] tracking-tight sm:text-[34px] xl:text-[42px]">Do doador à família, sem perder o fio.</p>
+    <p class="mt-4 hidden max-w-sm leading-relaxed text-conecta-on-dark-muted lg:block">
+        O Conecta registra cada doação, mantém o estoque em dia e acompanha a entrega até a família atendida.
+    </p>
 </div>
 {% endblock %}
 
