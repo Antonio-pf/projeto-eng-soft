@@ -68,4 +68,6 @@
 | 3 | CSV não trazia os mesmos dados da tela do relatório, como pede a #23 | Média | Corrigido (PR #66) |
 
 ## 4. Testes de aceitação com cliente/PO
-Pendente. Será realizado com o professor.
+Testes manuais da interface: Alexandre Victoriano Ribeiro Ulhoa testou as telas do sistema e apontou bugs e ajustes de interface para a equipe.
+
+Aceitação com o cliente/PO: pendente. Será realizada com o Prof. Lucas.
