@@ -2,7 +2,7 @@
 
 **Papel nesta sprint:** [Facilitador / PO / Dados / Qualidade]
 
-> Rascunho. Não há commit, PR ou revisão de Alexandre no repositório entre 03/10 e 16/10/2026. Alexandre deve preencher com o que fez, linkando PRs, commits, issues ou outros registros, e abrir o PR deste arquivo com a própria conta.
+> Rascunho. Alexandre deve preencher com o que fez, linkando PRs, commits, issues ou outros registros, e abrir o PR deste arquivo com a própria conta.
 
 ## 1. O que fiz
 
@@ -22,7 +22,7 @@
 
 | PR | Autor | Comentário resumido |
 |---|---|---|
-| [nenhuma revisão registrada no GitHub nesta sprint — completar se houver] | | |
+| [PRs de colegas revisados nesta sprint — completar] | | |
 
 ## 4. Dificuldades e o que aprendi
 
