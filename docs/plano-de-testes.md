@@ -1,6 +1,6 @@
 # Plano de Testes — Conecta Social
 
-**Versão:** 1.2 (29/10/2026, fim da Sprint 4). Versão inicial 1.1 na E4, em 11/09/2026  
+**Versão:** 1.3 (04/11/2026, bateria final da E9). Versão inicial 1.1 na E4, em 11/09/2026  
 **Equipe:**
 - Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
 - Daniel Souza Monteiro de Carvalho — RA 2840482211052
@@ -85,18 +85,18 @@ Nenhum PR é aceito na `main` se:
 
 ## 4. Situação dos casos de teste
 
-Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 02/11/2026: **30 passaram, 2 parciais e 1 não executado**. Os testes automatizados rodam com `python manage.py test` (213 testes) e no CI a cada PR, no SQLite e no PostgreSQL.
+Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 04/11/2026 (bateria final da E9): **33 passaram**. Os testes automatizados rodam com `coverage run manage.py test` (229 testes) e no CI a cada PR, no SQLite e no PostgreSQL; a cobertura de linhas e branches é medida com o coverage.py, e o CI exige no mínimo 95%. O consolidado da bateria final está em [`docs/relatorio-testes-final.md`](relatorio-testes-final.md).
 
 | ID | História | Situação | Quando | Evidência |
 |---|---|---|---|---|
-| CT01 | #1 | 🟡 Parcial | Sprint 1 | Login válido: `test_login_valido_redireciona_para_painel`. A expiração da sessão está configurada em `conecta/settings.py`, mas não tem teste automatizado |
+| CT01 | #1 | ✅ Passou | 04/11/2026 | Login válido: `test_login_valido_redireciona_para_painel` (Sprint 1). Expiração da sessão: `ExpiracaoSessaoTests` (configuração de 30 minutos, sessão expirada na página inteira e no htmx, renovação do prazo a cada requisição), no PR #66 |
 | CT02 | #1 | ✅ Passou | Sprint 1 | `AutenticarTests` (senha errada e e-mail inexistente) e `test_login_invalido_mostra_erro_generico_e_nao_autentica` |
 | CT03 | #3 | ✅ Passou | Sprint 1 | `UsuarioFormTests` e `UsuariosViewTests` (cadastro, listagem e 403 para Voluntário) |
 | CT04 | #3 | ✅ Passou | Sprint 1 | `test_email_duplicado_e_rejeitado` e `test_email_duplicado_mostra_erro_e_nao_duplica` |
 | CT05 | #5 | ✅ Passou | Sprint 2 | `DoadorTestCase.test_cpf_formato_invalido` |
 | CT06 | #5 | ✅ Passou | Sprint 2 | `DoadorTestCase.test_cpf_duplicado` |
 | CT07 | #8 | ✅ Passou | Sprint 2 | `FamiliaTestCase`: cadastro, número de membros inválido e telefone opcional |
-| CT08 | #9 | 🟡 Parcial | Sprint 2 | Busca: `test_listar_e_buscar_familias`. A paginação de 20 por página funciona, mas não tem teste automatizado |
+| CT08 | #9 | ✅ Passou | 04/11/2026 | Busca: `test_listar_e_buscar_familias` (Sprint 2). Colunas e paginação: `FamiliaTestCase.test_ct08_lista_de_familias_exibe_responsavel_endereco_e_membros`, `test_ct08_lista_de_familias_tem_no_maximo_20_por_pagina` e `test_ct08_busca_de_familias_continua_paginada`, no PR #66 |
 | CT09 | #10 | ✅ Passou | Sprint 2 | `CategoriaTestCase` |
 | CT10 | #11 | ✅ Passou | Sprint 2 | `test_cadastrar_item_com_sucesso` e `test_cadastrar_item_estoque_minimo_invalido` |
 | CT11 | #14 | ✅ Passou | Sprint 2 | `DoacaoTestCase`. A data padrão foi corrigida na Sprint 3 (PR #38) |
@@ -108,8 +108,8 @@ Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 
 | CT17 | #21 | ✅ Passou | Sprint 4 | `DistribuicaoRelatorioTestCase.test_ct17_relatorio_distribuicoes_filtra_por_familia` (PR #53) |
 | CT18 | #2 | ✅ Passou | Sprint 1 | `test_logout_limpa_sessao_e_bloqueia_painel` e `test_painel_sem_sessao_redireciona_para_login` |
 | CT19 | #4 | ✅ Passou | Sprint 1 | `test_usuario_inativo_retorna_none` e `test_usuario_desativado_nao_consegue_fazer_login` |
-| CT20 | #19 | ✅ Passou | 02/11/2026 | `CancelarMovimentacaoModeloTests.test_ct20_cancelar_doacao_reverte_saldo_e_preserva_registro` e `CancelarMovimentacaoViewTests.test_ct20_voluntario_nao_pode_cancelar`. Saldo negativo, cancelamento repetido, permissões e históricos em `CancelarMovimentacaoModeloTests`, `CancelarMovimentacaoViewTests` e `HistoricoComCanceladasTests` |
-| CT21 | #23 | ⬜ Não executado | — | Só o link de exportação tem teste (`test_exportar_csv_leva_os_filtros_do_relatorio`). O conteúdo do CSV não tem teste automatizado nem execução manual registrada |
+| CT20 | #19 | ✅ Passou | 02/11/2026 | `CancelarMovimentacaoModeloTests.test_ct20_cancelar_doacao_reverte_saldo_e_preserva_registro` e `CancelarMovimentacaoViewTests.test_ct20_voluntario_nao_pode_cancelar`. Saldo negativo, cancelamento repetido, permissões e históricos em `CancelarMovimentacaoModeloTests`, `CancelarMovimentacaoViewTests` e `HistoricoComCanceladasTests`. O registro do estorno é a própria movimentação marcada como cancelada, com `cancelado_em` e `cancelado_por`, sem apagar o original |
+| CT21 | #23 | ✅ Passou | 04/11/2026 | Falhou na primeira verificação da bateria final (o CSV não trazia os mesmos dados da tela, repetia o BOM em cada linha e não neutralizava fórmulas) e passou depois da correção no PR #66: `ExportarCsvTests` (cabeçalho em português, mesmas linhas e filtros da tela, BOM único, fórmulas neutralizadas, login) e `test_exportar_csv_leva_os_filtros_do_relatorio` |
 | CT22 | #6 | ✅ Passou | Sprint 2 | `test_listar_doadores`, `test_buscar_doador_por_nome` e `test_paginacao_doadores` |
 | CT23 | #7 | ✅ Passou | Sprint 2 | `DoadorUpdateTestCase` |
 | CT24 | #13 | ✅ Passou | Sprint 2 | `ItemTestCase.test_editar_item` |
@@ -123,7 +123,7 @@ Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 
 | CT32 | — (E3) | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_colunas_das_migrations_iguais_ao_schema_sql` (PR #55) |
 | CT33 | #24 | ✅ Passou | 02/11/2026 | `PainelTests.test_ct33_painel_do_mes_conta_doacoes_familias_e_lista_recentes`. Período equivalente do mês anterior, famílias distintas, ordem e limite das movimentações recentes e renderização para os dois perfis nos demais testes de `PainelTests` |
 
-Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da sessão), CT08 (paginação de famílias) e CT21 (conteúdo do CSV).
+Sem pendências nos testes automatizados. A aceitação com o cliente e os testes exploratórios da bateria final estão na seção 4 do [`docs/relatorio-testes-final.md`](relatorio-testes-final.md).
 
 ---
 
@@ -133,3 +133,4 @@ Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da se
 |---|---|---|
 | 1.1 | 11/09/2026 | Versão inicial da E4: estratégia, critério de bloqueio de merge e casos CT01 a CT28 |
 | 1.2 | 29/10/2026 | Situação de cada caso nas Sprints 1 a 4 (seção 4); critério (g) de bloqueio; casos CT29 a CT32, para as validações no banco e o alinhamento com o `db/schema.sql`; caso CT33, para a #24 |
+| 1.3 | 04/11/2026 | Bateria final da E9: CT01, CT08 e CT21 passam a ter teste automatizado e passaram; observação do CT20 sobre o registro do estorno; medição de cobertura no CI (mínimo de 95%) |
