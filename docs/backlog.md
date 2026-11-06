@@ -82,6 +82,14 @@
 
 ---
 
+## Privacidade (LGPD)
+
+| #  | História | Critérios de aceite | Prioridade | Pontos | Sprint |
+|----|----------|---------------------|------------|--------|--------|
+| 25 | Como doador ou responsável por família atendida, quero saber para que a ONG usa meus dados, por quanto tempo os guarda e como pedir correção ou exclusão, para que meus dados pessoais sejam tratados conforme a LGPD. | - Página pública, sem login, informa quem é o controlador e o contato, os dados guardados, as finalidades com a base legal, que o cadastro é condição para a família ser atendida, quem acessa, o compartilhamento, o prazo de retenção e os direitos do titular<br>- Os formulários de novo doador e de nova família avisam o voluntário e levam ao aviso completo<br>- Cadastros sem movimentação há 5 anos são anonimizados por um comando, sem mudar saldo, históricos e relatórios<br>- A lista de doadores mostra o CPF/CNPJ mascarado<br>- O relatório de distribuições avisa que o CSV exportado contém dados pessoais | Deve ter | 5 | — |
+
+---
+
 ## Não será feito neste semestre
 
 | # | Funcionalidade | Justificativa |
