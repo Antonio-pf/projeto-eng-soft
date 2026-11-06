@@ -1,6 +1,6 @@
 # Termo de Aceite do Cliente — Conecta Social
 
-**Cliente/PO:** professor da disciplina Laboratório de Engenharia de Software, atuando como cliente/PO  
+**Cliente/PO:** Prof. Lucas, professor da disciplina Laboratório de Engenharia de Software, atuando como cliente/PO  
 **Data:** \_\_\_/\_\_\_/\_\_\_\_\_\_
 
 ## 1. Escopo avaliado (comparado ao Termo de Aceite do Projeto — E2b)
@@ -17,7 +17,7 @@
 | Relatório para prestação de contas (#20, #21, #22, #23) | Sim | |
 
 ## 2. Ressalvas / pendências
-- LGPD: o sistema guarda dados pessoais de famílias e doadores, mas não mostra aviso ao titular nem registra a base legal e o prazo de retenção
+- LGPD: as bases legais e o prazo de retenção de 5 anos do aviso de privacidade (#25) foram propostos pela equipe e ainda precisam da validação do cliente
 - Segurança: não há limite de tentativas de login
 
 ## 3. Parecer

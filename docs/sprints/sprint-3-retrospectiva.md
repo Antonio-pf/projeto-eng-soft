@@ -3,8 +3,6 @@
 **Data:** 16/10/2026, encontro online
 **Presentes:** Alexandre Ulhoa (RA 2840482423007) — Daniel Carvalho (RA 2840482211052) — Antonio Felipe (RA 2840482211003) — Luiz Henrique (RA 2840482423005)
 
-> Rascunho preparado em 28/10/2026 a partir do histórico do repositório e do board. As seções 2, 3 e 4 precisam ser revistas e completadas pela equipe em conjunto.
-
 ## 1. Ações da retrospectiva anterior — foram aplicadas?
 
 | Ação decidida | Aplicada? | Evidência/comentário |
@@ -12,7 +10,7 @@
 | Atualizar o board no mesmo dia do merge e conferir o board contra a `main` na véspera da aula | Não | Em 28/10/2026 a issue da #19 estava fechada com o card em "Todo" e sem código na `main`, e a #24 não tinha card. Os cards foram corrigidos nesse dia |
 | Abrir o PR da correção da data padrão "hoje" e acrescentar mensagem de sucesso nos formulários de doação e distribuição | Sim | PR #38 (02/10/2026), com o teste de regressão `test_formulario_abre_com_data_de_hoje_em_formato_iso`. As views de doação e distribuição mostram "Doação registrada com sucesso!" e "Distribuição registrada com sucesso!" |
 | Escrever os testes pendentes de expiração de sessão (CT01) e paginação de famílias (CT08) | Não | Não há teste de expiração de sessão nem de paginação de famílias no commit `76acbde` |
-| Dividir a Sprint 3 por pessoa na primeira aula: #20 e #21 primeiro, depois #19, #22 e #23 | Parcialmente | Pelo histórico, a #20 foi feita por Antonio Felipe (PR #47) e a #22 por Daniel Carvalho (PR #49), as duas depois do prazo. A #21 e a #19 não tiveram responsável que abrisse PR |
+| Dividir a Sprint 3 por pessoa na primeira aula: #20 e #21 primeiro, depois #19, #22 e #23 | Parcialmente | Pelo histórico, a #20 (PR #47) e a #22 (PR #49) entraram depois do prazo. A #21 e a #19 ficaram sem PR na sprint |
 
 ## 2. O que funcionou bem
 

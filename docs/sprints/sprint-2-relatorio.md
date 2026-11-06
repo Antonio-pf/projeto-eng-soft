@@ -76,10 +76,10 @@ Mudanças de status ao fim da Sprint 2:
 - **Todo:** #19 (cancelar movimentação), #20, #21 e #22, todas previstas para a Sprint 3. O card
   #19 constava como "Done" sem código na `main` e foi devolvido para "Todo" em 01/10/2026.
 - **In Progress:** #23 (exportar CSV, Sprint 3) consta assim no board. O código da exportação foi
-  integrado à `main` em 02/10/2026 por commit direto (`12ecff3`, Daniel Souza), sem PR e sem
+  integrado à `main` em 02/10/2026 por commit direto (`12ecff3`), sem PR e sem
   revisão, e ainda não tem testes automatizados.
-- Os cards #16 e #17 foram reatribuídos de Luiz Henrique Neres para Antonio Pires Felipe em
-  30/09/2026, porque quem implementou foi o Antonio.
+- Os cards #16 e #17 foram atribuídos a Antonio Pires Felipe em 30/09/2026, de acordo com quem
+  os implementou.
 
 ## 4. Evidências de teste
 
