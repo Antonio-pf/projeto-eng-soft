@@ -38,7 +38,8 @@
 </form>
 
 <script>
-    // Mostra o saldo do item escolhido e avisa (e limita) quando a quantidade passa dele.
+    // Mostra o saldo do item escolhido e avisa quando a quantidade passa dele. A quantidade
+    // é digitada com vírgula (mascaras.js); o saldo do JSON vem com ponto e aparece com vírgula.
     (function () {
         var itensSaldo = JSON.parse(document.getElementById("distribuicao-itens-saldo").textContent);
         var itemSelect = document.getElementById("id_item");
@@ -49,14 +50,13 @@
         function atualizarSaldoInfo() {
             var dados = itensSaldo[itemSelect.value];
             if (dados) {
-                saldoInfo.textContent = "Saldo disponível: " + dados.saldo + " " + dados.unidade;
+                saldoInfo.textContent = "Saldo disponível: " + dados.saldo.replace(".", ",") + " " + dados.unidade;
                 saldoInfo.classList.remove("hidden");
-                quantidade.max = dados.saldo;
             } else {
                 saldoInfo.classList.add("hidden");
-                quantidade.removeAttribute("max");
             }
-            var excede = dados && quantidade.value !== "" && Number(quantidade.value) > Number(dados.saldo);
+            var valor = Number(quantidade.value.replace(",", "."));
+            var excede = dados && quantidade.value !== "" && valor > Number(dados.saldo);
             aviso.classList.toggle("hidden", !excede);
         }
 
