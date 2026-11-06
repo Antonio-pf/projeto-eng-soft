@@ -91,7 +91,7 @@
                         <td class="px-4 py-4 text-right">
                             {% if not doacao.cancelado %}
                             {% url 'doacao_cancelar' doacao.pk as url_cancelar %}
-                            <a href="{{ url_cancelar }}" hx-get="{{ url_cancelar }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                            <a data-esqueleto="cancelar" href="{{ url_cancelar }}" hx-get="{{ url_cancelar }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                                data-testid="doacao-historico-cancelar-button"
                                aria-label="Cancelar doação de {{ doacao.doador.nome }} em {{ doacao.data|date:'d/m/Y' }}"
                                class="btn btn-ghost btn-sm rounded-md text-error">Cancelar</a>

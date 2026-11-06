@@ -10,9 +10,9 @@
     </nav>
     {% if usuario_logado.perfil == "administrador" %}
     <div class="flex gap-2">
-        <a href="{% url 'categoria_create' %}" hx-get="{% url 'categoria_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+        <a data-esqueleto="categoria" href="{% url 'categoria_create' %}" hx-get="{% url 'categoria_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
            class="btn btn-outline btn-sm rounded-md">+ Nova categoria</a>
-        <a href="{% url 'item_create' %}" hx-get="{% url 'item_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+        <a data-esqueleto="item" href="{% url 'item_create' %}" hx-get="{% url 'item_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
            class="btn btn-secondary btn-sm rounded-md">+ Novo item</a>
     </div>
     {% endif %}

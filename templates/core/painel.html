@@ -6,7 +6,8 @@
 {% block page_title %}Painel{% endblock %}
 
 {% block content %}
-{# Depois de registrar uma movimentação no modal, o painel recarrega só este bloco (hx-select). #}
+{# Depois de registrar uma movimentação no modal, o painel recarrega só este bloco (hx-select); #}
+{# se a espera passar de 200 ms, os elementos com esqueleto-dado viram barras no próprio lugar (carregamento.js). #}
 <div id="painel-conteudo" class="flex w-full flex-col gap-[22px] text-conecta-title"
      hx-get="{% url 'painel' %}" hx-trigger="registro-salvo from:body" hx-select="#painel-conteudo"
      hx-target="this" hx-swap="outerHTML" hx-disinherit="*">
@@ -14,7 +15,7 @@
         <p class="text-[11px] font-bold uppercase text-conecta-muted">{{ agora|date:"l, j \d\e F" }}</p>
         <h2 class="text-[28px] font-bold leading-tight lg:text-[32px]">{{ saudacao }}, {{ primeiro_nome }}</h2>
         <p class="text-[15px] text-conecta-muted">Aqui está o pulso das doações da sua rede.</p>
-        <a href="{% url 'movimentacao_nova' %}" hx-get="{% url 'movimentacao_nova' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+        <a data-esqueleto="escolha" href="{% url 'movimentacao_nova' %}" hx-get="{% url 'movimentacao_nova' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
            class="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[13px] font-medium text-white transition-colors hover:bg-primary/90 sm:w-[220px]">
             +&nbsp;&nbsp;Nova movimentação
         </a>
@@ -23,26 +24,26 @@
     <section aria-label="Indicadores" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div class="flex flex-col gap-[7px] rounded-xl bg-conecta-mint p-[18px]">
             <p class="text-[12px] font-medium text-conecta-muted">Itens em estoque</p>
-            <p class="text-[28px] font-bold leading-none">{{ resumo.itens_em_estoque }}</p>
-            <p class="text-[12px] font-medium text-primary">{{ resumo.texto_variacao }}</p>
+            <p class="esqueleto-dado self-start text-[28px] font-bold leading-none">{{ resumo.itens_em_estoque }}</p>
+            <p class="esqueleto-dado self-start text-[12px] font-medium text-primary">{{ resumo.texto_variacao }}</p>
         </div>
         <div class="flex flex-col gap-[7px] rounded-xl bg-conecta-alert-soft p-[18px]">
             <p class="text-[12px] font-medium text-conecta-muted">Itens em alerta</p>
-            <p class="text-[28px] font-bold leading-none">{{ resumo.itens_em_alerta|stringformat:"02d" }}</p>
+            <p class="esqueleto-dado self-start text-[28px] font-bold leading-none">{{ resumo.itens_em_alerta|stringformat:"02d" }}</p>
             {% if resumo.itens_em_alerta %}
-            <p class="text-[12px] font-medium text-conecta-alert">Requer atenção</p>
+            <p class="esqueleto-dado self-start text-[12px] font-medium text-conecta-alert">Requer atenção</p>
             {% else %}
-            <p class="text-[12px] font-medium text-primary">Tudo em dia</p>
+            <p class="esqueleto-dado self-start text-[12px] font-medium text-primary">Tudo em dia</p>
             {% endif %}
         </div>
         <div data-testid="painel-doacoes-recebidas-card" class="flex flex-col gap-[7px] rounded-xl bg-white p-[18px]">
             <p class="text-[12px] font-medium text-conecta-muted">Doações recebidas</p>
-            <p class="text-[28px] font-bold leading-none">{{ resumo.doacoes_no_mes }}</p>
-            <p class="text-[12px] font-medium {% if resumo.variacao_doacoes > 0 %}text-primary{% elif resumo.variacao_doacoes < 0 %}text-conecta-alert{% else %}text-conecta-muted{% endif %}">{{ resumo.texto_variacao_doacoes }}</p>
+            <p class="esqueleto-dado self-start text-[28px] font-bold leading-none">{{ resumo.doacoes_no_mes }}</p>
+            <p class="esqueleto-dado self-start text-[12px] font-medium {% if resumo.variacao_doacoes > 0 %}text-primary{% elif resumo.variacao_doacoes < 0 %}text-conecta-alert{% else %}text-conecta-muted{% endif %}">{{ resumo.texto_variacao_doacoes }}</p>
         </div>
         <div data-testid="painel-familias-atendidas-card" class="flex flex-col gap-[7px] rounded-xl bg-white p-[18px]">
             <p class="text-[12px] font-medium text-conecta-muted">Famílias atendidas</p>
-            <p class="text-[28px] font-bold leading-none">{{ resumo.familias_atendidas }}</p>
+            <p class="esqueleto-dado self-start text-[28px] font-bold leading-none">{{ resumo.familias_atendidas }}</p>
             <p class="text-[12px] font-medium text-conecta-muted">Neste mês</p>
         </div>
     </section>
@@ -56,15 +57,15 @@
             {% for categoria in resumo.categorias %}
             <div class="flex flex-col gap-[14px]">
                 <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13px]">
-                    <span class="font-medium">{{ categoria.nome }}</span>
-                    <span class="text-conecta-muted">
+                    <span class="esqueleto-dado font-medium">{{ categoria.nome }}</span>
+                    <span class="esqueleto-dado text-conecta-muted">
                         {% for total in categoria.totais %}{{ total.quantidade|floatformat:"-2" }} {{ total.sigla }}{% if not forloop.last %} · {% endif %}{% empty %}{% if categoria.quantidade_itens %}Sem saldo{% else %}Nenhum item cadastrado{% endif %}{% endfor %}
                     </span>
                     {% if categoria.quantidade_itens %}
-                    <span class="ml-auto font-medium">{{ categoria.percentual_acima_minimo }}% acima do mínimo</span>
+                    <span class="esqueleto-dado ml-auto font-medium">{{ categoria.percentual_acima_minimo }}% acima do mínimo</span>
                     {% endif %}
                 </div>
-                <div class="h-2 w-full rounded bg-conecta-form"
+                <div class="esqueleto-dado h-2 w-full rounded bg-conecta-form"
                      role="progressbar" aria-label="Itens de {{ categoria.nome }} acima do estoque mínimo"
                      aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ categoria.percentual_acima_minimo }}">
                     <div class="h-2 rounded {% if categoria.percentual_acima_minimo < 50 %}bg-accent{% else %}bg-secondary{% endif %}"
@@ -80,12 +81,12 @@
             <h3 class="text-[19px] font-bold">Pontos de atenção</h3>
             <p class="text-[13px] text-conecta-muted">Itens no estoque mínimo.</p>
             {% for item in resumo.pontos_de_atencao %}
-            <p class="text-[13px] font-medium">{{ item.nome }} — {{ item.saldo|floatformat:"-2" }} {{ item.unidade_medida.sigla }}</p>
+            <p class="esqueleto-dado self-start text-[13px] font-medium">{{ item.nome }} — {{ item.saldo|floatformat:"-2" }} {{ item.unidade_medida.sigla }}</p>
             {% empty %}
             <p class="text-[13px] font-medium">Nenhum item no estoque mínimo.</p>
             {% endfor %}
             {% if resumo.itens_em_alerta %}
-            <a href="{% url 'item_list' %}?estoque=baixo" class="mt-auto pt-2 text-[13px] font-medium text-primary underline-offset-4 hover:underline">
+            <a href="{% url 'item_list' %}?estoque=baixo" class="esqueleto-dado mt-auto self-start pt-2 text-[13px] font-medium text-primary underline-offset-4 hover:underline">
                 Ver todos ({{ resumo.itens_em_alerta }})
             </a>
             {% endif %}
@@ -102,16 +103,16 @@
             {% for movimentacao in resumo.movimentacoes_recentes %}
             <li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-3 text-[13px]">
                 {% if movimentacao.entrada %}
-                <span class="w-[64px] shrink-0 rounded bg-conecta-mint px-2 py-0.5 text-center text-[11px] font-semibold text-primary">Entrada</span>
+                <span class="esqueleto-dado w-[64px] shrink-0 rounded bg-conecta-mint px-2 py-0.5 text-center text-[11px] font-semibold text-primary">Entrada</span>
                 {% else %}
-                <span class="w-[64px] shrink-0 rounded bg-gray-100 px-2 py-0.5 text-center text-[11px] font-semibold text-gray-600">Saída</span>
+                <span class="esqueleto-dado w-[64px] shrink-0 rounded bg-gray-100 px-2 py-0.5 text-center text-[11px] font-semibold text-gray-600">Saída</span>
                 {% endif %}
                 <span class="min-w-0 flex-1">
-                    <span class="font-medium">{{ movimentacao.tipo }}</span>
-                    <span class="text-conecta-muted">· {{ movimentacao.pessoa }} · {{ movimentacao.item }}</span>
+                    <span class="esqueleto-dado font-medium">{{ movimentacao.tipo }}</span>
+                    <span class="esqueleto-dado text-conecta-muted">· {{ movimentacao.pessoa }} · {{ movimentacao.item }}</span>
                 </span>
-                <span class="font-medium">{{ movimentacao.quantidade|floatformat:"-2" }} {{ movimentacao.sigla }}</span>
-                <span class="w-[72px] text-right text-conecta-muted">{{ movimentacao.data|date:"d/m/Y" }}</span>
+                <span class="esqueleto-dado font-medium">{{ movimentacao.quantidade|floatformat:"-2" }} {{ movimentacao.sigla }}</span>
+                <span class="esqueleto-dado w-[72px] text-right text-conecta-muted">{{ movimentacao.data|date:"d/m/Y" }}</span>
             </li>
             {% endfor %}
         </ul>

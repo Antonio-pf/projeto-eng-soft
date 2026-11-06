@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="flex justify-end">
-    <a href="{% url 'doador_create' %}" hx-get="{% url 'doador_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+    <a data-esqueleto="doador" href="{% url 'doador_create' %}" hx-get="{% url 'doador_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
        class="btn btn-secondary btn-sm rounded-md">+ Novo doador</a>
 </div>
 

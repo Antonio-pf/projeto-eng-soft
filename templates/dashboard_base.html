@@ -9,6 +9,7 @@
     <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
     <link href="{% static 'css/app.css' %}" rel="stylesheet">
     <script src="{% static 'js/htmx.min.js' %}" defer></script>
+    <script src="{% static 'js/carregamento.js' %}" defer></script>
     <script src="{% static 'js/modal.js' %}" defer></script>
     <script src="{% static 'js/formularios.js' %}" defer></script>
 </head>
@@ -44,6 +45,7 @@
             <button>Fechar</button>
         </form>
     </dialog>
+    {% include "partials/_modelos_carregamento.html" %}
     {% include "partials/_mensagens.html" %}
 </body>
 </html>
