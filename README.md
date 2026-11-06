@@ -4,20 +4,13 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
 **Deploy:** [https://conecta-social-wcxa.onrender.com/](https://conecta-social-wcxa.onrender.com/)
 
-**Equipe:**
-- Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
-- Daniel Souza Monteiro de Carvalho — RA 2840482211052
-- Cintia Marcelo de Oliveira — RA 2840482421017
-- Antonio Pires Felipe — RA 2840482211003
-- Luiz Henrique Neres — RA 2840482423005
+**Equipe:** Alexandre Victoriano Ribeiro Ulhoa (RA 2840482423007) — Daniel Souza Monteiro de Carvalho (RA 2840482211052) — Antonio Pires Felipe (RA 2840482211003) — Luiz Henrique Neres (RA 2840482423005) · Laboratório de Engenharia de Software · ADS Fatec Ribeirão Preto
 
 ## Stack
 
-- Frontend: Django Templates + Tailwind CSS 3.4.17 + daisyUI 4.12.10, compilados em um único CSS (`npm run build`), sem CDN
-- Interações sem recarregar a página (modais, busca e filtros): htmx 2.0.11, versionado em `static/js/htmx.min.js` (atualizado com `npm run htmx`), sem CDN
+- Frontend: Django Templates + Tailwind CSS 3.4.17 + daisyUI 4.12.10, compilados em um único CSS (`npm run build`), e htmx 2.0.11, versionado em `static/js/htmx.min.js`, sem CDN
 - Backend: Python 3.12+ + Django 5.2+
 - Banco de dados: PostgreSQL 15+
-- Deploy: Render Web Service + PostgreSQL
 
 ## Como rodar localmente
 
@@ -33,50 +26,26 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
 ### Passo a passo
 
-1. Clone o repositório:
+1. Clone o repositório: `git clone https://github.com/Antonio-pf/projeto-eng-soft.git` e entre na pasta com `cd projeto-eng-soft`.
 
-   ```bash
-   git clone https://github.com/Antonio-pf/projeto-eng-soft.git
-   cd projeto-eng-soft
-   ```
-
-2. Crie e ative um ambiente virtual:
+2. Crie e ative um ambiente virtual e instale as dependências:
 
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate       # Linux/macOS
-   ```
-
-   No Windows PowerShell:
-
-   ```powershell
-   py -3.12 -m venv .venv
-   .venv\Scripts\Activate.ps1
-   ```
-
-   No Windows `cmd.exe`:
-
-   ```cmd
-   py -3.12 -m venv .venv
-   .venv\Scripts\activate.bat
-   ```
-
-3. Instale as dependências:
-
-   ```bash
    python -m pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
-4. Configure as variáveis de ambiente obrigatórias. O arquivo `.env.example` contém apenas valores de exemplo e nunca deve receber credenciais reais:
+   No Windows PowerShell, crie e ative o ambiente com `py -3.12 -m venv .venv` e `.venv\Scripts\Activate.ps1`; no `cmd.exe`, com `py -3.12 -m venv .venv` e `.venv\Scripts\activate.bat`. Depois rode os mesmos comandos `pip`.
 
-   Gere uma `SECRET_KEY` exclusiva para o ambiente local com o Django:
+3. Configure as variáveis de ambiente (copie `.env.example` para `.env` e preencha). O arquivo `.env.example` contém apenas valores de exemplo e nunca deve receber credenciais reais. Gere uma `SECRET_KEY` exclusiva com:
 
    ```bash
    python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
    ```
 
-   Copie o valor exibido para `SECRET_KEY` no arquivo `.env`.
+   O projeto não lê o `.env` automaticamente: defina as variáveis no terminal antes de executar o Django.
 
    Linux/macOS (Bash ou Git Bash):
 
@@ -87,7 +56,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
    set +a
    ```
 
-   No PowerShell, copie o modelo e defina as variáveis na sessão atual:
+   No PowerShell:
 
    ```powershell
    Copy-Item .env.example .env
@@ -97,7 +66,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
    $env:DATABASE_URL = "postgresql://conecta:conecta@localhost:5432/conectasocial"
    ```
 
-   No `cmd.exe`, use:
+   No `cmd.exe`:
 
    ```cmd
    copy .env.example .env
@@ -107,121 +76,37 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
    set DATABASE_URL=postgresql://conecta:conecta@localhost:5432/conectasocial
    ```
 
-   Edite o arquivo `.env` para guardar a configuração local, mas mantenha as variáveis definidas no terminal antes de executar o Django. O projeto não lê arquivos `.env` automaticamente.
+   | Variável | Descrição |
+   |---|---|
+   | `SECRET_KEY` | Chave usada pelo Django. Gere uma chave exclusiva com o comando acima e mantenha-a fora do repositório. Exemplo local: `django-insecure-<valor-gerado-localmente>` |
+   | `DEBUG` | Ativa o modo de desenvolvimento. Exemplo local: `True` |
+   | `ALLOWED_HOSTS` | Hosts aceitos pelo Django, separados por vírgula. Exemplo local: `localhost,127.0.0.1` |
+   | `DATABASE_URL` | URL de conexão com o PostgreSQL local. Exemplo local: `postgresql://conecta:conecta@localhost:5432/conectasocial` |
 
-   Edite o `.env`:
-
-   | Variável | Descrição | Exemplo local |
-   |---|---|---|
-   | `SECRET_KEY` | Chave usada pelo Django. Gere uma chave exclusiva com o comando acima e mantenha-a fora do repositório. | `django-insecure-<valor-gerado-localmente>` |
-   | `DEBUG` | Ativa o modo de desenvolvimento. | `True` |
-   | `ALLOWED_HOSTS` | Hosts aceitos pelo Django, separados por vírgula. | `localhost,127.0.0.1` |
-   | `DATABASE_URL` | URL de conexão com o PostgreSQL local. | `postgresql://conecta:conecta@localhost:5432/conectasocial` |
-
-5. Crie o usuário e o banco PostgreSQL local (os mesmos `conecta`/`conecta` da `DATABASE_URL` e do `compose.yaml`), aplique as migrations e carregue os dados de desenvolvimento:
-
-   Linux/macOS ou Git Bash:
+4. Crie o banco e rode o schema: crie o usuário e o banco PostgreSQL local (os mesmos `conecta`/`conecta` da `DATABASE_URL` e do `compose.yaml`). Os comandos são os mesmos no Linux/macOS, no Git Bash, no PowerShell e no `cmd.exe`:
 
    ```bash
    psql -U postgres -c "CREATE USER conecta WITH PASSWORD 'conecta' CREATEDB;"
    psql -U postgres -c "CREATE DATABASE conectasocial OWNER conecta;"
-   python manage.py migrate
-   python manage.py seed
    ```
 
-   Windows PowerShell:
+   O PostgreSQL precisa estar instalado, em execução e disponível no `PATH`. O usuário `postgres` é o administrador criado na instalação; o `psql` pode pedir a senha dele. A permissão `CREATEDB` do usuário `conecta` é necessária para o `python manage.py test` criar o banco de testes. Se `psql` não for reconhecido, adicione a pasta `bin` da instalação do PostgreSQL ao `PATH` ou use o Docker Compose (passo 6). O schema é criado pelas migrations no passo 5; o `db/schema.sql` é o DDL de referência da E3.
 
-   ```powershell
-   psql -U postgres -c "CREATE USER conecta WITH PASSWORD 'conecta' CREATEDB;"
-   psql -U postgres -c "CREATE DATABASE conectasocial OWNER conecta;"
-   python manage.py migrate
-   python manage.py seed
-   ```
+5. Rode as migrations e o seed: `python manage.py migrate` e `python manage.py seed`. As migrations em `core/migrations/` são a fonte oficial da estrutura do banco. O `seed` pode ser executado novamente sem duplicar os dados e cria os usuários `admin@conectasocial.org` (Administrador), `maria@conectasocial.org` e `joao@conectasocial.org` (Voluntário), todos com a senha `alterar-senha`. A aplicação também possui fallback para `db.sqlite3` quando `DATABASE_URL` não está definida, mas o fluxo documentado usa PostgreSQL.
 
-   Windows `cmd.exe`:
-
-   ```cmd
-   psql -U postgres -c "CREATE USER conecta WITH PASSWORD 'conecta' CREATEDB;"
-   psql -U postgres -c "CREATE DATABASE conectasocial OWNER conecta;"
-   python manage.py migrate
-   python manage.py seed
-   ```
-
-   Nos comandos acima, o PostgreSQL precisa estar instalado, em execução e disponível no `PATH`. O usuário `postgres` é o administrador criado na instalação; o `psql` pode pedir a senha dele. A permissão `CREATEDB` do usuário `conecta` é necessária para o `python manage.py test` criar o banco de testes. Se `psql` não for reconhecido, adicione a pasta `bin` da instalação do PostgreSQL ao `PATH` ou use o Docker Compose abaixo.
-
-   As migrations em `core/migrations/` são a fonte oficial da estrutura do banco. O comando `seed` pode ser executado novamente sem duplicar os dados. A aplicação também possui fallback para `db.sqlite3` quando `DATABASE_URL` não está definida, mas o fluxo documentado usa PostgreSQL.
-
-6. Compile o CSS (Tailwind + daisyUI):
+6. Suba o projeto: compile o CSS (Tailwind + daisyUI) e inicie o servidor.
 
    ```bash
    npm ci
    npm run build
-   ```
-
-   O comando gera `static/css/tailwind.css`, que não é versionado. Ao editar templates ou classes em `core/forms.py`, deixe `npm run dev` rodando em outro terminal para recompilar automaticamente. Sem esse arquivo, as páginas abrem sem estilo.
-
-   O htmx já está versionado em `static/js/htmx.min.js`; não é preciso rodar nada para ele. Para atualizar a versão, altere `htmx.org` no `package.json` e rode `npm install` seguido de `npm run htmx`.
-
-7. Suba o servidor:
-
-   ```bash
    python manage.py runserver
    ```
 
-8. Acesse `http://127.0.0.1:8000`.
+   O `npm run build` gera `static/css/tailwind.css`, que não é versionado; sem ele, as páginas abrem sem estilo. Ao editar templates ou classes em `core/forms.py`, deixe `npm run dev` rodando em outro terminal. O htmx já está versionado; para atualizar a versão, altere `htmx.org` no `package.json` e rode `npm install` seguido de `npm run htmx`.
 
-### Alternativa com Docker
+   Alternativa com Docker (opcional): `docker compose up --build` cria o PostgreSQL e a aplicação, roda `migrate` e `seed` e compila o CSS, sem instalar Python, PostgreSQL ou Node na máquina (no Windows, abra o Docker Desktop antes). Para parar, `docker compose down`; para apagar também os dados do PostgreSQL local, `docker compose down -v`. O deploy atual usa o ambiente Python nativo configurado em `render.yaml`.
 
-Docker é opcional e recomendado para quem não é desenvolvedor ou não quer instalar Python e PostgreSQL separadamente. Ele cria a aplicação e o PostgreSQL em containers, deixando o ambiente igual para toda a equipe.
-
-Pré-requisitos adicionais:
-
-- Docker Engine 24+
-- Docker Compose v2+
-
-PowerShell:
-
-```powershell
-docker compose up --build
-```
-
-`cmd.exe`:
-
-```cmd
-docker compose up --build
-```
-
-No Windows, abra o Docker Desktop antes de executar o comando. O Compose cria o PostgreSQL e a aplicação; não é necessário executar `psql`, `python manage.py migrate` ou `python manage.py seed` manualmente.
-
-O container web executa automaticamente `migrate` e `seed` antes de iniciar o servidor, e o serviço `tailwind` compila o CSS e o recompila a cada alteração nos templates (não é preciso instalar Node na máquina). Acesse `http://127.0.0.1:8000`.
-
-Comandos úteis:
-
-```bash
-docker compose exec web python manage.py test
-docker compose exec web python manage.py check
-docker compose down
-```
-
-Para apagar também os dados persistidos do PostgreSQL local:
-
-```bash
-docker compose down -v
-```
-
-O deploy atual continua usando o ambiente Python nativo configurado em `render.yaml`. O `Dockerfile` fica disponível para uma futura mudança do Render para deploy por container.
-
-## Usuários de teste
-
-O comando `seed` (rodado automaticamente pelo Docker, ou manualmente no passo 5 da instalação local) cria estes usuários — mesma senha pra todos, `alterar-senha`:
-
-| E-mail | Perfil |
-|---|---|
-| `admin@conectasocial.org` | Administrador |
-| `maria@conectasocial.org` | Voluntário |
-| `joao@conectasocial.org` | Voluntário |
-
-Acesse `http://127.0.0.1:8000/login/` (ou `http://localhost:8000/login/` no Docker) com qualquer um deles.
+7. Acesse em `http://127.0.0.1:8000`.
 
 ## Estrutura do repositório
 
@@ -246,68 +131,15 @@ requirements.txt      — dependências Python
 render.yaml           — configuração de deploy no Render
 ```
 
-## Interações com htmx
-
-As telas internas abrem cadastros em modal e atualizam listas sem recarregar a página. Sem JavaScript, os mesmos links e formulários continuam abrindo as páginas completas.
-
-- **Página inteira ou trecho:** `_render` (em `core/views.py`) devolve a página completa numa navegação normal e só o trecho (`templates/partials/_*.html`) quando o pedido vem do htmx.
-- **Depois de salvar:** `_salvo` redireciona sem htmx; no modal, mostra o toast e dispara o evento `registro-salvo`, que fecha o modal (`static/js/modal.js`) e faz as listas se recarregarem.
-- **Modal compartilhado:** fica em `templates/dashboard_base.html`; os links usam `hx-get="..." hx-target="#modal-conteudo"`.
-- **Envio único:** `static/js/formularios.js` trava o botão dos formulários POST até a resposta chegar.
-
 ## Convenções da equipe
 
 - Branches: `feature/nome-da-feature`, `fix/nome-do-problema` e `docs/nome-do-documento`, sempre criadas a partir de `main`.
-- Commits: Conventional Commits, no formato `<tipo>(escopo-opcional): <descrição>`.
-- Tipos aceitos: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style` e `test`.
-- Exemplos: `feat: adiciona cadastro de doador` e `fix(auth): corrige login do administrador`.
-- Toda PR exige revisão de pelo menos 1 integrante antes do merge na `main`.
-
-## Histórico de doações por doador
-
-Em **Histórico de Doações** (`/doacoes/`), o relatório **Totais por doador e item**
-agrupa as doações de cada doador e soma a quantidade de cada item, com sua unidade
-de medida. Os filtros de doador, data inicial e data final se aplicam tanto aos
-totais quanto aos registros detalhados. As datas dos limites são incluídas;
-sem datas, o relatório considera todo o histórico. Doações canceladas não entram
-no relatório, e os totais incluem todas as páginas dos registros filtrados.
+- Commits: Conventional Commits, no formato `<tipo>(escopo-opcional): <descrição>`, com os tipos `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style` e `test` (validados pelo hook `pre-commit install --hook-type commit-msg`).
+- Toda PR exige revisão de ao menos 1 integrante antes do merge.
 
 ## Testes
 
-Execute os testes e a checagem do Django com o ambiente virtual ativado:
-
-```bash
-python manage.py check
-python manage.py test
-```
-
-Para medir a cobertura dos testes (linhas e branches de `core` e `conecta`, configurada em `pyproject.toml`):
-
-```bash
-coverage run manage.py test
-coverage report
-```
-
-O `coverage report` falha se a cobertura ficar abaixo de 95%, que é o mínimo exigido no CI. Para ver as linhas não cobertas no navegador, rode `coverage html` e abra `htmlcov/index.html`.
-
-Para verificar se há alterações nos models sem migration correspondente:
-
-```bash
-python manage.py makemigrations --check
-```
-
-Para instalar os hooks executados antes dos commits:
-
-```bash
-pre-commit install
-pre-commit install --hook-type commit-msg
-```
-
-O CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa Ruff, `manage.py check`, os testes Django com a medição de cobertura (mínimo de 95%) e a validação das mensagens de commit em pushes para `main`.
-
-## Protótipo navegável
-
-O protótipo navegável está disponível no [Figma](https://www.figma.com/proto/YChrqTf5IiwA9skwfSP8O7/Conecta-Social--Copy-?node-id=2603-15&starting-point-node-id=2603-15). O roteiro completo está em [`docs/prototipo.md`](docs/prototipo.md).
+Como rodar: `coverage run manage.py test` seguido de `coverage report`, que falha se a cobertura ficar abaixo de 95%, o mínimo exigido no CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## Licença / Uso acadêmico
 
