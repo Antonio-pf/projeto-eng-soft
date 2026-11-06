@@ -62,4 +62,4 @@
 | 3 | CSV não trazia os mesmos dados da tela do relatório, como pede a #23 | Média | Corrigido (PR #66) |
 
 ## 4. Testes de aceitação com cliente/PO
-Pendente em 06/11/2026. A sessão com o professor da disciplina, atuando como cliente/PO, ainda não foi realizada. Data, participantes, roteiro seguido e resultado serão registrados aqui depois da sessão.
+Pendente. Será realizado com o professor.
