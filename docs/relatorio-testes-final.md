@@ -62,4 +62,4 @@
 | 3 | CSV não trazia os mesmos dados da tela do relatório, como pede a #23 | Média | Corrigido (PR #66) |
 
 ## 4. Testes de aceitação com cliente/PO
-Pendente em 06/11/2026. A sessão será presencial, em aula, com o professor da disciplina atuando como cliente/PO (tema do banco de temas), no sistema publicado. Roteiro: os itens do escopo da E2b, um a um, as histórias #19 e #24 e testes exploratórios por perfil (Administrador e Voluntário). Participantes e resultado serão registrados aqui depois da sessão.
+Pendente em 06/11/2026. A sessão com o professor da disciplina, atuando como cliente/PO, ainda não foi realizada. Data, participantes, roteiro seguido e resultado serão registrados aqui depois da sessão.
