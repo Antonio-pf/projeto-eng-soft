@@ -20,13 +20,13 @@
                     {% for doador in page_obj %}
                     <tr>
                         <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ doador.nome }}</td>
-                        <td class="px-4 py-4 text-sm text-gray-500">{{ doador.cpf_cnpj }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500" data-testid="doador-documento">{{ doador.documento_mascarado }}</td>
                         <td class="px-4 py-4 text-sm text-gray-500">{{ doador.telefone|default:"-" }}</td>
                         <td class="px-4 py-4 text-sm text-gray-500">{{ doador.email|default:"-" }}</td>
                         <td class="px-4 py-4 text-sm">
                             <div class="flex items-center gap-2">
                                 <a href="{% url 'doacao_list' %}?id_doador={{ doador.pk }}" class="btn btn-outline btn-xs">Ver doações</a>
-                                {% if usuario_logado.perfil == "administrador" %}
+                                {% if usuario_logado.perfil == "administrador" and not doador.anonimizado %}
                                 <a href="{% url 'doador_update' doador.pk %}" hx-get="{% url 'doador_update' doador.pk %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                                    class="btn btn-ghost btn-xs">Editar</a>
                                 {% endif %}

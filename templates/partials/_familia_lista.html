@@ -20,7 +20,7 @@
                     {% for familia in page_obj %}
                     <tr>
                         <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ familia.nome_responsavel }}</td>
-                        <td class="px-4 py-4 text-sm text-gray-500">{{ familia.endereco }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">{{ familia.endereco|default:"-" }}</td>
                         <td class="px-4 py-4 text-sm text-gray-500">{{ familia.telefone|default:"-" }}</td>
                         <td class="px-4 py-4 text-sm text-gray-500">{{ familia.num_membros }} membros</td>
                         <td class="px-4 py-4 text-sm">

@@ -5,7 +5,7 @@ import re
 import runpy
 import subprocess
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from unittest import mock
 
@@ -16,7 +16,7 @@ from django.contrib.sessions.models import Session
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
@@ -38,6 +38,15 @@ from core.painel import (
     periodo_equivalente_do_mes_anterior,
     saudacao,
     texto_variacao_mes_anterior,
+)
+from core.privacidade import (
+    CONTATO_PADRAO,
+    FINALIDADES,
+    NOME_ANONIMIZADO,
+    NOME_ONG_PADRAO,
+    controlador,
+    data_limite,
+    mascarar_documento,
 )
 from core.views import _celula_csv
 
@@ -549,9 +558,11 @@ class DoadorTestCase(TestCase):
         response = self.client.get(reverse("doador_list"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Carlos Silva")
-        self.assertContains(response, "111.111.111-11")
         self.assertContains(response, "Ana Pereira")
-        self.assertContains(response, "222.222.222-22")
+        # CPF/CNPJ mascarado na lista (#25, CT37): só os 4 últimos dígitos aparecem.
+        self.assertContains(response, "***.***.*11-11")
+        self.assertContains(response, "***.***.*22-22")
+        self.assertNotContains(response, "111.111.111-11")
 
     def test_buscar_doador_por_nome(self):
         Doador.objects.create(nome="Carlos Silva", cpf_cnpj="111.111.111-11")
@@ -3518,3 +3529,448 @@ class SeedCommandTests(TestCase):
         self._rodar_seed()
 
         self.assertEqual([modelo.objects.count() for modelo in self.MODELOS], contagens)
+
+
+class CenarioPrivacidadeMixin:
+    """Doador, família e item com estoque para os testes da #25 (LGPD)."""
+
+    HOJE = date(2026, 11, 6)
+    LIMITE = date(2021, 11, 6)  # HOJE menos o prazo de retenção (5 anos)
+
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Ana Admin",
+            email="ana-lgpd@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+        )
+        self.voluntario = Usuario.objects.create(
+            nome="Maria Voluntária",
+            email="maria-lgpd@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+        )
+        self.doador = Doador.objects.create(
+            nome="Carlos Pereira",
+            cpf_cnpj="123.456.789-01",
+            telefone="(16) 99999-0000",
+            email="carlos@example.com",
+        )
+        self.familia = Familia.objects.create(
+            nome_responsavel="Família Lima",
+            endereco="Rua das Flores, 12",
+            telefone="(16) 98888-0000",
+            num_membros=4,
+        )
+        categoria = CategoriaItem.objects.create(nome="Alimento LGPD")
+        unidade = UnidadeMedida.objects.create(nome="Quilograma LGPD", sigla="kgl")
+        self.item = Item.objects.create(nome="Arroz", categoria=categoria, unidade_medida=unidade)
+
+    def _doar(self, data, doador=None, quantidade="10"):
+        return Doacao.objects.create(
+            doador=doador or self.doador,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal(quantidade),
+            data=data,
+        )
+
+    def _distribuir(self, data, familia=None, quantidade="2"):
+        return Distribuicao.objects.create(
+            familia=familia or self.familia,
+            item=self.item,
+            registrado_por=self.voluntario,
+            quantidade=Decimal(quantidade),
+            data=data,
+        )
+
+    def _cadastrado_em(self, registro, data):
+        type(registro).objects.filter(pk=registro.pk).update(
+            criado_em=timezone.make_aware(datetime(data.year, data.month, data.day, 12))
+        )
+
+    def _anonimizar(self, *argumentos):
+        saida = io.StringIO()
+        with mock.patch(
+            "core.management.commands.anonimizar_vencidos.timezone.localdate",
+            return_value=self.HOJE,
+        ):
+            call_command("anonimizar_vencidos", *argumentos, stdout=saida)
+        return saida.getvalue()
+
+    def _login(self, usuario):
+        self.client.post(reverse("login"), {"email": usuario.email, "senha": "senha-teste"})
+
+
+class PrazoRetencaoTests(SimpleTestCase):
+    """Fonte única do aviso (core/privacidade.py): prazo e controlador."""
+
+    def test_data_limite_e_cinco_anos_antes(self):
+        self.assertEqual(data_limite(date(2026, 11, 6)), date(2021, 11, 6))
+
+    def test_data_limite_de_29_de_fevereiro_cai_em_28(self):
+        self.assertEqual(data_limite(date(2028, 2, 29)), date(2023, 2, 28))
+
+    @override_settings(ONG_NOME="", ONG_CONTATO_PRIVACIDADE="")
+    def test_controlador_sem_configuracao_usa_os_textos_padrao(self):
+        self.assertEqual(
+            controlador(),
+            {"nome": NOME_ONG_PADRAO, "contato": CONTATO_PADRAO, "contato_configurado": False},
+        )
+
+    @override_settings(ONG_NOME="ONG Mãos Dadas", ONG_CONTATO_PRIVACIDADE="lgpd@maos.org")
+    def test_controlador_usa_as_variaveis_de_ambiente(self):
+        self.assertEqual(
+            controlador(),
+            {"nome": "ONG Mãos Dadas", "contato": "lgpd@maos.org", "contato_configurado": True},
+        )
+
+
+class AnonimizacaoTests(CenarioPrivacidadeMixin, TestCase):
+    """CT36 (#25): cadastros sem movimentação há 5 anos são anonimizados pelo comando."""
+
+    def _vencidos(self):
+        return list(Doador.objects.vencidos(self.HOJE)), list(Familia.objects.vencidas(self.HOJE))
+
+    def test_ct36_ultima_doacao_no_limite_exato_esta_vencida(self):
+        self._doar(self.LIMITE)
+
+        self.assertEqual(self._vencidos()[0], [self.doador])
+
+    def test_ct36_ultima_doacao_um_dia_depois_do_limite_nao_esta_vencida(self):
+        self._doar(self.LIMITE + timedelta(days=1))
+
+        self.assertEqual(self._vencidos()[0], [])
+
+    def test_ct36_vale_a_doacao_mais_recente(self):
+        self._doar(date(2019, 3, 1))
+        self._doar(date(2024, 5, 10))
+
+        self.assertEqual(self._vencidos()[0], [])
+
+    def test_ct36_doacao_cancelada_conta_como_movimentacao(self):
+        self._doar(date(2019, 3, 1))
+        self._doar(date(2024, 5, 10)).cancelar(self.admin)
+
+        self.assertEqual(self._vencidos()[0], [])
+
+    def test_ct36_sem_movimentacao_vale_a_data_do_cadastro(self):
+        antigo = Doador.objects.create(nome="Doador Antigo", cpf_cnpj="111.222.333-44")
+        self._cadastrado_em(antigo, date(2021, 1, 15))
+        self._cadastrado_em(self.doador, date(2025, 1, 15))
+        familia_antiga = Familia.objects.create(
+            nome_responsavel="Família Antiga", endereco="Rua B, 1", num_membros=2
+        )
+        self._cadastrado_em(familia_antiga, date(2020, 6, 1))
+
+        doadores, familias = self._vencidos()
+
+        self.assertEqual(doadores, [antigo])
+        self.assertEqual(familias, [familia_antiga])
+
+    def test_ct36_familia_vale_a_ultima_distribuicao(self):
+        self._doar(self.HOJE - timedelta(days=1), quantidade="50")
+        outra = Familia.objects.create(
+            nome_responsavel="Família Rocha", endereco="Rua D, 4", num_membros=3
+        )
+        self._distribuir(self.LIMITE)
+        self._distribuir(self.LIMITE + timedelta(days=1), familia=outra)
+
+        self.assertEqual(self._vencidos()[1], [self.familia])
+
+    def test_ct36_comando_anonimiza_doador_e_familia_vencidos(self):
+        self._doar(self.LIMITE, quantidade="10")
+        self._distribuir(self.LIMITE)
+
+        saida = self._anonimizar()
+
+        self.doador.refresh_from_db()
+        self.familia.refresh_from_db()
+        self.assertEqual(self.doador.nome, NOME_ANONIMIZADO)
+        self.assertEqual(self.doador.cpf_cnpj, f"ANON-{self.doador.pk}")
+        self.assertEqual((self.doador.telefone, self.doador.email), ("", ""))
+        self.assertTrue(self.doador.anonimizado)
+        self.assertEqual(self.familia.nome_responsavel, NOME_ANONIMIZADO)
+        self.assertEqual((self.familia.endereco, self.familia.telefone), ("", ""))
+        self.assertEqual(self.familia.num_membros, 4)
+        self.assertTrue(self.familia.anonimizada)
+        self.assertIn("Prazo de retenção: 5 anos (última movimentação até 06/11/2021).", saida)
+        self.assertIn("1 doador(es) e 1 família(s) anonimizados.", saida)
+
+    def test_ct36_comando_mantem_movimentacoes_e_saldo(self):
+        doacao = self._doar(self.LIMITE, quantidade="10")
+        distribuicao = self._distribuir(self.LIMITE, quantidade="3")
+        saldo_antes = self.item.saldo_atual
+
+        self._anonimizar()
+
+        self.assertEqual(self.item.saldo_atual, saldo_antes)
+        self.assertEqual(Doacao.objects.get().pk, doacao.pk)
+        self.assertEqual(Doacao.objects.get().doador_id, self.doador.pk)
+        self.assertEqual(Distribuicao.objects.get().pk, distribuicao.pk)
+        self.assertEqual(Distribuicao.objects.get().familia_id, self.familia.pk)
+
+    def test_ct36_comando_nao_toca_em_quem_esta_no_prazo(self):
+        self._doar(self.HOJE - timedelta(days=30))
+        self._distribuir(self.HOJE - timedelta(days=20))
+
+        saida = self._anonimizar()
+
+        self.doador.refresh_from_db()
+        self.familia.refresh_from_db()
+        self.assertEqual(self.doador.cpf_cnpj, "123.456.789-01")
+        self.assertEqual(self.familia.endereco, "Rua das Flores, 12")
+        self.assertIn("0 doador(es) e 0 família(s) anonimizados.", saida)
+
+    def test_ct36_comando_pode_rodar_de_novo_sem_reanonimizar(self):
+        self._doar(self.LIMITE)
+        self._anonimizar()
+
+        saida = self._anonimizar()
+
+        self.doador.refresh_from_db()
+        self.assertEqual(self.doador.cpf_cnpj, f"ANON-{self.doador.pk}")
+        self.assertIn("0 doador(es)", saida)
+
+    def test_ct36_documento_anonimizado_e_unico_por_doador(self):
+        outro = Doador.objects.create(nome="Outra Doadora", cpf_cnpj="987.654.321-00")
+        self._doar(self.LIMITE)
+        self._doar(self.LIMITE, doador=outro)
+
+        self._anonimizar()
+
+        self.assertEqual(
+            sorted(Doador.objects.values_list("cpf_cnpj", flat=True)),
+            sorted([f"ANON-{self.doador.pk}", f"ANON-{outro.pk}"]),
+        )
+
+    def test_ct36_simular_nao_grava(self):
+        self._doar(self.LIMITE)
+        self._distribuir(self.LIMITE)
+
+        saida = self._anonimizar("--simular")
+
+        self.doador.refresh_from_db()
+        self.familia.refresh_from_db()
+        self.assertEqual(self.doador.nome, "Carlos Pereira")
+        self.assertEqual(self.familia.nome_responsavel, "Família Lima")
+        self.assertIn(
+            "Simulação: 1 doador(es) e 1 família(s) seriam anonimizados. Nada foi gravado.",
+            saida,
+        )
+
+
+class DocumentoMascaradoTests(CenarioPrivacidadeMixin, TestCase):
+    """CT37 (#25): a lista de doadores mostra o CPF ou CNPJ mascarado."""
+
+    def test_ct37_cpf_mostra_so_os_4_ultimos_digitos(self):
+        self.assertEqual(mascarar_documento("123.456.789-01"), "***.***.*89-01")
+
+    def test_ct37_cnpj_mostra_so_os_4_ultimos_digitos(self):
+        self.assertEqual(mascarar_documento("12.345.678/0001-90"), "**.***.***/**01-90")
+
+    def test_ct37_valor_com_ate_4_digitos_nao_muda(self):
+        self.assertEqual(mascarar_documento("12-34"), "12-34")
+        self.assertEqual(mascarar_documento(""), "")
+
+    def test_ct37_doador_anonimizado_nao_mostra_documento(self):
+        self.doador.anonimizar()
+
+        self.assertEqual(self.doador.documento_mascarado, "—")
+
+    def test_ct37_lista_mostra_o_documento_mascarado_para_os_dois_perfis(self):
+        for usuario in (self.voluntario, self.admin):
+            with self.subTest(perfil=usuario.perfil):
+                self._login(usuario)
+                response = self.client.get(reverse("doador_list"))
+
+                self.assertContains(response, "***.***.*89-01")
+                self.assertNotContains(response, "123.456.789-01")
+                self.client.logout()
+
+    def test_ct37_edicao_do_administrador_mostra_o_documento_completo(self):
+        self._login(self.admin)
+
+        response = self.client.get(reverse("doador_update", args=[self.doador.pk]))
+
+        self.assertContains(response, "123.456.789-01")
+
+
+class AvisoPrivacidadeTests(TestCase):
+    """CT34 (#25): aviso de privacidade público, sem login."""
+
+    SECOES = (
+        "1. Quem cuida dos seus dados",
+        "2. Quais dados guardamos",
+        "3. Para que usamos os dados e com qual base legal",
+        "4. O cadastro é condição para o atendimento",
+        "5. Quem vê os dados",
+        "6. Com quem compartilhamos",
+        "7. Por quanto tempo guardamos",
+        "8. Seus direitos",
+        "9. Atualização deste aviso",
+    )
+
+    def test_ct34_visitante_sem_login_ve_o_aviso_sem_consultar_o_banco(self):
+        with self.assertNumQueries(0):
+            response = self.client.get(reverse("privacidade"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "core/privacidade.html")
+
+    def test_ct34_aviso_so_aceita_get(self):
+        response = self.client.post(reverse("privacidade"))
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_ct34_aviso_tem_as_9_secoes_na_ordem(self):
+        conteudo = self.client.get(reverse("privacidade")).content.decode()
+
+        posicoes = [conteudo.index(secao) for secao in self.SECOES]
+        self.assertEqual(posicoes, sorted(posicoes))
+
+    def test_ct34_aviso_traz_finalidades_bases_legais_compartilhamento_e_prazo(self):
+        response = self.client.get(reverse("privacidade"))
+
+        for item in FINALIDADES:
+            with self.subTest(finalidade=item["finalidade"]):
+                self.assertContains(response, item["finalidade"])
+                self.assertContains(response, item["base_legal"])
+        self.assertContains(response, "a família precisa estar cadastrada")
+        self.assertContains(response, "financiadores e parceiros da ONG para prestação de contas")
+        self.assertContains(response, "por mais 5 anos depois da última doação ou entrega")
+        self.assertContains(response, "Autoridade Nacional de Proteção de Dados")
+        self.assertContains(response, "Atualizado em 06/11/2026")
+
+    @override_settings(ONG_NOME="ONG Mãos Dadas", ONG_CONTATO_PRIVACIDADE="lgpd@maos.org")
+    def test_ct34_aviso_usa_o_nome_e_o_contato_configurados(self):
+        response = self.client.get(reverse("privacidade"))
+
+        self.assertContains(response, "ONG Mãos Dadas")
+        self.assertContains(response, "Contato: lgpd@maos.org")
+
+    @override_settings(ONG_NOME="", ONG_CONTATO_PRIVACIDADE="")
+    def test_ct34_sem_configuracao_o_aviso_usa_os_textos_padrao(self):
+        response = self.client.get(reverse("privacidade"))
+
+        self.assertContains(response, NOME_ONG_PADRAO)
+        self.assertContains(response, CONTATO_PADRAO)
+        self.assertNotContains(response, "Contato:")
+
+    def test_ct34_link_na_tela_de_login_na_pagina_inicial_e_no_rodape_interno(self):
+        link = f'href="{reverse("privacidade")}"'
+        for nome in ("login", "home"):
+            with self.subTest(pagina=nome):
+                self.assertContains(self.client.get(reverse(nome)), link)
+
+        Usuario.objects.create(
+            nome="Voluntária Rodapé",
+            email="rodape@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.VOLUNTARIO,
+        )
+        self.client.post(
+            reverse("login"), {"email": "rodape@conectasocial.org", "senha": "senha-teste"}
+        )
+        self.assertContains(self.client.get(reverse("painel")), link)
+
+
+class AvisoFormulariosTests(CenarioPrivacidadeMixin, TestCase):
+    """CT35 (#25): os formulários de cadastro avisam o voluntário e levam ao aviso completo."""
+
+    LINK = 'href="/privacidade/" target="_blank" rel="noopener"'
+    CONDICAO = "o cadastro é necessário para a família receber as doações"
+
+    def setUp(self):
+        super().setUp()
+        self._login(self.voluntario)
+
+    def _pagina_e_modal(self, nome_url):
+        yield "página", self.client.get(reverse(nome_url))
+        yield "modal", self.client.get(reverse(nome_url), HTTP_HX_REQUEST="true")
+
+    def test_ct35_novo_doador_avisa_e_leva_ao_aviso_em_nova_aba(self):
+        for onde, response in self._pagina_e_modal("doador_create"):
+            with self.subTest(onde=onde):
+                self.assertContains(response, 'data-testid="aviso-privacidade-doador"')
+                self.assertContains(response, self.LINK)
+
+    def test_ct35_nova_familia_avisa_com_destaque_da_condicao_de_atendimento(self):
+        for onde, response in self._pagina_e_modal("familia_create"):
+            with self.subTest(onde=onde):
+                self.assertContains(response, 'data-testid="aviso-privacidade-familia"')
+                self.assertContains(response, self.CONDICAO)
+                self.assertContains(response, self.LINK)
+
+    def test_ct35_edicao_de_doador_nao_repete_o_aviso(self):
+        self.client.logout()
+        self._login(self.admin)
+
+        response = self.client.get(reverse("doador_update", args=[self.doador.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'data-testid="aviso-privacidade-doador"')
+
+
+class AvisoCsvTests(CenarioPrivacidadeMixin, TestCase):
+    """CT38 (#25): o relatório avisa que o CSV exportado contém dados pessoais."""
+
+    def test_ct38_relatorio_avisa_que_o_csv_traz_o_nome_das_familias(self):
+        self._login(self.voluntario)
+
+        response = self.client.get(reverse("distribuicao_relatorio"))
+
+        self.assertContains(response, 'data-testid="aviso-privacidade-csv"')
+        self.assertContains(response, "O CSV traz o nome do responsável de cada família.")
+
+
+class AnonimizacaoNaInterfaceTests(CenarioPrivacidadeMixin, TestCase):
+    """CT36 (#25): depois do comando, as telas e o CSV mostram o titular anonimizado."""
+
+    def setUp(self):
+        super().setUp()
+        self._doar(self.LIMITE, quantidade="10")
+        self._distribuir(self.LIMITE, quantidade="3")
+        self._anonimizar()
+
+    def test_ct36_lista_de_doadores_sem_documento_e_sem_botao_editar(self):
+        self._login(self.admin)
+
+        response = self.client.get(reverse("doador_list"))
+
+        self.assertContains(response, NOME_ANONIMIZADO)
+        self.assertContains(
+            response,
+            '<td class="px-4 py-4 text-sm text-gray-500" data-testid="doador-documento">—</td>',
+            html=True,
+        )
+        self.assertNotContains(response, reverse("doador_update", args=[self.doador.pk]))
+
+    def test_ct36_edicao_de_doador_anonimizado_responde_404(self):
+        self._login(self.admin)
+
+        response = self.client.get(reverse("doador_update", args=[self.doador.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_ct36_lista_de_familias_sem_endereco(self):
+        self._login(self.voluntario)
+
+        response = self.client.get(reverse("familia_list"))
+
+        self.assertContains(response, NOME_ANONIMIZADO)
+        self.assertNotContains(response, "Rua das Flores")
+
+    def test_ct36_historicos_relatorio_e_csv_mostram_o_titular_anonimizado(self):
+        self._login(self.voluntario)
+
+        for nome_url in ("doacao_list", "distribuicao_list", "distribuicao_relatorio"):
+            with self.subTest(tela=nome_url):
+                response = self.client.get(reverse(nome_url))
+                self.assertContains(response, NOME_ANONIMIZADO)
+                self.assertNotContains(response, "Carlos Pereira")
+                self.assertNotContains(response, "Família Lima")
+
+        csv_exportado = self.client.get(reverse("distribuicao_exportar_csv"))
+        linhas = list(csv.reader(io.StringIO(csv_exportado.content.decode("utf-8-sig"))))
+        self.assertEqual(linhas[1][0], NOME_ANONIMIZADO)
