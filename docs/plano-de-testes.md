@@ -77,6 +77,7 @@ Nenhum PR é aceito na `main` se:
 | CT36 | #25           | Anonimização dos cadastros vencidos                                     | doador e família com a última movimentação (cancelada ou não) no limite de 5 anos, um dia depois e sem movimentação; comando rodado duas vezes e com `--simular` | Vencidos ficam como "Titular anonimizado", sem documento, contato e endereço; movimentações e saldo não mudam; quem está no prazo não muda; a segunda execução não anonimiza de novo; `--simular` não grava; listas, históricos, relatório e CSV mostram o titular anonimizado; a edição de doador anonimizado responde 404 | Alta       |
 | CT37 | #25           | CPF/CNPJ mascarado na lista de doadores                                 | doador com CPF `123.456.789-01`; perfis Voluntário e Administrador         | A lista mostra `***.***.*89-01` para os dois perfis; a edição do Administrador mostra o número completo  | Média      |
 | CT38 | #25           | Aviso de dados pessoais no relatório de distribuições                   | relatório de distribuições aberto por um Voluntário                        | Junto do botão "Exportar CSV", aviso de que o arquivo traz o nome do responsável de cada família         | Baixa      |
+| CT39 | #26           | Estados de carregamento (skeleton) e falha nas trocas feitas pelo htmx  | painel, listas, relatório e modais com resposta rápida, lenta (mais de 200 ms) e com falha | Resposta rápida troca direto; lenta mostra skeleton no lugar dos dados e abre o modal com o skeleton do formulário; clique repetido não abre outro modal; falha mostra aviso com "Tentar de novo"; o relatório filtra sem recarregar e o CSV leva os filtros | Média      |
 
 ---
 
@@ -119,6 +120,7 @@ Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 
 | CT31 | #3 | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_banco_recusa_perfil_fora_dos_dois_perfis` (PR #55) |
 | CT32 | — (E3) | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_colunas_das_migrations_iguais_ao_schema_sql` (PR #55) |
 | CT33 | #24 | ✅ Passou | 02/11/2026 | `PainelTests.test_ct33_painel_do_mes_conta_doacoes_familias_e_lista_recentes`. Período equivalente do mês anterior, famílias distintas, ordem e limite das movimentações recentes e renderização para os dois perfis nos demais testes de `PainelTests` |
+| CT39 | #26 | 🟡 Parcial | 06/11/2026 | `CarregamentoTests` (marcação do painel, relatório por htmx, CSV na região trocada, forma do skeleton nos links e scripts do layout) e roteiro com rede lenta e falha simuladas no Chrome e no WebKit, o motor do Safari (36 verificações em cada). Falta o roteiro no Firefox |
 
 Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da sessão), CT08 (paginação de famílias) e CT21 (conteúdo do CSV).
 
