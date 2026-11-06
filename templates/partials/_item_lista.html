@@ -43,7 +43,7 @@
                                 <a href="{% url 'distribuicao_create' %}?item={{ item.pk }}" hx-get="{% url 'distribuicao_create' %}?item={{ item.pk }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                                    class="btn btn-outline btn-xs">Distribuir</a>
                                 {% if usuario_logado.perfil == "administrador" %}
-                                <a href="{% url 'item_update' item.pk %}" hx-get="{% url 'item_update' item.pk %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                                <a data-esqueleto="item" href="{% url 'item_update' item.pk %}" hx-get="{% url 'item_update' item.pk %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                                    class="btn btn-ghost btn-xs">Editar</a>
                                 {% endif %}
                             </div>
@@ -80,7 +80,7 @@
             {% else %}
             <p class="text-sm font-medium text-gray-700">Nenhum item cadastrado ainda.</p>
             {% if usuario_logado.perfil == "administrador" %}
-            <a href="{% url 'item_create' %}" hx-get="{% url 'item_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+            <a data-esqueleto="item" href="{% url 'item_create' %}" hx-get="{% url 'item_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                class="btn btn-secondary btn-sm rounded-md">Cadastrar item</a>
             {% endif %}
             {% endif %}

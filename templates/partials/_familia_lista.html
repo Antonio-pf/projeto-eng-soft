@@ -58,7 +58,7 @@
             <a href="{% url 'familia_list' %}" class="btn btn-ghost btn-sm rounded-md">Limpar busca</a>
             {% else %}
             <p class="text-sm font-medium text-gray-700">Nenhuma família cadastrada ainda.</p>
-            <a href="{% url 'familia_create' %}" hx-get="{% url 'familia_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+            <a data-esqueleto="familia" href="{% url 'familia_create' %}" hx-get="{% url 'familia_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                class="btn btn-secondary btn-sm rounded-md">Cadastrar família</a>
             {% endif %}
         </div>

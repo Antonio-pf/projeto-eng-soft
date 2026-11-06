@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="flex justify-end">
-    <a href="{% url 'familia_create' %}" hx-get="{% url 'familia_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+    <a data-esqueleto="familia" href="{% url 'familia_create' %}" hx-get="{% url 'familia_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
        class="btn btn-secondary btn-sm rounded-md">+ Nova família</a>
 </div>
 

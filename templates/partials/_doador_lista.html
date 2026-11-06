@@ -27,7 +27,7 @@
                             <div class="flex items-center gap-2">
                                 <a href="{% url 'doacao_list' %}?id_doador={{ doador.pk }}" class="btn btn-outline btn-xs">Ver doações</a>
                                 {% if usuario_logado.perfil == "administrador" and not doador.anonimizado %}
-                                <a href="{% url 'doador_update' doador.pk %}" hx-get="{% url 'doador_update' doador.pk %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                                <a data-esqueleto="doador-edicao" href="{% url 'doador_update' doador.pk %}" hx-get="{% url 'doador_update' doador.pk %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                                    class="btn btn-ghost btn-xs">Editar</a>
                                 {% endif %}
                             </div>
@@ -63,7 +63,7 @@
             <a href="{% url 'doador_list' %}" class="btn btn-ghost btn-sm rounded-md">Limpar busca</a>
             {% else %}
             <p class="text-sm font-medium text-gray-700">Nenhum doador cadastrado ainda.</p>
-            <a href="{% url 'doador_create' %}" hx-get="{% url 'doador_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+            <a data-esqueleto="doador" href="{% url 'doador_create' %}" hx-get="{% url 'doador_create' %}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                class="btn btn-secondary btn-sm rounded-md">Cadastrar doador</a>
             {% endif %}
         </div>

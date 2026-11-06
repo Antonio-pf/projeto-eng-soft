@@ -83,16 +83,35 @@ body {
     animation: toast-sair 300ms ease-in 4s forwards;
 }
 
-/* Skeleton das listas: toma o lugar da tabela enquanto o htmx busca os dados. */
-.lista-esqueleto { display: none; }
-.htmx-request .lista-esqueleto { display: block; }
-.htmx-request .lista-dados { display: none; }
+/* Enquanto o htmx busca algo, o elemento que disparou fica com cursor de espera. */
+.htmx-request { cursor: progress; }
 
-.esqueleto-barra {
-    height: 0.75rem;
+/* Skeleton: a classe "carregando" entra no alvo da requisição só depois de 200 ms
+   sem resposta (static/js/carregamento.js), para não piscar em conexão rápida. */
+.lista-esqueleto { display: none; }
+.carregando .lista-esqueleto { display: block; }
+.carregando .lista-dados { display: none; }
+
+.esqueleto-barra,
+.esqueleto-peca {
     border-radius: 0.25rem;
     background: #e5e7eb;
 }
+
+.esqueleto-barra { height: 0.75rem; }
+
+/* Dado do painel e do relatório: durante o carregamento vira uma barra do próprio tamanho, no mesmo lugar. */
+.carregando .esqueleto-dado {
+    border-radius: 0.25rem;
+    background: #e5e7eb;
+    color: transparent;
+}
+
+.carregando .esqueleto-dado * { visibility: hidden; }
+
+/* Modal esperando o conteúdo: o skeleton (static/js/modal.js) fica no lugar do conteúdo anterior,
+   que só é escondido para o link que fez a requisição continuar na página. */
+#modal-conteudo.carregando > :not(.modal-esqueleto) { display: none; }
 
 .site-header {
     background: rgb(247 245 240 / 88%);
@@ -155,7 +174,9 @@ body {
             toast-sair 300ms ease-in 4s forwards;
     }
 
-    .esqueleto-barra {
+    .esqueleto-barra,
+    .esqueleto-peca,
+    .carregando .esqueleto-dado {
         background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
         background-size: 200% 100%;
         animation: brilho 1.2s ease-in-out infinite;

@@ -68,7 +68,7 @@
                         <td class="px-4 py-4 text-right">
                             {% if not distribuicao.cancelado %}
                             {% url 'distribuicao_cancelar' distribuicao.pk as url_cancelar %}
-                            <a href="{{ url_cancelar }}" hx-get="{{ url_cancelar }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
+                            <a data-esqueleto="cancelar" href="{{ url_cancelar }}" hx-get="{{ url_cancelar }}" hx-target="#modal-conteudo" hx-swap="innerHTML"
                                data-testid="distribuicao-historico-cancelar-button"
                                aria-label="Cancelar distribuição para {{ distribuicao.familia.nome_responsavel }} em {{ distribuicao.data|date:'d/m/Y' }}"
                                class="btn btn-ghost btn-sm rounded-md text-error">Cancelar</a>

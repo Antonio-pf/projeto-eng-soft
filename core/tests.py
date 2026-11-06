@@ -4184,3 +4184,141 @@ class MascarasTests(TestCase):
     def test_ct40_layout_carrega_as_mascaras(self):
         conteudo = self.client.get(reverse("painel")).content.decode()
         self.assertIn('src="/static/js/mascaras.js" defer', conteudo)
+
+
+class CarregamentoTests(TestCase):
+    """CT39 (#26): o que o servidor entrega ao skeleton, à falha e ao relatório sem recarregar."""
+
+    FORMAS_DE_MODAL = (
+        "pares",
+        "doador",
+        "doador-edicao",
+        "familia",
+        "item",
+        "categoria",
+        "cancelar",
+        "escolha",
+    )
+
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Ana Admin",
+            email="ana.carregamento@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "ana.carregamento@conectasocial.org", "senha": "senha-teste"},
+        )
+        self.doador = Doador.objects.create(nome="Doador Carregamento", cpf_cnpj="222.222.222-22")
+        self.familia = Familia.objects.create(
+            nome_responsavel="Família Carregamento", endereco="Rua C, 1", num_membros=3
+        )
+        self.categoria = CategoriaItem.objects.create(nome="Higiene")
+        self.unidade = UnidadeMedida.objects.create(nome="Unidade", sigla="un")
+        self.item = Item.objects.create(
+            nome="Sabonete", categoria=self.categoria, unidade_medida=self.unidade
+        )
+        hoje = timezone.localdate()
+        Doacao.objects.create(
+            doador=self.doador,
+            item=self.item,
+            quantidade=Decimal("10.00"),
+            data=hoje,
+            registrado_por=self.admin,
+        )
+        Distribuicao.objects.create(
+            familia=self.familia,
+            item=self.item,
+            quantidade=Decimal("2.00"),
+            data=hoje,
+            registrado_por=self.admin,
+        )
+
+    def _formulario_do_relatorio(self, conteudo):
+        return re.search(r'<form[^>]*data-testid="relatorio-filtros-form"[^>]*>', conteudo).group(0)
+
+    def test_ct39_painel_marca_os_dados_para_o_skeleton(self):
+        conteudo = self.client.get(reverse("painel")).content.decode()
+
+        valor_de_indicador = 'class="esqueleto-dado self-start text-[28px] font-bold leading-none"'
+        self.assertEqual(conteudo.count(valor_de_indicador), 4)
+        movimentacoes = conteudo.split('data-testid="painel-movimentacoes-recentes-lista"')[1]
+        movimentacoes = movimentacoes.split("</ul>")[0]
+        self.assertEqual(movimentacoes.count("<li"), 2)
+        self.assertEqual(movimentacoes.count("esqueleto-dado"), 2 * 5)
+        self.assertIn('<h3 class="text-[19px] font-bold">Estoque por categoria</h3>', conteudo)
+        self.assertIn('<h3 class="text-[19px] font-bold">Movimentações recentes</h3>', conteudo)
+        self.assertNotIn("esqueleto-dado text-[28px] font-bold leading-tight", conteudo)
+        self.assertIn('id="painel-conteudo"', conteudo)
+
+    def test_ct39_relatorio_filtra_por_htmx_na_mesma_url(self):
+        url = reverse("distribuicao_relatorio")
+        conteudo = self.client.get(url).content.decode()
+        formulario = self._formulario_do_relatorio(conteudo)
+
+        self.assertIn('id="relatorio-conteudo"', conteudo)
+        self.assertIn('method="get"', formulario)
+        self.assertIn(f'action="{url}"', formulario)
+        self.assertIn(f'hx-get="{url}"', formulario)
+        self.assertIn('hx-target="#relatorio-conteudo"', formulario)
+        self.assertIn('hx-select="#relatorio-conteudo"', formulario)
+        self.assertIn('hx-swap="outerHTML"', formulario)
+        self.assertIn('hx-push-url="true"', formulario)
+        self.assertIn('class="lista-esqueleto overflow-x-auto" aria-hidden="true"', conteudo)
+        self.assertEqual(conteudo.count('class="esqueleto-dado mt-1 w-fit text-2xl'), 3)
+
+    def test_ct39_csv_do_relatorio_fica_na_regiao_trocada(self):
+        filtros = {
+            "id_familia": str(self.familia.pk),
+            "data_inicio": "2026-01-01",
+            "data_fim": "2026-12-31",
+        }
+        for cabecalhos in ({}, {"HTTP_HX_REQUEST": "true"}):
+            with self.subTest(htmx=bool(cabecalhos)):
+                resposta = self.client.get(reverse("distribuicao_relatorio"), filtros, **cabecalhos)
+                conteudo = resposta.content.decode()
+                regiao = conteudo.split('id="relatorio-conteudo"', 1)[1]
+
+                self.assertEqual(resposta.status_code, 200)
+                self.assertIn(
+                    f'href="{reverse("distribuicao_exportar_csv")}?id_familia={self.familia.pk}'
+                    "&data_inicio=2026-01-01&data_fim=2026-12-31",
+                    regiao,
+                )
+                self.assertIn("Família Carregamento", regiao)
+
+    def test_ct39_links_de_modal_declaram_a_forma_do_skeleton(self):
+        esperado = {
+            "painel": ["escolha"],
+            "item_list": ["categoria", "item"],
+            "categoria_list": ["categoria"],
+            "doador_list": ["doador", "doador-edicao"],
+            "familia_list": ["familia"],
+            "doacao_list": ["cancelar"],
+            "distribuicao_list": ["cancelar"],
+        }
+        for nome_url, formas in esperado.items():
+            with self.subTest(pagina=nome_url):
+                conteudo = self.client.get(reverse(nome_url)).content.decode()
+                for forma in formas:
+                    self.assertIn(f'data-esqueleto="{forma}"', conteudo)
+                for forma in set(re.findall(r'data-esqueleto="([a-z-]+)"', conteudo)):
+                    self.assertIn(forma, self.FORMAS_DE_MODAL)
+                    self.assertIn(f'<template id="modal-esqueleto-{forma}">', conteudo)
+
+    def test_ct39_layout_carrega_o_controle_de_carregamento(self):
+        conteudo = self.client.get(reverse("painel")).content.decode()
+
+        self.assertIn('src="/static/js/carregamento.js" defer', conteudo)
+        self.assertIn('src="/static/js/modal.js" defer', conteudo)
+        for forma in self.FORMAS_DE_MODAL:
+            self.assertIn(f'<template id="modal-esqueleto-{forma}">', conteudo)
+        self.assertIn('<template id="modal-falha">', conteudo)
+        self.assertIn("Não foi possível carregar o formulário.", conteudo)
+        self.assertIn('<template id="faixa-falha">', conteudo)
+        self.assertIn("Não foi possível atualizar.", conteudo)
+        self.assertIn('data-testid="modal-falha-tentar-button"', conteudo)
+        self.assertIn('data-testid="carregamento-falha-tentar-button"', conteudo)
