@@ -77,6 +77,7 @@ Nenhum PR é aceito na `main` se:
 | CT36 | #25           | Anonimização dos cadastros vencidos                                     | doador e família com a última movimentação (cancelada ou não) no limite de 5 anos, um dia depois e sem movimentação; comando rodado duas vezes e com `--simular` | Vencidos ficam como "Titular anonimizado", sem documento, contato e endereço; movimentações e saldo não mudam; quem está no prazo não muda; a segunda execução não anonimiza de novo; `--simular` não grava; listas, históricos, relatório e CSV mostram o titular anonimizado; a edição de doador anonimizado responde 404 | Alta       |
 | CT37 | #25           | CPF/CNPJ mascarado na lista de doadores                                 | doador com CPF `123.456.789-01`; perfis Voluntário e Administrador         | A lista mostra `***.***.*89-01` para os dois perfis; a edição do Administrador mostra o número completo  | Média      |
 | CT38 | #25           | Aviso de dados pessoais no relatório de distribuições                   | relatório de distribuições aberto por um Voluntário                        | Junto do botão "Exportar CSV", aviso de que o arquivo traz o nome do responsável de cada família         | Baixa      |
+| CT40 | #27           | Campos com máscara e validação no servidor                              | letras, pontuação colada, CPF de 11 e CNPJ de 14 dígitos, telefone de 10 e 11 dígitos, quantidade "2,5" e "2.5", telefone de família inválido | Letras são descartadas; CPF/CNPJ e telefone saem formatados; a quantidade com vírgula ou ponto é gravada; telefone de família inválido é recusado com "Informe um telefone válido com DDD."; o saldo aparece com vírgula | Média      |
 
 ---
 
@@ -119,6 +120,7 @@ Atualizada a cada sprint a partir das evidências em `docs/sprints/`. Estado em 
 | CT31 | #3 | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_banco_recusa_perfil_fora_dos_dois_perfis` (PR #55) |
 | CT32 | — (E3) | ✅ Passou | 29/10/2026 | `SchemaBancoTests.test_colunas_das_migrations_iguais_ao_schema_sql` (PR #55) |
 | CT33 | #24 | ✅ Passou | 02/11/2026 | `PainelTests.test_ct33_painel_do_mes_conta_doacoes_familias_e_lista_recentes`. Período equivalente do mês anterior, famílias distintas, ordem e limite das movimentações recentes e renderização para os dois perfis nos demais testes de `PainelTests` |
+| CT40 | #27 | 🟡 Parcial | 06/11/2026 | `MascarasTests` (atributos dos campos, telefone da família, quantidade com vírgula e ponto, saldo com vírgula, inteiros e script do layout) e roteiro no Chrome e no WebKit, o motor do Safari (25 verificações em cada). Falta o roteiro no Firefox |
 
 Pendências para o Relatório de Testes Executados (E9): CT01 (expiração da sessão), CT08 (paginação de famílias) e CT21 (conteúdo do CSV).
 
