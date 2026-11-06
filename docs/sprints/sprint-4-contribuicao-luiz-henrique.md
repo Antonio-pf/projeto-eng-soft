@@ -26,7 +26,7 @@
 
 | PR | Autor | Comentário resumido |
 |---|---|---|
-| [nenhuma revisão registrada no GitHub nesta sprint — completar se houver] | | |
+| [PRs de colegas revisados nesta sprint — completar] | | |
 
 ## 4. Dificuldades e o que aprendi
 

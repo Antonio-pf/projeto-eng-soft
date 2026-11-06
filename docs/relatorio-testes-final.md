@@ -6,16 +6,16 @@
 - Daniel Souza Monteiro de Carvalho — RA 2840482211052
 - Luiz Henrique Neres — RA 2840482423005
 
-**Data da bateria final:** 04/11/2026  
-**Escopo testado:** funcionalidades aceitas no Termo de Aceite do Projeto (E2b) e as histórias #19 e #24, entregues além dele; histórias #1 a #24 do backlog, casos de teste CT01 a CT33
+**Data da bateria final:** 06/11/2026  
+**Escopo testado:** funcionalidades aceitas no Termo de Aceite do Projeto (E2b) e as histórias #19, #24, #25 e #28, entregues além dele; histórias #1 a #25 e #28 do backlog, casos de teste CT01 a CT38 e CT41
 
 ## 1. Resumo executivo
 | Métrica | Valor |
 |---|---|
-| Total de casos de teste | 33 |
-| Passaram | 33 |
+| Total de casos de teste | 39 |
+| Passaram | 38 |
 | Falharam | 1 (CT21, corrigido até 05/11, ver seção 3) |
-| Cobertura automatizada (linhas/branches) | 98% (229 testes automatizados no CI) |
+| Cobertura automatizada (linhas/branches) | 98% (270 testes automatizados no CI) |
 
 ## 2. Casos de teste — visão consolidada
 | ID | Área | Tipo | Resultado | Observação |
@@ -40,7 +40,7 @@
 | CT18 | Autenticação e Perfis | Integração | Passou | #2. Herdado da Sprint 1 |
 | CT19 | Autenticação e Perfis | Unitário/integração | Passou | #4. Herdado da Sprint 1 |
 | CT20 | Movimentações | Unitário/integração | Passou | #19. Entregue em 02/11 (PR #63); o estorno fica registrado na própria movimentação, com data e administrador |
-| CT21 | Relatórios e Painel | Integração | Passou | #23. Falhou na 1ª verificação; passou após a correção (PR #66) |
+| CT21 | Relatórios e Painel | Integração | Falhou na 1ª execução | #23. Passou após a correção (PR #66), ver seção 3 |
 | CT22 | Cadastros Básicos | Integração | Passou | #6. Herdado da Sprint 2 |
 | CT23 | Cadastros Básicos | Integração | Passou | #7. Herdado da Sprint 2 |
 | CT24 | Cadastros Básicos | Integração | Passou | #13. Herdado da Sprint 2 |
@@ -53,6 +53,12 @@
 | CT31 | Autenticação e Perfis | Banco | Passou | #3. Adicionado na Sprint 4 |
 | CT32 | Banco de dados | Banco | Passou | E3. Migrations iguais ao `db/schema.sql` |
 | CT33 | Relatórios e Painel | Integração | Passou | #24. Entregue em 03/11 (PR #64) |
+| CT34 | Privacidade (LGPD) | Integração | Passou | #25. Entregue em 06/11 (PR #69) |
+| CT35 | Privacidade (LGPD) | Integração | Passou | #25. Entregue em 06/11 (PR #69) |
+| CT36 | Privacidade (LGPD) | Unitário/integração | Passou | #25. Entregue em 06/11 (PR #69) |
+| CT37 | Privacidade (LGPD) | Unitário/integração | Passou | #25. Entregue em 06/11 (PR #69) |
+| CT38 | Privacidade (LGPD) | Integração | Passou | #25. Entregue em 06/11 (PR #69) |
+| CT41 | Página inicial | Integração | Passou | #28. Entregue em 06/11 (PR #71) |
 
 ## 3. Bugs encontrados nesta bateria
 | # | Descrição | Severidade | Status |
