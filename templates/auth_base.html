@@ -12,10 +12,11 @@
 </head>
 <body class="min-h-screen bg-conecta-form text-base-content">
     <div class="flex min-h-screen flex-col lg:flex-row">
-        <section class="flex flex-col gap-6 bg-primary px-8 py-12 text-primary-content sm:px-12 lg:w-1/2 lg:px-16 lg:py-16">
+        {# No celular o painel vira uma faixa curta e o formulário começa logo abaixo, sem precisar rolar. #}
+        <section class="painel-marca flex flex-col gap-3 overflow-hidden px-8 py-6 text-primary-content sm:gap-6 sm:px-12 sm:py-10 lg:w-1/2 lg:max-w-[760px] lg:justify-between lg:gap-8 lg:px-16 lg:py-16">
             {% block brand %}{% endblock %}
         </section>
-        <section class="flex flex-1 items-center justify-center bg-conecta-form px-8 py-12 sm:px-12 lg:px-16">
+        <section class="flex flex-1 items-start justify-center bg-conecta-form px-8 py-8 sm:px-12 sm:py-12 lg:items-center lg:px-16">
             {% block content %}{% endblock %}
         </section>
     </div>

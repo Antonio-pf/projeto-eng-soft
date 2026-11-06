@@ -1,18 +1,9 @@
 # Documento de Visão — Conecta Social
 
-**Equipe:**
-
-- Alexandre Victoriano Ribeiro Ulhoa (2840482423007)
-- Daniel Souza Monteiro de Carvalho (2840482211052)
-- Cintia Marcelo de Oliveira (2840482421017)
-- Antonio Pires Felipe (2840482211003)
-- Luiz Henrique Neres (2840482423005)
-
-**Trilha:** B
-**Origem do problema:** Banco de temas nº 4
+**Equipe:** Alexandre Victoriano Ribeiro Ulhoa (2840482423007) — Daniel Souza Monteiro de Carvalho (2840482211052) — Cintia Marcelo de Oliveira (2840482421017) — Antonio Pires Felipe (2840482211003) — Luiz Henrique Neres (2840482423005)  
+**Trilha:** B  
+**Origem do problema:** Banco de temas nº 4  
 **Data:** 21/08/2026
-
----
 
 ## 1. Problema
 
@@ -22,8 +13,6 @@ Na prática, isso gera gargalos concretos: um gestor típico gasta entre 3 e 5 h
 
 O sistema proposto resolve esse cenário ao centralizar o cadastro de doadores, o controle de estoque de itens, o registro das famílias atendidas e a geração de relatórios de distribuição, eliminando a dependência de processos manuais e tornando a operação da ONG rastreável e auditável.
 
----
-
 ## 2. Público-alvo e perfis de usuário
 
 | Perfil        | Quem é                                                               | O que faz no sistema                                                                                                                                               |
@@ -31,13 +20,9 @@ O sistema proposto resolve esse cenário ao centralizar o cadastro de doadores, 
 | Administrador | Gestor ou coordenador da ONG, responsável pela operação geral        | Cadastra e gerencia usuários, categorias de itens e famílias; visualiza o painel geral; gera relatórios de distribuição e estoque; acessa todas as funcionalidades |
 | Voluntário    | Colaborador que auxilia nas atividades de recebimento e distribuição | Registra entradas de doações no estoque, registra saídas (distribuições para famílias), consulta saldo de itens disponíveis                                        |
 
----
-
 ## 3. Visão da solução
 
 O sistema é uma aplicação web que centraliza a gestão operacional de uma ONG de doações, cobrindo o ciclo completo de cada item: do registro da doação recebida de um doador até a distribuição para uma família beneficiada. O software mantém o estoque atualizado em tempo real por categoria de item, bloqueia distribuições quando o saldo é insuficiente e emite alertas quando itens atingem o estoque mínimo configurado. Um painel de indicadores e relatórios filtráveis por período, família e item substituem as planilhas manuais, oferecendo aos gestores dados confiáveis para tomada de decisão e prestação de contas a financiadores.
-
----
 
 ## 4. Objetivos do MVP (o que o semestre entrega)
 
@@ -48,8 +33,6 @@ O sistema é uma aplicação web que centraliza a gestão operacional de uma ONG
 - Gerar relatório de distribuição por período e por família, substituindo o levantamento manual semanal
 - Disponibilizar o sistema em URL pública, acessível sem instalação local
 
----
-
 ## 5. Fora de escopo (explicitamente)
 
 - **Arrecadação financeira online e links de pagamento:** o sistema não processa doações em dinheiro nem integra com gateways de pagamento (PagSeguro, Stripe etc.); o foco é exclusivamente na gestão de itens físicos doados
@@ -57,8 +40,6 @@ O sistema é uma aplicação web que centraliza a gestão operacional de uma ONG
 - **Aplicativo mobile nativo:** a interface será uma plataforma web responsiva, otimizando o tempo de desenvolvimento; não haverá app publicado na App Store ou Google Play
 - **Emissão de Nota Fiscal Eletrônica e documentos com validade jurídica:** o sistema poderá gerar comprovantes simples em tela, mas sem integração com órgãos governamentais (SEFAZ, Receita Federal)
 - **Integração com APIs externas (CNPJ, CPF, CEP automático):** validações de documentos serão de formato apenas, sem consulta a serviços governamentais
-
----
 
 ## 6. Requisitos mínimos do §3 do Manual — como este projeto cobre cada um
 
@@ -72,8 +53,6 @@ O sistema é uma aplicação web que centraliza a gestão operacional de uma ONG
 | Deploy público por URL                  | Deploy no Render (Web Service Python + PostgreSQL free tier), acessível por URL pública tipo `https://ong-doacoes.onrender.com`, sem necessidade de instalação local                                                                                                                                                                              |
 | Repositório Git com README              | Repositório público no GitHub com README contendo: descrição do projeto, pré-requisitos, passo a passo de instalação local, variáveis de ambiente necessárias (`.env.example`) e link para o deploy — suficiente para um terceiro subir o projeto do zero                                                                                         |
 
----
-
 ## 7. Riscos identificados
 
 | Risco                                                                                        | Impacto                                            | Mitigação                                                                                                                                               |
@@ -84,4 +63,3 @@ O sistema é uma aplicação web que centraliza a gestão operacional de uma ONG
 | Rotatividade na equipe ou disponibilidade desigual de membros                                | Médio — acúmulo de tarefas em poucos               | Distribuir responsabilidades por módulo desde a E2; documentar decisões técnicas no README conforme o desenvolvimento avança                            |
 | Dificuldade em modelar o controle de estoque com múltiplas categorias e unidades de medida   | Baixo-Médio — inconsistências de dados             | Finalizar e revisar o modelo de entidades na E2 antes de começar a implementação                                                                        |
 
----

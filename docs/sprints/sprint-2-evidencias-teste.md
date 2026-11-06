@@ -47,6 +47,6 @@ doações 7, histórico de distribuições 7). O PR #34 registrou `ruff check` e
 Evidência manual: os três GIFs em [`assets/`](assets/) (`conecta-social-sprint2-*.gif`) foram
 gravados em 01/10/2026 com a `main` desta sprint rodando localmente.
 
-**Pendências para a Sprint 3:** teste de paginação de famílias (CT08); teste de expiração de sessão
+Pendências para a Sprint 3: teste de paginação de famílias (CT08); teste de expiração de sessão
 (CT01, herdado da Sprint 1);
 casos CT15 a CT17, CT20, CT21 e CT28 do plano de testes (painel, relatórios, estorno e CSV).

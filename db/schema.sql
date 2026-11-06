@@ -1,7 +1,6 @@
--- ============================================================
--- Conecta Social — Schema DDL
--- PostgreSQL 15+
--- Uso: psql -d conecta_social -f db/schema.sql
+-- schema.sql — Conecta Social
+-- Gera o schema completo em um banco vazio.
+-- PostgreSQL 15+. Uso: psql -d conecta_social -f db/schema.sql
 --
 -- Equipe:
 --   Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
@@ -9,7 +8,6 @@
 --   Cintia Marcelo de Oliveira — RA 2840482421017
 --   Antonio Pires Felipe — RA 2840482211003
 --   Luiz Henrique Neres — RA 2840482423005
--- ============================================================
 
 BEGIN;
 
@@ -122,7 +120,7 @@ CREATE INDEX idx_dist_id_familia       ON distribuicao (id_familia);
 CREATE INDEX idx_dist_data             ON distribuicao (data);
 
 -- --------------------------------------------------------
--- Seed: dados de teste
+-- Seed de exemplo
 -- --------------------------------------------------------
 
 -- Usuários

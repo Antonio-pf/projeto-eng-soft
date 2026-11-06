@@ -7,21 +7,12 @@
 - Antonio Pires Felipe — RA 2840482211003
 - Luiz Henrique Neres — RA 2840482423005
 
-**Entrega:** E3 — Modelagem de Dados e UML  
-**Semestre:** 2026/2
-
----
-
 ## 1. Diagrama de Casos de Uso
-
-O sistema possui dois perfis de ator. O **Voluntário** executa os fluxos operacionais, enquanto o **Administrador** executa operações exclusivas de gestão. O cancelamento é um fluxo opcional que estende o registro de uma doação ou distribuição.
-
-### Voluntário
-
 
 ```mermaid
 flowchart LR
   Voluntario((Voluntario))
+  Administrador((Administrador))
 
   subgraph auth["Autenticação"]
     UC1[Fazer login]
@@ -51,18 +42,6 @@ flowchart LR
     UC23[Exportar CSV]
   end
 
-  Voluntario --> UC1 & UC2
-  Voluntario --> UC5 & UC6 & UC8 & UC9 & UC12
-  Voluntario --> UC14 & UC15 & UC16 & UC17 & UC18
-  Voluntario --> UC20 & UC21 & UC22 & UC23
-```
-
-### Administrador
-
-```mermaid
-flowchart LR
-  Administrador((Administrador))
-
   subgraph excl["Exclusivos do Administrador"]
     UC3[Cadastrar usuário]
     UC4[Desativar usuário]
@@ -73,19 +52,16 @@ flowchart LR
     UC19[Cancelar movimentação]
   end
 
-  subgraph mov["Casos de uso base"]
-    UC14[Registrar doação]
-    UC16[Registrar distribuição]
-  end
-
+  Voluntario --> UC1 & UC2
+  Voluntario --> UC5 & UC6 & UC8 & UC9 & UC12
+  Voluntario --> UC14 & UC15 & UC16 & UC17 & UC18
+  Voluntario --> UC20 & UC21 & UC22 & UC23
   Administrador --> UC3 & UC4
   Administrador --> UC7 & UC10 & UC11 & UC13
   Administrador --> UC19
   UC19 -. "<<extend>>" .-> UC14
   UC19 -. "<<extend>>" .-> UC16
 ```
-
----
 
 ## 2. Diagrama de Classes
 
@@ -170,8 +146,6 @@ classDiagram
   Item "1" --> "0..*" Distribuicao : sai via
 ```
 
----
-
 ## 3. Rastreabilidade — caso de uso → história do backlog
 
 | Caso de uso | História(s) relacionada(s) (E2) |
@@ -199,16 +173,3 @@ classDiagram
 | Relatório de distribuições | #21 |
 | Histórico de doações por doador | #22 |
 | Exportar relatório em CSV | #23 |
-
-### Classes × Histórias do backlog
-
-| Classe | Histórias relacionadas |
-|---|---|
-| `Usuario` | #1, #2, #3, #4 |
-| `Doador` | #5, #6, #7, #14, #15, #22 |
-| `Familia` | #8, #9, #16, #18, #21, #23 |
-| `CategoriaItem` | #10, #11, #12, #20 |
-| `UnidadeMedida` | #11, #12, #13 |
-| `Item` | #11, #12, #13, #14, #15, #16, #17, #18, #20, #21, #22, #23 |
-| `Doacao` | #14, #15, #19, #22 |
-| `Distribuicao` | #16, #17, #18, #19, #21, #23 |

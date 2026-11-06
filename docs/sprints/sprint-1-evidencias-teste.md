@@ -52,6 +52,6 @@ OK
 `test_senha_fraca_e_rejeitada` (`UsuarioFormTests`) é cobertura extra do
 formulário de usuário, além dos critérios de aceite de CT03/CT04.
 
-**Pendência para a próxima sprint:** CT01 não tem teste automatizado pra
+Pendência para a próxima sprint: CT01 não tem teste automatizado pra
 expiração de sessão por inatividade (precisaria simular passagem de tempo,
 ex. com `freezegun`).
