@@ -211,9 +211,19 @@
 
             <ul class="mt-14 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
                 {% for pessoa in equipe %}
-                <li class="reveal flex flex-col items-center rounded-2xl border border-primary/10 bg-white px-5 py-8 text-center">
-                    <span class="grid size-16 place-items-center rounded-full text-xl font-bold {% cycle 'bg-primary text-white' 'bg-secondary text-white' 'bg-accent text-neutral' 'bg-conecta-quote text-white' %}" aria-hidden="true">{{ pessoa.iniciais }}</span>
-                    <p class="mt-5 font-bold leading-snug text-neutral">{{ pessoa.nome }}</p>
+                {# A cor avança a cada cartão, com foto ou não, para cada posição manter a cor de antes. #}
+                {% cycle 'bg-primary text-white' 'bg-secondary text-white' 'bg-accent text-neutral' 'bg-conecta-quote text-white' as cor silent %}
+                <li class="reveal">
+                    <a href="{{ pessoa.perfil }}" target="_blank" rel="noopener noreferrer" aria-label="Perfil de {{ pessoa.nome }} no GitHub" data-testid="equipe-perfil-{{ pessoa.login }}"
+                       class="flex h-full flex-col items-center rounded-2xl border border-primary/10 bg-white px-5 py-8 text-center transition-colors hover:border-primary/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        {% if pessoa.foto %}
+                        <img src="{% static pessoa.foto %}" alt="Foto de {{ pessoa.nome }}" width="64" height="64" loading="lazy" class="size-16 rounded-full object-cover">
+                        {% else %}
+                        <span class="grid size-16 place-items-center rounded-full text-xl font-bold {{ cor }}" aria-hidden="true">{{ pessoa.iniciais }}</span>
+                        {% endif %}
+                        <p class="mt-5 font-bold leading-snug text-neutral">{{ pessoa.nome }}</p>
+                        <p class="mt-1 text-xs text-conecta-muted">@{{ pessoa.login }}</p>
+                    </a>
                 </li>
                 {% endfor %}
             </ul>

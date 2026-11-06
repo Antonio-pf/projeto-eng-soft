@@ -43,11 +43,13 @@ from core.privacidade import (
     controlador,
 )
 
+# Nome, login no GitHub e se a foto do perfil foi copiada para static/img/equipe/<login>.jpg.
+# Quem não tem foto no GitHub aparece com as iniciais; para incluir, copie a foto e marque True.
 EQUIPE = (
-    "Alexandre Victoriano Ribeiro Ulhoa",
-    "Antonio Pires Felipe",
-    "Daniel Souza Monteiro de Carvalho",
-    "Luiz Henrique Neres",
+    ("Alexandre Victoriano Ribeiro Ulhoa", "viktoralex321", False),
+    ("Antonio Pires Felipe", "Antonio-pf", True),
+    ("Daniel Souza Monteiro de Carvalho", "DanielSouzaMC", False),
+    ("Luiz Henrique Neres", "luiz-Henrique-neres", True),
 )
 
 
@@ -80,7 +82,16 @@ def _salvo(request, mensagem, destino, evento="registro-salvo"):
 
 
 def home(request):
-    equipe = [{"nome": nome, "iniciais": nome[0] + nome.split()[-1][0]} for nome in EQUIPE]
+    equipe = [
+        {
+            "nome": nome,
+            "iniciais": nome[0] + nome.split()[-1][0],
+            "login": login,
+            "perfil": f"https://github.com/{login}",
+            "foto": f"img/equipe/{login}.jpg" if tem_foto else None,
+        }
+        for nome, login, tem_foto in EQUIPE
+    ]
     return render(request, "core/home.html", {"equipe": equipe})
 
 
