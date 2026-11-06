@@ -7,15 +7,15 @@
 - Luiz Henrique Neres — RA 2840482423005
 
 **Data da bateria final:** 06/11/2026  
-**Escopo testado:** funcionalidades aceitas no Termo de Aceite do Projeto (E2b) e as histórias #19, #24, #25 e #28, entregues além dele; histórias #1 a #25 e #28 do backlog, casos de teste CT01 a CT38 e CT41
+**Escopo testado:** funcionalidades aceitas no Termo de Aceite do Projeto (E2b) e as histórias #19 e #24 a #28, entregues além dele; histórias #1 a #28 do backlog, casos de teste CT01 a CT41
 
 ## 1. Resumo executivo
 | Métrica | Valor |
 |---|---|
-| Total de casos de teste | 39 |
-| Passaram | 38 |
+| Total de casos de teste | 41 |
+| Passaram | 40 |
 | Falharam | 1 (CT21, corrigido até 05/11, ver seção 3) |
-| Cobertura automatizada (linhas/branches) | 98% (270 testes automatizados no CI) |
+| Cobertura automatizada (linhas/branches) | 99% (282 testes automatizados no CI) |
 
 ## 2. Casos de teste — visão consolidada
 | ID | Área | Tipo | Resultado | Observação |
@@ -58,6 +58,8 @@
 | CT36 | Privacidade (LGPD) | Unitário/integração | Passou | #25. Entregue em 06/11 (PR #69) |
 | CT37 | Privacidade (LGPD) | Unitário/integração | Passou | #25. Entregue em 06/11 (PR #69) |
 | CT38 | Privacidade (LGPD) | Integração | Passou | #25. Entregue em 06/11 (PR #69) |
+| CT39 | Interface | Integração + manual | Passou | #26. Entregue em 06/11 (PR #72). Roteiro no navegador feito no Chrome e no Safari (WebKit); falta conferir no Firefox |
+| CT40 | Interface | Integração + manual | Passou | #27. Entregue em 06/11 (PR #73). Roteiro no navegador feito no Chrome e no Safari (WebKit); falta conferir no Firefox |
 | CT41 | Página inicial | Integração | Passou | #28. Entregue em 06/11 (PR #71) |
 
 ## 3. Bugs encontrados nesta bateria
