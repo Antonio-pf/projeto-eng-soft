@@ -22,7 +22,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
-from core.forms import UsuarioForm
+from core.forms import DistribuicaoForm, DoacaoForm, FamiliaForm, ItemForm, UsuarioForm
 from core.models import (
     CategoriaItem,
     Distribuicao,
@@ -1603,8 +1603,8 @@ class DistribuicaoTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         form = response.context["form"]
         self.assertIn("Saldo insuficiente", str(form.errors))
-        self.assertIn("10.00", str(form.errors))
-        self.assertIn("11.00", str(form.errors))
+        self.assertIn("10,00", str(form.errors))
+        self.assertIn("11,00", str(form.errors))
         self.assertEqual(Distribuicao.objects.count(), 0)
         self.item.refresh_from_db()
         self.assertEqual(self.item.saldo_atual, Decimal("10"))
@@ -1647,7 +1647,7 @@ class DistribuicaoTestCase(TestCase):
     def test_formulario_exibe_saldo_inline_na_opcao_do_item(self):
         response = self.client.get(reverse("distribuicao_create"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "saldo: 10.00")
+        self.assertContains(response, "saldo: 10,00")
 
     def test_contexto_da_view_contem_saldo_por_item(self):
         response = self.client.get(reverse("distribuicao_create"))
@@ -4030,6 +4030,160 @@ class AnonimizacaoNaInterfaceTests(CenarioPrivacidadeMixin, TestCase):
         csv_exportado = self.client.get(reverse("distribuicao_exportar_csv"))
         linhas = list(csv.reader(io.StringIO(csv_exportado.content.decode("utf-8-sig"))))
         self.assertEqual(linhas[1][0], NOME_ANONIMIZADO)
+
+
+class MascarasTests(TestCase):
+    """CT40 (#27): campos com máscara e o que o servidor aceita e grava."""
+
+    def setUp(self):
+        self.admin = Usuario.objects.create(
+            nome="Ana Admin",
+            email="ana.mascaras@conectasocial.org",
+            password=make_password("senha-teste"),
+            perfil=Usuario.Perfil.ADMINISTRADOR,
+            ativo=True,
+        )
+        self.client.post(
+            reverse("login"),
+            {"email": "ana.mascaras@conectasocial.org", "senha": "senha-teste"},
+        )
+        self.doador = Doador.objects.create(nome="Doador Máscara", cpf_cnpj="333.333.333-33")
+        self.familia = Familia.objects.create(
+            nome_responsavel="Família Máscara", endereco="Rua D, 2", num_membros=2
+        )
+        self.categoria = CategoriaItem.objects.create(nome="Alimento")
+        self.unidade = UnidadeMedida.objects.create(nome="Quilograma", sigla="kg")
+        self.item = Item.objects.create(
+            nome="Arroz 5kg", categoria=self.categoria, unidade_medida=self.unidade
+        )
+        self.hoje = timezone.localdate().isoformat()
+        Doacao.objects.create(
+            doador=self.doador,
+            item=self.item,
+            quantidade=Decimal("10.00"),
+            data=timezone.localdate(),
+            registrado_por=self.admin,
+        )
+
+    def _campo(self, nome_url, nome_campo):
+        conteudo = self.client.get(reverse(nome_url)).content.decode()
+        return re.search(rf'<input[^>]*name="{nome_campo}"[^>]*>', conteudo).group(0)
+
+    def _familia(self, **dados):
+        return FamiliaForm(
+            data={
+                "nome_responsavel": "Família Teste",
+                "endereco": "Rua E, 3",
+                "telefone": "",
+                "num_membros": "3",
+                **dados,
+            }
+        )
+
+    def test_ct40_campos_renderizam_com_mascara(self):
+        esperado = [
+            ("doador_create", "cpf_cnpj", "cpf-cnpj", "numeric", "000.000.000-00 ou CNPJ"),
+            ("doador_create", "telefone", "telefone", "numeric", "(00)00000-0000"),
+            ("familia_create", "telefone", "telefone", "numeric", "(00)00000-0000"),
+            ("familia_create", "num_membros", "inteiro", "numeric", "Ex.: 4"),
+            ("item_create", "estoque_minimo", "inteiro", "numeric", "0"),
+            ("doacao_create", "quantidade", "decimal", "decimal", "Quantidade doada (ex.: 2,5)"),
+            (
+                "distribuicao_create",
+                "quantidade",
+                "decimal",
+                "decimal",
+                "Quantidade distribuída (ex.: 2,5)",
+            ),
+        ]
+        for nome_url, nome_campo, mascara, teclado, placeholder in esperado:
+            with self.subTest(pagina=nome_url, campo=nome_campo):
+                campo = self._campo(nome_url, nome_campo)
+                self.assertIn('type="text"', campo)
+                self.assertIn(f'data-mascara="{mascara}"', campo)
+                self.assertIn(f'inputmode="{teclado}"', campo)
+                self.assertIn(f'placeholder="{placeholder}"', campo)
+                self.assertIn("pattern=", campo)
+
+    def test_ct40_telefone_da_familia_e_gravado_formatado(self):
+        for informado, gravado in (
+            ("11987654321", "(11)98765-4321"),
+            ("(21) 3456-7890", "(21)3456-7890"),
+            ("", ""),
+        ):
+            with self.subTest(telefone=informado):
+                form = self._familia(telefone=informado)
+                self.assertTrue(form.is_valid(), form.errors)
+                self.assertEqual(form.cleaned_data["telefone"], gravado)
+
+        self.client.post(
+            reverse("familia_create"),
+            {
+                "nome_responsavel": "Família Gravada",
+                "endereco": "Rua F, 4",
+                "telefone": "(31) 99876-5432",
+                "num_membros": "5",
+            },
+        )
+        familia = Familia.objects.get(nome_responsavel="Família Gravada")
+        self.assertEqual(familia.telefone, "(31)99876-5432")
+
+    def test_ct40_telefone_da_familia_invalido_da_erro(self):
+        for informado in ("119876543", "telefone"):
+            with self.subTest(telefone=informado):
+                form = self._familia(telefone=informado)
+                self.assertFalse(form.is_valid())
+                self.assertIn("Informe um telefone válido com DDD.", form.errors["telefone"])
+
+    def test_ct40_quantidade_aceita_virgula_e_ponto(self):
+        dados = {"doador": self.doador.pk, "item": self.item.pk, "data": self.hoje}
+        for informado in ("2,5", "2.5"):
+            with self.subTest(quantidade=informado):
+                form = DoacaoForm(data={**dados, "quantidade": informado})
+                self.assertTrue(form.is_valid(), form.errors)
+                self.assertEqual(form.cleaned_data["quantidade"], Decimal("2.5"))
+
+        self.assertFalse(DoacaoForm(data={**dados, "quantidade": "abc"}).is_valid())
+
+        self.client.post(reverse("doacao_create"), {**dados, "quantidade": "3,25"})
+        self.assertTrue(Doacao.objects.filter(quantidade=Decimal("3.25")).exists())
+
+    def test_ct40_saldo_com_virgula_no_seletor_e_na_mensagem(self):
+        resposta = self.client.get(reverse("distribuicao_create"))
+        self.assertContains(resposta, "Arroz 5kg saldo: 10,00")
+
+        form = DistribuicaoForm(
+            data={
+                "familia": self.familia.pk,
+                "item": self.item.pk,
+                "quantidade": "12,5",
+                "data": self.hoje,
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn(
+            "Saldo insuficiente: disponível 10,00, solicitado 12,50.", form.non_field_errors()
+        )
+
+    def test_ct40_inteiros_aceitam_so_numeros(self):
+        self.assertEqual(self._familia(num_membros="4").is_valid(), True)
+        self.assertIn("num_membros", self._familia(num_membros="0").errors)
+        self.assertIn("num_membros", self._familia(num_membros="abc").errors)
+
+        item = ItemForm(
+            data={
+                "nome": "Feijão 1kg",
+                "categoria": self.categoria.pk,
+                "unidade_medida": self.unidade.pk,
+                "estoque_minimo": "7",
+            }
+        )
+        self.assertTrue(item.is_valid(), item.errors)
+        self.assertEqual(item.cleaned_data["estoque_minimo"], 7)
+
+    def test_ct40_layout_carrega_as_mascaras(self):
+        conteudo = self.client.get(reverse("painel")).content.decode()
+        self.assertIn('src="/static/js/mascaras.js" defer', conteudo)
 
 
 class CarregamentoTests(TestCase):
