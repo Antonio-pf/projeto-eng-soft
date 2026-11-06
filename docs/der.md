@@ -7,11 +7,6 @@
 - Antonio Pires Felipe — RA 2840482211003
 - Luiz Henrique Neres — RA 2840482423005
 
-**Entrega:** E3 — Modelagem de Dados e UML  
-**Semestre:** 2026/2
-
----
-
 ## 1. Diagrama
 
 O modelo está normalizado até a **3FN**: atributos atômicos (1FN), chaves simples sem dependências parciais (2FN), e nenhum atributo não-chave dependente transitivamente de outro (3FN). O saldo atual do item é derivado e **não** é persistido — calculado via ORM a partir de `doacao` e `distribuicao`.
@@ -104,8 +99,6 @@ erDiagram
 ```
 
 > `id_cancelado_por` em `DOACAO` e `DISTRIBUICAO` é FK nullable para `USUARIO` — representa o administrador que realizou o cancelamento. Omitido como linha separada no diagrama para evitar duplicidade visual com "registra".
-
----
 
 ## 2. Dicionário de dados
 

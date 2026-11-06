@@ -68,7 +68,7 @@ Ativo, sem perder o cadastro do usuário.
 Nas duas opções, o `seed` cria os mesmos usuários de teste (senha
 `alterar-senha` para todos): `admin@conectasocial.org` (Administrador),
 `maria@conectasocial.org` ou `joao@conectasocial.org` (Voluntário). Lista
-completa em [`README.md` → "Usuários de teste"](../../README.md#usuários-de-teste).
+completa em [`README.md`, passo 5](../../README.md#passo-a-passo).
 
 ## 3. Backlog atualizado
 

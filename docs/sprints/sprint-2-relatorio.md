@@ -60,7 +60,7 @@ python manage.py runserver
 ```
 
 Acesse `http://127.0.0.1:8000/login/` com um dos usuários de teste do `seed` (lista em
-[`README.md` → "Usuários de teste"](../../README.md#usuários-de-teste)). Telas desta sprint:
+[`README.md`, passo 5](../../README.md#passo-a-passo)). Telas desta sprint:
 `/doacoes/nova/`, `/doacoes/`, `/distribuicoes/nova/` e `/distribuicoes/`.
 
 ## 3. Backlog atualizado
