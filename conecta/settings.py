@@ -14,6 +14,11 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+# Controlador e contato do aviso de privacidade (/privacidade/). Vazios, o aviso usa
+# os textos padrão de core/privacidade.py, sem inventar nome ou contato.
+ONG_NOME = os.getenv("ONG_NOME", "").strip()
+ONG_CONTATO_PRIVACIDADE = os.getenv("ONG_CONTATO_PRIVACIDADE", "").strip()
+
 INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",

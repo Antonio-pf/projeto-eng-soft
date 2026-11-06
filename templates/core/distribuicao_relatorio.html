@@ -37,6 +37,7 @@
             <a href="{% url 'distribuicao_exportar_csv' %}?id_familia={{ id_familia|urlencode }}&data_inicio={{ data_inicio|urlencode }}&data_fim={{ data_fim|urlencode }}" class="btn btn-outline rounded-md px-4 text-sm font-semibold">Exportar CSV</a>
         </div>
     </form>
+    <p class="-mt-2 mb-5 text-xs text-gray-500" data-testid="aviso-privacidade-csv">O CSV traz o nome do responsável de cada família. Envie o arquivo só a quem precisa para a prestação de contas e apague-o quando não precisar mais.</p>
 
     {% if linhas %}
     <div class="overflow-x-auto">

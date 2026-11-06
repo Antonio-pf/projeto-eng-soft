@@ -28,6 +28,9 @@
             <main class="flex flex-1 flex-col gap-6 bg-conecta-form px-4 py-6 lg:px-12 lg:py-8">
                 {% block content %}{% endblock %}
             </main>
+            <footer class="border-t border-gray-200 bg-conecta-form px-4 py-3 text-xs text-gray-500 lg:px-12">
+                <a href="{% url 'privacidade' %}" class="link" data-testid="link-privacidade">Aviso de privacidade</a>
+            </footer>
         </div>
         <div class="drawer-side z-30">
             <label for="sidebar-drawer" aria-label="Fechar menu" class="drawer-overlay"></label>

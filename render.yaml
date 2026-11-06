@@ -16,6 +16,11 @@ services:
         fromDatabase:
           name: conecta-social-db
           property: connectionString
+      # Aviso de privacidade: preencher no painel do Render com os dados reais da ONG.
+      - key: ONG_NOME
+        sync: false
+      - key: ONG_CONTATO_PRIVACIDADE
+        sync: false
 
 databases:
   - name: conecta-social-db
