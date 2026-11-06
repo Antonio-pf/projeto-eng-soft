@@ -90,6 +90,14 @@
 
 ---
 
+## Página inicial
+
+| #  | História | Critérios de aceite | Prioridade | Pontos | Sprint |
+|----|----------|---------------------|------------|--------|--------|
+| 28 | Como visitante da página inicial, quero ver a foto e o perfil do GitHub de cada integrante, para que eu conheça quem construiu o Conecta Social. | - Integrantes com foto no GitHub aparecem com a foto, servida pelo próprio sistema<br>- Integrantes sem foto continuam com as iniciais<br>- Cada cartão leva ao perfil do GitHub em nova aba e mostra o login | Poderia ter | 1 | — |
+
+---
+
 ## Não será feito neste semestre
 
 | # | Funcionalidade | Justificativa |
