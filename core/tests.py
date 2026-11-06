@@ -13,6 +13,7 @@ from django.conf import settings
 from django.contrib.auth import SESSION_KEY, authenticate
 from django.contrib.auth.hashers import make_password
 from django.contrib.sessions.models import Session
+from django.contrib.staticfiles import finders
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
@@ -80,6 +81,50 @@ class HomePageTests(TestCase):
         ):
             self.assertContains(response, nome)
         self.assertNotContains(response, "2840482")
+
+    # CT41 (#28): foto do GitHub de quem tem, iniciais de quem não tem e link para o perfil.
+    COM_FOTO = (
+        ("Antonio-pf", "Antonio Pires Felipe"),
+        ("luiz-Henrique-neres", "Luiz Henrique Neres"),
+    )
+    SEM_FOTO = (
+        ("viktoralex321", "Alexandre Victoriano Ribeiro Ulhoa", "AU"),
+        ("DanielSouzaMC", "Daniel Souza Monteiro de Carvalho", "DC"),
+    )
+
+    def test_ct41_quem_tem_foto_aparece_com_a_foto_servida_pelo_sistema(self):
+        response = self.client.get(reverse("home"))
+
+        for login, nome in self.COM_FOTO:
+            with self.subTest(login=login):
+                self.assertContains(
+                    response, f'src="/static/img/equipe/{login}.jpg" alt="Foto de {nome}"'
+                )
+                self.assertIsNotNone(finders.find(f"img/equipe/{login}.jpg"))
+        self.assertNotContains(response, 'src="https://')
+
+    def test_ct41_quem_nao_tem_foto_continua_com_as_iniciais(self):
+        response = self.client.get(reverse("home"))
+
+        for login, nome, iniciais in self.SEM_FOTO:
+            with self.subTest(login=login):
+                self.assertContains(response, f'aria-hidden="true">{iniciais}</span>')
+                self.assertNotContains(response, f"Foto de {nome}")
+                self.assertNotContains(response, f"img/equipe/{login}")
+        self.assertNotContains(response, 'aria-hidden="true">AF</span>')
+        self.assertNotContains(response, 'aria-hidden="true">LN</span>')
+
+    def test_ct41_cartoes_levam_ao_perfil_do_github_em_nova_aba(self):
+        response = self.client.get(reverse("home"))
+
+        logins = [login for login, _ in self.COM_FOTO] + [login for login, *_ in self.SEM_FOTO]
+        for login in logins:
+            with self.subTest(login=login):
+                self.assertContains(
+                    response,
+                    f'href="https://github.com/{login}" target="_blank" rel="noopener noreferrer"',
+                )
+                self.assertContains(response, f"@{login}")
 
     def test_visitante_ve_botao_de_entrar(self):
         response = self.client.get(reverse("home"))
