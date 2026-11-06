@@ -2,7 +2,7 @@ import re
 
 from django import forms
 from django.contrib.auth.password_validation import validate_password
-from django.utils import timezone
+from django.utils import formats, timezone
 
 from core.models import CategoriaItem, Distribuicao, Doacao, Doador, Familia, Item, Usuario
 
@@ -16,6 +16,58 @@ _CARD_INPUT_CLASS = (
 )
 
 _CARD_SELECT_CLASS = f"{_CARD_INPUT_CLASS} appearance-none pr-9"
+
+_PATTERN_TELEFONE = r"(?:\d{10,11}|\(\d{2}\)\d{4,5}-\d{4})"
+_TITLE_TELEFONE = "Informe o telefone com DDD."
+_PATTERN_QUANTIDADE = r"[0-9]{1,8}([,.][0-9]{1,2})?"
+_TITLE_QUANTIDADE = "Informe a quantidade com até 2 casas decimais, por exemplo 2,5."
+
+
+def _attrs_mascara(mascara, inputmode, **attrs):
+    """Campo de texto com a máscara de static/js/mascaras.js; sem JS, o pattern segura o envio."""
+    return {"class": _CARD_INPUT_CLASS, "data-mascara": mascara, "inputmode": inputmode, **attrs}
+
+
+def _inteiro(placeholder):
+    return forms.TextInput(
+        attrs=_attrs_mascara(
+            "inteiro",
+            "numeric",
+            pattern="[0-9]*",
+            title="Informe só números.",
+            placeholder=placeholder,
+        )
+    )
+
+
+def _quantidade(placeholder):
+    return forms.TextInput(
+        attrs=_attrs_mascara(
+            "decimal",
+            "decimal",
+            pattern=_PATTERN_QUANTIDADE,
+            title=_TITLE_QUANTIDADE,
+            placeholder=placeholder,
+        )
+    )
+
+
+def _normalizar_telefone(telefone_informado):
+    """Vazio é aceito; 10 ou 11 dígitos com DDD viram (00)0000-0000 ou (00)00000-0000."""
+    telefone_informado = telefone_informado.strip()
+
+    if not telefone_informado:
+        return ""
+
+    numeros = re.sub(r"\D", "", telefone_informado)
+
+    if len(numeros) == 11:
+        return f"({numeros[:2]}){numeros[2:7]}-{numeros[7:]}"
+
+    if len(numeros) == 10:
+        return f"({numeros[:2]}){numeros[2:6]}-{numeros[6:]}"
+
+    raise forms.ValidationError("Informe um telefone válido com DDD.")
 
 
 class LoginForm(forms.Form):
@@ -105,7 +157,8 @@ class DoadorForm(forms.ModelForm):
             "cpf_cnpj": forms.TextInput(
                 attrs={
                     "class": _CARD_INPUT_CLASS,
-                    "placeholder": "Digite o CPF ou CNPJ",
+                    "placeholder": "000.000.000-00 ou CNPJ",
+                    "data-mascara": "cpf-cnpj",
                     "inputmode": "numeric",
                     "maxlength": "18",
                     "pattern": (
@@ -117,14 +170,14 @@ class DoadorForm(forms.ModelForm):
                 }
             ),
             "telefone": forms.TextInput(
-                attrs={
-                    "class": _CARD_INPUT_CLASS,
-                    "placeholder": "(00)00000-0000",
-                    "inputmode": "numeric",
-                    "maxlength": "14",
-                    "pattern": r"(?:\d{10,11}|\(\d{2}\)\d{4,5}-\d{4})",
-                    "title": "Informe o telefone com DDD.",
-                }
+                attrs=_attrs_mascara(
+                    "telefone",
+                    "numeric",
+                    placeholder="(00)00000-0000",
+                    maxlength="14",
+                    pattern=_PATTERN_TELEFONE,
+                    title=_TITLE_TELEFONE,
+                )
             ),
             "email": forms.EmailInput(
                 attrs={
@@ -163,20 +216,7 @@ class DoadorForm(forms.ModelForm):
         return documento
 
     def clean_telefone(self):
-        telefone_informado = self.cleaned_data["telefone"].strip()
-
-        if not telefone_informado:
-            return ""
-
-        numeros = re.sub(r"\D", "", telefone_informado)
-
-        if len(numeros) == 11:
-            return f"({numeros[:2]}){numeros[2:7]}-{numeros[7:]}"
-
-        if len(numeros) == 10:
-            return f"({numeros[:2]}){numeros[2:6]}-{numeros[6:]}"
-
-        raise forms.ValidationError("Informe um telefone válido com DDD.")
+        return _normalizar_telefone(self.cleaned_data["telefone"])
 
 
 class FamiliaForm(forms.ModelForm):
@@ -191,9 +231,16 @@ class FamiliaForm(forms.ModelForm):
                 attrs={"class": _CARD_INPUT_CLASS, "rows": 3, "placeholder": "Endereço completo"}
             ),
             "telefone": forms.TextInput(
-                attrs={"class": _CARD_INPUT_CLASS, "placeholder": "(00) 00000-0000"}
+                attrs=_attrs_mascara(
+                    "telefone",
+                    "numeric",
+                    placeholder="(00)00000-0000",
+                    maxlength="14",
+                    pattern=_PATTERN_TELEFONE,
+                    title=_TITLE_TELEFONE,
+                )
             ),
-            "num_membros": forms.NumberInput(attrs={"class": _CARD_INPUT_CLASS, "min": "1"}),
+            "num_membros": _inteiro("Ex.: 4"),
         }
         labels = {
             "nome_responsavel": "Nome do Responsável",
@@ -201,6 +248,9 @@ class FamiliaForm(forms.ModelForm):
             "telefone": "Telefone",
             "num_membros": "Número de Membros",
         }
+
+    def clean_telefone(self):
+        return _normalizar_telefone(self.cleaned_data["telefone"])
 
 
 class CategoriaItemForm(forms.ModelForm):
@@ -246,7 +296,7 @@ class ItemForm(forms.ModelForm):
             ),
             "categoria": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
             "unidade_medida": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
-            "estoque_minimo": forms.NumberInput(attrs={"class": _CARD_INPUT_CLASS, "min": "0"}),
+            "estoque_minimo": _inteiro("0"),
         }
         labels = {
             "nome": "Nome do Item",
@@ -279,17 +329,12 @@ class DoacaoForm(MovimentacaoForm):
     class Meta:
         model = Doacao
         fields = ["doador", "item", "quantidade", "data"]
+        # Aceita a vírgula decimal ("2,5") além do ponto.
+        localized_fields = ["quantidade"]
         widgets = {
             "doador": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
             "item": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
-            "quantidade": forms.NumberInput(
-                attrs={
-                    "class": _CARD_INPUT_CLASS,
-                    "step": "0.01",
-                    "min": "0.01",
-                    "placeholder": "Quantidade doada",
-                }
-            ),
+            "quantidade": _quantidade("Quantidade doada (ex.: 2,5)"),
             "data": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -308,7 +353,7 @@ class DoacaoForm(MovimentacaoForm):
 
 class ItemComSaldoChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
-        return f"{obj.nome} saldo: {obj.saldo_atual:.2f}"
+        return f"{obj.nome} saldo: {formats.number_format(obj.saldo_atual, 2)}"
 
 
 class DistribuicaoForm(MovimentacaoForm):
@@ -321,16 +366,11 @@ class DistribuicaoForm(MovimentacaoForm):
     class Meta:
         model = Distribuicao
         fields = ["familia", "item", "quantidade", "data"]
+        # Aceita a vírgula decimal ("2,5") além do ponto.
+        localized_fields = ["quantidade"]
         widgets = {
             "familia": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
-            "quantidade": forms.NumberInput(
-                attrs={
-                    "class": _CARD_INPUT_CLASS,
-                    "step": "0.01",
-                    "min": "0.01",
-                    "placeholder": "Quantidade distribuída",
-                }
-            ),
+            "quantidade": _quantidade("Quantidade distribuída (ex.: 2,5)"),
             "data": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -353,7 +393,7 @@ class DistribuicaoForm(MovimentacaoForm):
             saldo_atual = item.saldo_atual
             if quantidade > saldo_atual:
                 raise forms.ValidationError(
-                    f"Saldo insuficiente: disponível {saldo_atual:.2f}, "
-                    f"solicitado {quantidade:.2f}."
+                    f"Saldo insuficiente: disponível {formats.number_format(saldo_atual, 2)}, "
+                    f"solicitado {formats.number_format(quantidade, 2)}."
                 )
         return cleaned_data
