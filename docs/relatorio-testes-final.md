@@ -6,8 +6,6 @@
 - Daniel Souza Monteiro de Carvalho — RA 2840482211052
 - Luiz Henrique Neres — RA 2840482423005
 
-> Cintia Marcelo de Oliveira (RA 2840482421017) consta do Termo de Aceite do Projeto (E2), mas não participou das Sprints 3 e 4 nem desta bateria final.
-
 **Data da bateria final:** 04/11/2026 (testes automatizados), confirmada no CI do PR #66 em 05/11/2026
 
 **Escopo testado:** as funcionalidades aceitas no Termo de Aceite do Projeto ([`docs/termo-aceite.md`](termo-aceite.md), E2) e todas as histórias entregues do [`docs/backlog.md`](backlog.md) (#1 a #24, sendo 14 Deve ter, 8 Deveria ter e 2 Poderia ter), com os casos de teste CT01 a CT33 do [`docs/plano-de-testes.md`](plano-de-testes.md).
