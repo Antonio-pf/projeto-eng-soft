@@ -1,10 +1,8 @@
 # Plano de Testes — Conecta Social
 
-**Versão:** 1.2 (29/10/2026, fim da Sprint 4). Versão inicial 1.1 na E4, em 11/09/2026  
 **Equipe:**
 - Alexandre Victoriano Ribeiro Ulhoa — RA 2840482423007
 - Daniel Souza Monteiro de Carvalho — RA 2840482211052
-- Cintia Marcelo de Oliveira — RA 2840482421017
 - Antonio Pires Felipe — RA 2840482211003
 - Luiz Henrique Neres — RA 2840482423005
 
@@ -12,18 +10,11 @@
 
 ## 1. Estratégia
 
-Esta estratégia segue a **pirâmide de testes**: muitos testes pequenos e rápidos na base, uma quantidade menor de testes de integração no meio e poucos testes de alto nível no topo. A proporção é mais importante que nomes rígidos; cada comportamento deve ser testado na camada mais baixa que dê confiança suficiente, evitando repetir o mesmo cenário em todas as camadas.
-
-| Tipo de teste      | Camada da pirâmide e do requisito mínimo do §3                  | O que cobre                                                                                                  | Ferramenta                 | Quando roda                                      |
-|-------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|----------------------------|--------------------------------------------------|
-| Unitário          | Base: regra de negócio e validações de domínio                  | A maioria dos testes: cálculo de saldo, bloqueio por saldo insuficiente, quantidade > 0 e CPF/CNPJ         | Django TestCase (unittest) | Primeiro estágio, a cada alteração/PR            |
-| Integração/serviço | Meio: limites com banco, HTTP, permissões e consultas            | Uma quantidade menor de testes para autenticação/perfis, validações de interface e banco, relacionamentos e agregações | Django TestCase com Client | Segundo estágio da CI, a cada PR desde a Sprint 1 |
-| E2E/aceitação     | Topo: fluxo completo do requisito e deploy público               | Poucos fluxos críticos de Administrador e Voluntário, incluindo login, movimentação de estoque, relatório e URL publicada | Navegador automatizado ou roteiro de aceitação | Terceiro estágio da CI e antes da entrega final |
-| Exploratório      | Complementar: aspectos que testes automatizados não garantem     | Usabilidade, mensagens, layout, acessibilidade e situações inesperadas                                     | Roteiro manual             | Ao fim de cada sprint e antes da Sprint Review   |
-
-**Distribuição planejada:** os testes unitários devem ser a maioria; os testes de integração/serviço devem ser suficientes para verificar cada fronteira real, sem repetir todas as combinações; e os testes E2E/aceitação devem ficar restritos às jornadas de maior valor. Testes exploratórios não substituem a automação nem aumentam artificialmente o topo da pirâmide.
-
-**Referência:** [The Practical Test Pyramid — Martin Fowler](https://martinfowler.com/articles/practical-test-pyramid.html).
+| Tipo de teste | O que cobre | Ferramenta | Quando roda |
+|---|---|---|---|
+| Unitário | Regra de negócio e validações de domínio (requisitos mínimos do §3): cálculo de saldo, bloqueio por saldo insuficiente, quantidade > 0 e CPF/CNPJ | Django TestCase (unittest) | A cada alteração e a cada PR (CI) |
+| Integração | Autenticação e perfis, validações na interface e no banco, relacionamentos e consultas agregadas do relatório e do painel (requisitos mínimos do §3), contra o PostgreSQL | Django TestCase com Client e coverage.py | A cada PR (CI), desde a Sprint 1 |
+| Manual/aceitação | Fluxos completos de Administrador e Voluntário no deploy público, com o cliente/PO, e testes exploratórios de usabilidade, mensagens, layout e acessibilidade | Roteiro manual | Ao fim de cada sprint e na bateria final (E9) |
 
 ---
 
@@ -37,13 +28,14 @@ Nenhum PR é aceito na `main` se:
 - (d) Uma funcionalidade alterar dados sem teste de integração correspondente ou sem preservar as restrições do banco;
 - (e) O build, a migração do banco ou a execução da CI falhar;
 - (f) O arquivo `requirements.txt` for alterado sem atualização do `README.md`;
-- (g) Um model for alterado sem a atualização correspondente do `db/schema.sql` e do dicionário de dados do `docs/der.md` (o CT32 quebra no CI se as colunas divergirem).
+- (g) Um model for alterado sem a atualização correspondente do `db/schema.sql` e do dicionário de dados do `docs/der.md` (o CT32 quebra no CI se as colunas divergirem);
+- (h) A cobertura dos testes ficar abaixo de 95% (o `coverage report` falha no CI).
 
 ---
 
-## 3. Casos de teste planejados
+## 3. Casos de teste planejados (cresce a cada sprint)
 
-> A partir da E5, cada caso implementado precisa de evidência de execução em `docs/sprints/sprint-N-evidencias-teste.md`. A situação atual de cada caso está na [seção 4](#4-situação-dos-casos-de-teste). Os casos CT29 a CT33 foram incluídos na versão 1.2.
+> A partir da E5, cada caso implementado precisa de evidência de execução em `docs/sprints/sprint-N-evidencias-teste.md`. O resultado da bateria final está em [`docs/relatorio-testes-final.md`](relatorio-testes-final.md).
 
 | ID   | História (E2) | Cenário                                                                 | Entrada                                                                    | Resultado esperado                                                                                          | Prioridade |
 |------|--------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|------------|
@@ -80,6 +72,11 @@ Nenhum PR é aceito na `main` se:
 | CT31 | #3            | Banco recusa perfil diferente de Administrador e Voluntário             | gravação direta de usuário com perfil `gestor`                             | O banco rejeita com erro de integridade (`CHECK perfil IN (...)`)                                           | Alta       |
 | CT32 | — (E3)        | Banco criado pelas migrations igual ao `db/schema.sql`                  | colunas de cada tabela nos models e no `db/schema.sql`                     | As 8 tabelas têm as mesmas colunas, com os mesmos nomes, nos dois                                           | Média      |
 | CT33 | #24           | Painel com doações do mês, famílias atendidas e movimentações recentes  | doações e distribuições no mês atual e no anterior, incluindo canceladas   | Cards mostram as doações não canceladas do mês com a variação, as famílias distintas atendidas e as 5 últimas movimentações não canceladas| Média      |
+| CT34 | #25           | Aviso de privacidade público, sem login                                 | visitante sem sessão abre `/privacidade/`; `ONG_NOME` e `ONG_CONTATO_PRIVACIDADE` preenchidos e vazios | Página abre sem login e sem consulta ao banco, com as 9 seções: controlador e contato (ou o texto padrão), dados guardados, finalidades com base legal, condição de atendimento, quem acessa, compartilhamento, prazo de 5 anos e direitos; link na tela de login, na página inicial e no rodapé das telas internas | Alta       |
+| CT35 | #25           | Aviso nos formulários de novo doador e de nova família                  | formulários abertos na página e no modal; edição de doador pelo Administrador | Os dois formulários de cadastro mostram o aviso com link para o aviso completo em nova aba; o de família destaca que o cadastro é condição para receber doações; a edição de doador não repete o aviso | Média      |
+| CT36 | #25           | Anonimização dos cadastros vencidos                                     | doador e família com a última movimentação (cancelada ou não) no limite de 5 anos, um dia depois e sem movimentação; comando rodado duas vezes e com `--simular` | Vencidos ficam como "Titular anonimizado", sem documento, contato e endereço; movimentações e saldo não mudam; quem está no prazo não muda; a segunda execução não anonimiza de novo; `--simular` não grava; listas, históricos, relatório e CSV mostram o titular anonimizado; a edição de doador anonimizado responde 404 | Alta       |
+| CT37 | #25           | CPF/CNPJ mascarado na lista de doadores                                 | doador com CPF `123.456.789-01`; perfis Voluntário e Administrador         | A lista mostra `***.***.*89-01` para os dois perfis; a edição do Administrador mostra o número completo  | Média      |
+| CT38 | #25           | Aviso de dados pessoais no relatório de distribuições                   | relatório de distribuições aberto por um Voluntário                        | Junto do botão "Exportar CSV", aviso de que o arquivo traz o nome do responsável de cada família         | Baixa      |
 
 ---
 

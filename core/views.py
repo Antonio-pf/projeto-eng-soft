@@ -6,13 +6,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Sum
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.cache import patch_vary_headers
 from django.utils.dateparse import parse_date
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from core.decorators import admin_obrigatorio, login_obrigatorio
 from core.forms import (
@@ -36,6 +36,12 @@ from core.models import (
     Usuario,
 )
 from core.painel import montar_resumo, saudacao
+from core.privacidade import (
+    AVISO_ATUALIZADO_EM,
+    FINALIDADES,
+    PRAZO_RETENCAO_ANOS,
+    controlador,
+)
 
 EQUIPE = (
     "Alexandre Victoriano Ribeiro Ulhoa",
@@ -80,6 +86,21 @@ def home(request):
 
 def health(request):
     return JsonResponse({"status": "ok"})
+
+
+@require_GET
+def privacidade(request):
+    """Aviso de privacidade público (LGPD, art. 9º): o titular não tem login no sistema."""
+    return render(
+        request,
+        "core/privacidade.html",
+        {
+            "controlador": controlador(),
+            "finalidades": FINALIDADES,
+            "prazo_anos": PRAZO_RETENCAO_ANOS,
+            "atualizado_em": AVISO_ATUALIZADO_EM,
+        },
+    )
 
 
 def login_view(request):
@@ -174,6 +195,9 @@ def doador_create(request):
 @admin_obrigatorio
 def doador_update(request, pk):
     doador = get_object_or_404(Doador, pk=pk)
+    if doador.anonimizado:
+        # O código ANON-<id> não passaria na validação de CPF/CNPJ, e não há o que corrigir.
+        raise Http404("Doador anonimizado.")
     if request.method == "POST":
         form = DoadorForm(request.POST, instance=doador)
         if form.is_valid():

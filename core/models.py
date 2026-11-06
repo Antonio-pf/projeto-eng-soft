@@ -2,10 +2,17 @@ from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
-from django.db.models import F, OuterRef, Q, Subquery, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models import F, Max, OuterRef, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce, TruncDate
 from django.template.defaultfilters import floatformat
 from django.utils import timezone
+
+from core.privacidade import (
+    NOME_ANONIMIZADO,
+    PREFIXO_DOCUMENTO_ANONIMIZADO,
+    data_limite,
+    mascarar_documento,
+)
 
 
 class UsuarioManager(BaseUserManager):
@@ -70,6 +77,19 @@ class Usuario(AbstractBaseUser):
         return self.ativo
 
 
+class DoadorQuerySet(models.QuerySet):
+    def vencidos(self, hoje):
+        """Doadores identificados sem doação (cancelada ou não) desde o prazo de retenção.
+
+        Sem nenhuma doação, vale a data do cadastro.
+        """
+        return (
+            self.exclude(cpf_cnpj__startswith=PREFIXO_DOCUMENTO_ANONIMIZADO)
+            .annotate(referencia=Coalesce(Max("doacao__data"), TruncDate("criado_em")))
+            .filter(referencia__lte=data_limite(hoje))
+        )
+
+
 class Doador(models.Model):
     id_doador = models.BigAutoField(primary_key=True)
     nome = models.CharField(max_length=150)
@@ -77,6 +97,8 @@ class Doador(models.Model):
     telefone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(max_length=255, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    objects = DoadorQuerySet.as_manager()
 
     class Meta:
         db_table = "doador"
@@ -86,6 +108,38 @@ class Doador(models.Model):
     def __str__(self):
         return self.nome
 
+    @property
+    def anonimizado(self):
+        return self.cpf_cnpj.startswith(PREFIXO_DOCUMENTO_ANONIMIZADO)
+
+    @property
+    def documento_mascarado(self):
+        if self.anonimizado:
+            return "—"
+        return mascarar_documento(self.cpf_cnpj)
+
+    def anonimizar(self):
+        """Apaga os dados que identificam o doador e mantém as doações (o PROTECT impede apagar)."""
+        self.nome = NOME_ANONIMIZADO
+        # Código único que não é documento: cabe nos 18 caracteres e no UNIQUE da coluna.
+        self.cpf_cnpj = f"{PREFIXO_DOCUMENTO_ANONIMIZADO}{self.pk}"
+        self.telefone = ""
+        self.email = ""
+        self.save(update_fields=["nome", "cpf_cnpj", "telefone", "email"])
+
+
+class FamiliaQuerySet(models.QuerySet):
+    def vencidas(self, hoje):
+        """Famílias identificadas sem distribuição (cancelada ou não) desde o prazo de retenção.
+
+        Sem nenhuma distribuição, vale a data do cadastro.
+        """
+        return (
+            self.exclude(nome_responsavel=NOME_ANONIMIZADO, endereco="")
+            .annotate(referencia=Coalesce(Max("distribuicao__data"), TruncDate("criado_em")))
+            .filter(referencia__lte=data_limite(hoje))
+        )
+
 
 class Familia(models.Model):
     id_familia = models.BigAutoField(primary_key=True)
@@ -94,6 +148,8 @@ class Familia(models.Model):
     telefone = models.CharField(max_length=20, blank=True)
     num_membros = models.IntegerField(validators=[MinValueValidator(1)])
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    objects = FamiliaQuerySet.as_manager()
 
     class Meta:
         db_table = "familia"
@@ -107,6 +163,17 @@ class Familia(models.Model):
 
     def __str__(self):
         return self.nome_responsavel
+
+    @property
+    def anonimizada(self):
+        return self.nome_responsavel == NOME_ANONIMIZADO and not self.endereco
+
+    def anonimizar(self):
+        """Apaga os dados que identificam a família; o número de membros fica para os totais."""
+        self.nome_responsavel = NOME_ANONIMIZADO
+        self.endereco = ""
+        self.telefone = ""
+        self.save(update_fields=["nome_responsavel", "endereco", "telefone"])
 
 
 class CategoriaItem(models.Model):

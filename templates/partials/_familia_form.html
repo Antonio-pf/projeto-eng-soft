@@ -16,6 +16,10 @@
     {% include "partials/_campo_formulario_dashboard.html" with field=form.endereco %}
     {% include "partials/_campo_formulario_dashboard.html" with field=form.telefone %}
     <p class="text-xs text-gray-500">O campo de telefone é opcional.</p>
+    <p class="rounded-lg bg-gray-50 p-3 text-xs leading-relaxed text-gray-600" data-testid="aviso-privacidade-familia">
+        Antes de salvar, conte ao responsável que <strong>o cadastro é necessário para a família receber as doações</strong>, para que servem esses dados e como pedir correção ou exclusão.
+        O texto completo, para mostrar ou enviar, está no <a href="{% url 'privacidade' %}" target="_blank" rel="noopener" class="link font-semibold">aviso de privacidade</a>.
+    </p>
     <div class="flex gap-3{% if parcial %} justify-end{% endif %}">
         {% if parcial %}
         <button type="button" class="btn btn-ghost w-fit rounded-md px-4 py-2.5 text-sm font-semibold" onclick="this.closest('dialog').close()">Cancelar</button>
