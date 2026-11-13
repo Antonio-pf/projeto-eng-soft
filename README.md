@@ -82,6 +82,8 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
    | `DEBUG` | Ativa o modo de desenvolvimento. Exemplo local: `True` |
    | `ALLOWED_HOSTS` | Hosts aceitos pelo Django, separados por vírgula. Exemplo local: `localhost,127.0.0.1` |
    | `DATABASE_URL` | URL de conexão com o PostgreSQL local. Exemplo local: `postgresql://conecta:conecta@localhost:5432/conectasocial` |
+   | `ONG_NOME` | Opcional. Nome da ONG mostrado no aviso de privacidade (`/privacidade/`); vazia, o aviso usa um texto padrão. Exemplo local: `ONG Exemplo de Doações` |
+   | `ONG_CONTATO_PRIVACIDADE` | Opcional. Contato para os pedidos dos titulares no aviso de privacidade; vazia, o aviso usa um texto padrão. Exemplo local: `privacidade@ong-exemplo.org` |
 
 4. Crie o banco e rode o schema: crie o usuário e o banco PostgreSQL local (os mesmos `conecta`/`conecta` da `DATABASE_URL` e do `compose.yaml`). Os comandos são os mesmos no Linux/macOS, no Git Bash, no PowerShell e no `cmd.exe`:
 
@@ -92,7 +94,24 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 
    O PostgreSQL precisa estar instalado, em execução e disponível no `PATH`. O usuário `postgres` é o administrador criado na instalação; o `psql` pode pedir a senha dele. A permissão `CREATEDB` do usuário `conecta` é necessária para o `python manage.py test` criar o banco de testes. Se `psql` não for reconhecido, adicione a pasta `bin` da instalação do PostgreSQL ao `PATH` ou use o Docker Compose (passo 6). O schema é criado pelas migrations no passo 5; o `db/schema.sql` é o DDL de referência da E3.
 
-5. Rode as migrations e o seed: `python manage.py migrate` e `python manage.py seed`. As migrations em `core/migrations/` são a fonte oficial da estrutura do banco. O `seed` pode ser executado novamente sem duplicar os dados e cria os usuários `admin@conectasocial.org` (Administrador), `maria@conectasocial.org` e `joao@conectasocial.org` (Voluntário), todos com a senha `alterar-senha`. A aplicação também possui fallback para `db.sqlite3` quando `DATABASE_URL` não está definida, mas o fluxo documentado usa PostgreSQL.
+5. Rode as migrations e o seed:
+
+   ```bash
+   python manage.py migrate
+   python manage.py seed
+   ```
+
+   As migrations em `core/migrations/` são a fonte oficial da estrutura do banco. O `seed` pode ser executado novamente sem duplicar os dados e cria estes usuários de teste, todos com a senha `alterar-senha`:
+
+   | E-mail | Perfil |
+   |---|---|
+   | `admin@conectasocial.org` | Administrador |
+   | `maria@conectasocial.org` | Voluntário |
+   | `joao@conectasocial.org` | Voluntário |
+
+   Sem `DATABASE_URL` definida, a aplicação usa o `db.sqlite3` como alternativa, mas o fluxo documentado usa PostgreSQL.
+
+   O prazo de retenção do aviso de privacidade é de 5 anos sem movimentação. Para ver quantos doadores e famílias já passaram desse prazo, sem gravar nada, rode `python manage.py anonimizar_vencidos --simular`. Sem `--simular`, o comando anonimiza esses cadastros e mantém as doações, as distribuições e os saldos.
 
 6. Suba o projeto: compile o CSS (Tailwind + daisyUI) e inicie o servidor.
 
