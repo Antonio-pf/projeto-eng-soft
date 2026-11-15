@@ -5,7 +5,7 @@
 ## 1. O que fiz
 
 | Item | PR/commit | Status |
-|---|---|---|
+|Estruturação inicial do projeto---|---|---|
 | | | |
 
 ## 2. Rituais que participei
