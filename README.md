@@ -137,7 +137,7 @@ Sistema web de gestão operacional para ONGs de doações. O sistema acompanha o
 /db/                  — schema SQL de referência legada
 /core/migrations/     — migrations oficiais do banco
 /core/management/     — comandos Django, incluindo o seed
-/docs/                — visão, backlog, UML, DER, testes e protótipo
+/docs/                — visão, backlog, UML, DER, testes, protótipo, documentação final e manual do usuário (`docs/manual-e10/`)
 /.github/workflows/   — workflow de CI do GitHub Actions
 /Dockerfile           — imagem Docker da aplicação
 /compose.yaml          — aplicação e PostgreSQL locais via Docker Compose

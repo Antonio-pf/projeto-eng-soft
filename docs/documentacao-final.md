@@ -18,6 +18,7 @@
 | E4 | README + Protótipo + Plano de Testes | `README.md`, `docs/prototipo.md`, `docs/plano-de-testes.md` |
 | E5–E8 | Relatórios de sprint | `docs/sprints/sprint-{1,2,3,4}-relatorio.md`, `docs/sprints/sprint-{1,2,3,4}-retrospectiva.md`, `docs/sprints/sprint-{1,2,3,4}-evidencias-teste.md`, `docs/sprints/sprint-{1,2,3,4}-contribuicao-*.md` |
 | E9 | Relatório de testes + Termo de Aceite do Cliente | `docs/relatorio-testes-final.md`, `docs/termo-aceite-cliente.md` |
+| E10 | Manual do Usuário | `docs/manual-e10/manual-do-usuario.md` |
 
 *Rastreabilidade requisito → modelo → código → teste: cada história do `docs/backlog.md` leva ao caso de uso pela seção 3 do `docs/uml.md` (histórias #1 a #23; as #24 a #28 vieram depois da E3 e não estão no diagrama), e as entidades do modelo estão no `docs/der.md` e no `db/schema.sql`. A seção 1 de cada relatório de sprint aponta o PR que entregou a história, quando houve PR, e as evidências de teste da sprint apontam o teste automatizado em `core/tests.py`. O caso de teste de cada história está na seção 3 do `docs/plano-de-testes.md`, e o resultado final, com o PR das histórias entregues depois da Sprint 4, está na seção 2 do `docs/relatorio-testes-final.md`.*
 
