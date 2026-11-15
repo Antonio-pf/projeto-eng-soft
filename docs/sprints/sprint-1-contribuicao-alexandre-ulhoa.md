@@ -5,13 +5,13 @@
 ## 1. O que fiz
 
 | Item | PR/commit | Status |
-|---|---|---|
+|Elaboração do Escopo do Projeto Conecta Social|---|---|
 | | | |
 
 ## 2. Rituais que participei
 
 - [ ] Dailies/weeklies
-- [ ] Sprint Review
+- [X] Sprint Review
 - [ ] Retrospectiva
 
 ## 3. PRs de colegas que revisei
