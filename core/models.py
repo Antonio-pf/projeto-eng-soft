@@ -1,6 +1,7 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class UsuarioManager(BaseUserManager):
@@ -137,6 +138,7 @@ class Item(models.Model):
         default=0,
         validators=[MinValueValidator(0)],
     )
+    expiration_date = models.DateField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -167,6 +169,25 @@ class Item(models.Model):
     @property
     def abaixo_estoque_minimo(self):
         return self.saldo_atual <= self.estoque_minimo
+
+    @property
+    def is_expired(self):
+        if not self.expiration_date:
+            return False
+        return self.expiration_date < timezone.localdate()
+
+    @property
+    def expires_soon(self):
+        if not self.expiration_date:
+            return False
+        delta = (self.expiration_date - timezone.localdate()).days
+        return 0 <= delta <= 7
+
+    @property
+    def days_until_expiration(self):
+        if not self.expiration_date:
+            return None
+        return (self.expiration_date - timezone.localdate()).days
 
 
 class Doacao(models.Model):

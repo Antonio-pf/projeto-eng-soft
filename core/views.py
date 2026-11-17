@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from core.decorators import admin_obrigatorio, login_obrigatorio
@@ -63,7 +64,15 @@ def logout_view(request):
 
 @login_obrigatorio
 def painel_view(request):
-    return render(request, "core/painel.html")
+    todos_itens = Item.objects.select_related("categoria", "unidade_medida").all()
+    itens_vencidos = [i for i in todos_itens if i.is_expired]
+    itens_vencendo = [i for i in todos_itens if i.expires_soon]
+    context = {
+        "itens_vencidos_count": len(itens_vencidos),
+        "itens_vencendo_count": len(itens_vencendo),
+        "itens_criticos": itens_vencidos + itens_vencendo,
+    }
+    return render(request, "core/painel.html", context)
 
 
 # ---------------------------------------------------------------------------
@@ -280,9 +289,16 @@ def item_update(request, pk):
 @login_obrigatorio
 def item_list(request):
     query = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+    
     itens_list = Item.objects.select_related("categoria", "unidade_medida").all().order_by("nome")
     if query:
         itens_list = itens_list.filter(nome__icontains=query)
+        
+    if status_filter == "vencido":
+        itens_list = [item for item in itens_list if item.is_expired]
+    elif status_filter == "vencendo":
+        itens_list = [item for item in itens_list if item.expires_soon]
 
     paginator = Paginator(itens_list, 20)
     page_number = request.GET.get("page")
@@ -291,7 +307,7 @@ def item_list(request):
     return render(
         request,
         "core/item_list.html",
-        {"page_obj": page_obj, "query": query},
+        {"page_obj": page_obj, "query": query, "status_filter": status_filter},
     )
 
 

@@ -6,8 +6,37 @@
 {% block page_subtitle %}<p class="text-sm text-gray-500">Visão geral do Conecta Social</p>{% endblock %}
 
 {% block content %}
-<section class="w-full max-w-2xl rounded-xl border border-gray-200 bg-white p-6 sm:p-8" data-testid="painel-panel">
-    <h2 class="mb-4 text-xl font-bold text-gray-700">Bem-vindo(a), {{ usuario_logado.nome }}</h2>
-    <p class="text-gray-500">Perfil: {{ usuario_logado.get_perfil_display }}</p>
-</section>
+<div class="flex flex-col gap-6 w-full max-w-4xl">
+    {% if itens_vencidos_count > 0 or itens_vencendo_count > 0 %}
+    <div class="alert alert-warning shadow-md flex flex-col items-start gap-3 p-4 sm:p-5" data-testid="dashboard-validade-alert">
+        <div class="flex items-center gap-2 font-bold text-base">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <span>Alerta de Validade de Estoque!</span>
+        </div>
+        <p class="text-sm">
+            Existem <strong>{{ itens_vencidos_count }}</strong> itens vencidos e <strong>{{ itens_vencendo_count }}</strong> itens prestes a vencer (próximos 7 dias). Por favor, priorize a distribuição ou descarte adequado destes itens.
+        </p>
+        <div class="flex gap-2">
+            <a href="{% url 'item_list' %}?status=vencido" class="btn btn-sm btn-error text-white" data-testid="alert-btn-vencidos">Ver Vencidos ({{ itens_vencidos_count }})</a>
+            <a href="{% url 'item_list' %}?status=vencendo" class="btn btn-sm btn-warning" data-testid="alert-btn-vencendo">Ver Prestes a Vencer ({{ itens_vencendo_count }})</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <section class="w-full rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm" data-testid="painel-panel">
+        <h2 class="mb-4 text-xl font-bold text-gray-700">Bem-vindo(a), {{ usuario_logado.nome }}</h2>
+        <p class="text-gray-500 mb-6">Perfil: {{ usuario_logado.get_perfil_display }}</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-4" data-testid="counter-vencidos">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Itens Vencidos</p>
+                <p class="text-2xl font-extrabold text-error mt-1">{{ itens_vencidos_count|default:0 }}</p>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-4" data-testid="counter-vencendo">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Itens Prestes a Vencer</p>
+                <p class="text-2xl font-extrabold text-warning mt-1">{{ itens_vencendo_count|default:0 }}</p>
+            </div>
+        </div>
+    </section>
+</div>
 {% endblock %}

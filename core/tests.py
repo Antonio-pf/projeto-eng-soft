@@ -743,6 +743,75 @@ class ItemTestCase(TestCase):
         item.refresh_from_db()
         self.assertEqual(item.nome, "Macarrão Integral")
 
+    def test_item_expiration_properties(self):
+        hoje = timezone.localdate()
+        item_vencido = Item.objects.create(
+            nome="Leite Vencido",
+            categoria=self.categoria,
+            unidade_medida=self.unidade,
+            expiration_date=hoje - timedelta(days=2),
+        )
+        item_vencendo = Item.objects.create(
+            nome="Iogurte Vencendo",
+            categoria=self.categoria,
+            unidade_medida=self.unidade,
+            expiration_date=hoje + timedelta(days=3),
+        )
+        item_ok = Item.objects.create(
+            nome="Arroz Novo",
+            categoria=self.categoria,
+            unidade_medida=self.unidade,
+            expiration_date=hoje + timedelta(days=30),
+        )
+
+        self.assertTrue(item_vencido.is_expired)
+        self.assertFalse(item_vencido.expires_soon)
+        self.assertEqual(item_vencido.days_until_expiration, -2)
+
+        self.assertFalse(item_vencendo.is_expired)
+        self.assertTrue(item_vencendo.expires_soon)
+        self.assertEqual(item_vencendo.days_until_expiration, 3)
+
+        self.assertFalse(item_ok.is_expired)
+        self.assertFalse(item_ok.expires_soon)
+        self.assertEqual(item_ok.days_until_expiration, 30)
+
+    def test_item_list_expiration_filters(self):
+        hoje = timezone.localdate()
+        Item.objects.create(
+            nome="Item Vencido",
+            categoria=self.categoria,
+            unidade_medida=self.unidade,
+            expiration_date=hoje - timedelta(days=1),
+        )
+        Item.objects.create(
+            nome="Item Vencendo",
+            categoria=self.categoria,
+            unidade_medida=self.unidade,
+            expiration_date=hoje + timedelta(days=2),
+        )
+
+        response_vencidos = self.client.get(reverse("item_list") + "?status=vencido")
+        self.assertEqual(response_vencidos.status_code, 200)
+        self.assertContains(response_vencidos, "Item Vencido")
+
+        response_vencendo = self.client.get(reverse("item_list") + "?status=vencendo")
+        self.assertEqual(response_vencendo.status_code, 200)
+        self.assertContains(response_vencendo, "Item Vencendo")
+
+    def test_dashboard_expiration_alerts(self):
+        hoje = timezone.localdate()
+        Item.objects.create(
+            nome="Item Vencido",
+            categoria=self.categoria,
+            unidade_medida=self.unidade,
+            expiration_date=hoje - timedelta(days=5),
+        )
+        response = self.client.get(reverse("painel"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Alerta de Validade de Estoque")
+        self.assertContains(response, "Itens Vencidos")
+
 
 class DoacaoTestCase(TestCase):
     def setUp(self):

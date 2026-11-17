@@ -15,7 +15,7 @@
 </div>
 
 <section class="w-full rounded-xl border border-gray-200 bg-white p-4 sm:p-6" data-testid="item-table-card">
-    <form method="get" class="mb-4 flex gap-2">
+    <form method="get" class="mb-4 flex flex-col sm:flex-row gap-2">
         <input
             type="text"
             name="q"
@@ -23,8 +23,13 @@
             placeholder="Buscar por nome do item..."
             class="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 placeholder:text-gray-400"
         >
-        <button type="submit" class="btn btn-secondary rounded-md px-4 text-sm font-semibold">Buscar</button>
-        {% if query %}
+        <select name="status" class="select select-bordered rounded-lg bg-white text-sm text-gray-700">
+            <option value="">Todos os status</option>
+            <option value="vencido" {% if status_filter == "vencido" %}selected{% endif %}>Vencidos</option>
+            <option value="vencendo" {% if status_filter == "vencendo" %}selected{% endif %}>Prest. a Vencer (7 dias)</option>
+        </select>
+        <button type="submit" class="btn btn-secondary rounded-md px-4 text-sm font-semibold">Filtrar</button>
+        {% if query or status_filter %}
         <a href="{% url 'item_list' %}" class="btn btn-ghost rounded-md px-4 text-sm font-semibold">Limpar</a>
         {% endif %}
     </form>
@@ -39,6 +44,7 @@
                     <th class="px-4 py-3 font-semibold">Unidade</th>
                     <th class="px-4 py-3 font-semibold">Saldo</th>
                     <th class="px-4 py-3 font-semibold">Mín</th>
+                    <th class="px-4 py-3 font-semibold">Validade</th>
                     <th class="px-4 py-3 font-semibold">Status</th>
                     <th class="px-4 py-3 font-semibold">Ações</th>
                 </tr>
@@ -51,12 +57,27 @@
                     <td class="px-4 py-4 text-sm text-gray-500">{{ item.unidade_medida.sigla }}</td>
                     <td class="px-4 py-4 text-sm font-semibold text-gray-700">{{ item.saldo_atual }}</td>
                     <td class="px-4 py-4 text-sm text-gray-500">{{ item.estoque_minimo }}</td>
-                    <td class="px-4 py-4 text-sm">
-                        {% if item.abaixo_estoque_minimo %}
-                        <span class="inline-block whitespace-nowrap rounded bg-yellow-100 px-2 py-0.5 text-[13px] font-semibold text-yellow-700" data-testid="item-baixo-estoque-badge">Baixo Estoque</span>
+                    <td class="px-4 py-4 text-sm text-gray-500">
+                        {% if item.expiration_date %}
+                            {{ item.expiration_date|date:"d/m/Y" }}
                         {% else %}
-                        <span class="inline-block whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-[13px] font-semibold text-primary">Ok</span>
+                            -
                         {% endif %}
+                    </td>
+                    <td class="px-4 py-4 text-sm">
+                        <div class="flex flex-col gap-1 items-start">
+                            {% if item.is_expired %}
+                            <span class="badge badge-error text-white text-xs font-semibold" data-testid="item-vencido-badge">Vencido</span>
+                            {% elif item.expires_soon %}
+                            <span class="badge badge-warning text-xs font-semibold" data-testid="item-prestes-vencer-badge">Vence logo ({{ item.days_until_expiration }}d)</span>
+                            {% endif %}
+                            
+                            {% if item.abaixo_estoque_minimo %}
+                            <span class="badge badge-warning text-xs font-semibold" data-testid="item-baixo-estoque-badge">Baixo Estoque</span>
+                            {% elif not item.is_expired and not item.expires_soon %}
+                            <span class="badge badge-ghost text-xs font-semibold">Ok</span>
+                            {% endif %}
+                        </div>
                     </td>
                     <td class="px-4 py-4 text-sm">
                         <a href="{% url 'item_update' item.pk %}" class="btn btn-outline btn-xs">Editar</a>
@@ -71,13 +92,13 @@
     <div class="mt-6 flex justify-center">
         <div class="join">
             {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn btn-sm">«</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="join-item btn btn-sm">«</a>
             {% else %}
             <button class="join-item btn btn-sm btn-disabled">«</button>
             {% endif %}
             <button class="join-item btn btn-sm">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</button>
             {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="join-item btn btn-sm">»</a>
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="join-item btn btn-sm">»</a>
             {% else %}
             <button class="join-item btn btn-sm btn-disabled">»</button>
             {% endif %}

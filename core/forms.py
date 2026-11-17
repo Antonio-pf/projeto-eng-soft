@@ -250,7 +250,7 @@ class CategoriaItemForm(forms.ModelForm):
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ["nome", "categoria", "unidade_medida", "estoque_minimo"]
+        fields = ["nome", "categoria", "unidade_medida", "estoque_minimo", "expiration_date"]
         widgets = {
             "nome": forms.TextInput(
                 attrs={
@@ -261,12 +261,16 @@ class ItemForm(forms.ModelForm):
             "categoria": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
             "unidade_medida": forms.Select(attrs={"class": _CARD_SELECT_CLASS}),
             "estoque_minimo": forms.NumberInput(attrs={"class": _CARD_INPUT_CLASS, "min": "0"}),
+            "expiration_date": forms.DateInput(
+                attrs={"class": _CARD_INPUT_CLASS, "type": "date"}
+            ),
         }
         labels = {
             "nome": "Nome do Item",
             "categoria": "Categoria",
             "unidade_medida": "Unidade de Medida",
             "estoque_minimo": "Estoque Mínimo",
+            "expiration_date": "Data de Validade (Opcional)",
         }
 
     def clean_estoque_minimo(self):

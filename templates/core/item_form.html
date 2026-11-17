@@ -26,7 +26,10 @@
             {% include "partials/_campo_formulario_dashboard.html" with field=form.categoria select=True %}
             {% include "partials/_campo_formulario_dashboard.html" with field=form.unidade_medida select=True %}
         </div>
-        {% include "partials/_campo_formulario_dashboard.html" with field=form.estoque_minimo %}
+        <div class="flex flex-col gap-4 sm:flex-row">
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.estoque_minimo %}
+            {% include "partials/_campo_formulario_dashboard.html" with field=form.expiration_date %}
+        </div>
         <div class="flex gap-3">
             <button type="submit" class="btn btn-secondary w-fit rounded-md px-4 py-2.5 text-sm font-semibold" data-testid="item-form-submit-button">
                 {% if editing %}Salvar alterações{% else %}Salvar item{% endif %}
