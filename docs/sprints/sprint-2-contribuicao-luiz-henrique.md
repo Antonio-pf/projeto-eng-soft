@@ -1,28 +1,30 @@
 # Relatório Individual de Contribuição — Sprint 2 — Luiz Henrique Neres (RA 2840482423005)
 
-**Papel nesta sprint:** Desenvolvedor / Desenvolvedor Full-Stack
+**Papel nesta sprint:** Desenvolvedor Full-Stack / QA
 
 ## 1. O que fiz
 
 | Item | PR/commit | Status |
 |---|---|---|
-| Implementação de cadastros, listagens e testes unitários/integração para Doadores, Famílias, Categorias e Itens | [`4a28255`](../../core/views.py) | Concluído |
-| Atualização e validação de testes de sistema e fluxos no Django (`core/tests.py`) | [`core/tests.py`](../../core/tests.py) | Concluído |
-| Revisão e refatoração de formulários, views e templates HTML para os módulos do sistema | [`core/forms.py`](../../core/forms.py) | Concluído |
+| Implementação de cadastros, listagens e formulários para Doadores, Famílias, Categorias e Itens | [`core/views.py`](../../core/views.py), [`core/forms.py`](../../core/forms.py) | Concluído |
+| Criação e expansão da suíte de testes unitários e de integração no Django (`core/tests.py`) | [`core/tests.py`](../../core/tests.py) | Concluído |
+| Refatoração de rotas e mapeamento de URLs para os novos módulos do sistema | [`core/urls.py`](../../core/urls.py) | Concluído |
+| Ajustes e melhorias em templates HTML, formulários e integração com o painel administrativo | [`templates/core/doador_form.html`](../../templates/core/doador_form.html) | Concluído |
 
 ## 2. Rituais que participei
 
-- [x] Dailies/weeklies
-- [x] Sprint Review
-- [x] Retrospectiva
+- [x] Planejamento da Sprint (Sprint Planning)
+- [x] Reuniões diárias e alinhamentos semanais (Dailies/Weeklies)
+- [x] Revisão da Sprint (Sprint Review)
+- [x] Retrospectiva da Sprint
 
 ## 3. PRs de colegas que revisei
 
 | PR | Autor | Comentário resumido |
 |---|---|---|
-| [`PR #28`, `#29`, `#30`, `#32`](../../core/views.py) | Equipe (Antonio Pires e demais) | Revisão de autenticação, painel, layout com sidebar e correções de cadastros |
+| [`PR #28`, `#29`, `#30`, `#32`](../../core/views.py) | Antonio Pires e Equipe | Revisão de autenticação, painel administrativo, layout responsivo com sidebar e validações de cadastros |
 
 ## 4. Dificuldades e o que aprendi
 
-- **Dificuldade:** Garantir a robustez das validações de CPF/CNPJ e integridade relacional entre modelos complexos (Doadores, Famílias, Itens e Distribuições) nos testes automatizados.
-- **Aprendizado:** Domínio avançado sobre o ORM do Django, estruturação de formulários baseados em ModelForm e criação de suítes de testes abrangentes no Django para validação de regras de negócio.
+- **Dificuldade:** Garantir a consistência de relacionamentos complexos entre modelos no banco de dados e cobertura robusta de testes para validação de formulários.
+- **Aprendizado:** Domínio avançado do Django ORM, construção de testes automatizados eficientes, uso de `ModelForm` e boas práticas de desenvolvimento full-stack para aplicações web.
