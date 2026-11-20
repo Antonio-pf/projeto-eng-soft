@@ -44,13 +44,13 @@
 | Retrospectiva com ação aplicada | 3 → 4 | Ata da Sprint 3: "terminar a #21 com os testes CT16 e CT17"; aplicada na Sprint 4 pelo PR #53 (seção 1 da `docs/sprints/sprint-4-retrospectiva.md`). Contraponto: CT01 e CT08 ficaram pendentes em três atas e só saíram na E9 (PR #66), quando a cobertura mínima de 95% virou regra do CI |
 | Mudança de escopo negociada | 3–4 | História #19 (cancelar movimentação, Could, fora do E2b): ficou em "Todo" nas Sprints 3 e 4, a ata pediu "implementar ou negociar o corte com o professor", e ela entrou em 02/11 pelo PR #63, com o cancelamento marcado na própria movimentação (seção 2 da `docs/documentacao-final.md`) |
 | PR com revisão relevante | 4 | PR #49 (história #22, Daniel), aprovado por Antonio antes do merge. Contraponto: entre os PRs de código, só o #30 e o #49 têm revisão registrada, apesar da regra combinada na retrospectiva da Sprint 1 |
-| Rodízio de papéis | 1–4 | Sprint 1: Alexandre Scrum Master, Antonio PO, Daniel responsável por dados e Luiz facilitador (`docs/termo-aceite.md` e contribuições da Sprint 1). Antonio seguiu como PO nas quatro sprints; os papéis das Sprints 2 a 4 dos demais [a confirmar] |
+| Rodízio de papéis | 1–4 | Sprint 1: Alexandre Scrum Master, Antonio PO, Daniel responsável por dados e Luiz facilitador (`docs/termo-aceite.md` e contribuições da Sprint 1). Antonio acumulou PO e Scrum Master nas quatro sprints; os papéis das Sprints 2 a 4 dos demais [a confirmar — alinhar com o Alexandre antes do envio, já que `docs/termo-aceite.md` ainda lista só ele como Scrum Master] |
 
 ## 5. Depoimentos (bloco 6)
 | Integrante | Papéis exercidos | Conceito aprendido na prática | Evidência citada | O que faria diferente |
 |---|---|---|---|---|
 | Alexandre | Scrum Master (S1); S2–S4 [a confirmar] | [Alexandre] | [Alexandre; ex.: testes manuais da interface, seção 4 do relatório da E9] | [Alexandre] |
-| Antonio | PO (S1–S4) | [Antonio] | [Antonio; ex.: PRs #34 e #63 ou o CI com cobertura mínima do PR #66] | [Antonio] |
+| Antonio | Product Owner e Scrum Master (S1–S4) | Escopo e processo andam juntos: uma decisão de PO (fazer ou cortar a #19) só vira entrega quando o Scrum Master garante que isso vira ação com dono e prazo, não só intenção na ata | PR #63 (decisão sobre a #19) e PR #66 (cobertura mínima de 95% no CI, que destravou CT01/CT08 pendentes desde a Sprint 2) | Checar o board contra a `main` toda semana, não só no fim da sprint — foi o que faltou entre 09/10 e 28/10, quando a `main` ficou quase 3 semanas sem merge |
 | Daniel | Dados (S1); S2–S4 [a confirmar] | [Daniel] | [Daniel; ex.: PR #30, PR #49 ou o manual do usuário, PR #78] | [Daniel] |
 | Luiz | Facilitador (S1); S2–S4 [a confirmar] | [Luiz] | [Luiz; ex.: PR #31 ou o relatório de distribuições, commit `56ce3c6` do PR #53] | [Luiz] |
 
