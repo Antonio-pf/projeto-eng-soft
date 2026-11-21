@@ -15,7 +15,7 @@ ONGs pequenas ainda controlam doações em planilha, caderno e WhatsApp, gastand
 | Integrante | RA | Papel na Sprint 1 | Papéis nas Sprints 2–4 |
 |---|---|---|---|
 | Antonio Pires Felipe | 2840482211003 | Product Owner e Scrum Master | Product Owner e Scrum Master (seguiu nas 4 sprints) |
-| Alexandre Victoriano Ribeiro Ulhoa | 2840482423007 | Scrum Master | `[a confirmar]` |
+| Alexandre Victoriano Ribeiro Ulhoa | 2840482423007 | Product Owner |  Product Owner |
 | Daniel Souza Monteiro de Carvalho | 2840482211052 | Responsável por Dados | `[a confirmar]` |
 | Luiz Henrique Neres | 2840482423005 | Facilitador | `[a confirmar]` |
 
