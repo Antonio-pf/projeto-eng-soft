@@ -49,8 +49,8 @@
 ## 5. Depoimentos (bloco 6)
 | Integrante | Papéis exercidos | Conceito aprendido na prática | Evidência citada | O que faria diferente |
 |---|---|---|---|---|
-| Alexandre | Scrum Master (S1); S2–S4 [a confirmar] | [Alexandre] | [Alexandre; ex.: testes manuais da interface, seção 4 do relatório da E9] | [Alexandre] |
-| Antonio | Product Owner e Scrum Master (S1–S4) | Escopo e processo andam juntos: uma decisão de PO (fazer ou cortar a #19) só vira entrega quando o Scrum Master garante que isso vira ação com dono e prazo, não só intenção na ata | PR #63 (decisão sobre a #19) e PR #66 (cobertura mínima de 95% no CI, que destravou CT01/CT08 pendentes desde a Sprint 2) | Checar o board contra a `main` toda semana, não só no fim da sprint — foi o que faltou entre 09/10 e 28/10, quando a `main` ficou quase 3 semanas sem merge |
+| Alexandre | Product Owner (S1); S2–S4 [a confirmar] | [Alexandre] | [Alexandre; ex.: testes manuais da interface, seção 4 do relatório da E9] | [Alexandre] |
+| Antonio | Scrum Master (S1–S4) | Escopo e processo andam juntos: uma decisão de PO (fazer ou cortar a #19) só vira entrega quando o Scrum Master garante que isso vira ação com dono e prazo, não só intenção na ata | PR #63 (decisão sobre a #19) e PR #66 (cobertura mínima de 95% no CI, que destravou CT01/CT08 pendentes desde a Sprint 2) | Checar o board contra a `main` toda semana, não só no fim da sprint — foi o que faltou entre 09/10 e 28/10, quando a `main` ficou quase 3 semanas sem merge |
 | Daniel | Dados (S1); S2–S4 [a confirmar] | [Daniel] | [Daniel; ex.: PR #30, PR #49 ou o manual do usuário, PR #78] | [Daniel] |
 | Luiz | Facilitador (S1); S2–S4 [a confirmar] | [Luiz] | [Luiz; ex.: PR #31 ou o relatório de distribuições, commit `56ce3c6` do PR #53] | [Luiz] |
 
