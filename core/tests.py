@@ -70,7 +70,7 @@ class HomePageTests(TestCase):
     def test_apresenta_secoes_e_equipe_sem_ra(self):
         response = self.client.get(reverse("home"))
 
-        for secao in ("problema", "como-funciona", "perfis", "andamento", "equipe"):
+        for secao in ("problema", "como-funciona", "perfis", "andamento", "equipe", "video"):
             self.assertContains(response, f'id="{secao}"')
             self.assertContains(response, f'href="#{secao}"')
         for nome in (
@@ -125,6 +125,65 @@ class HomePageTests(TestCase):
                     f'href="https://github.com/{login}" target="_blank" rel="noopener noreferrer"',
                 )
                 self.assertContains(response, f"@{login}")
+
+    # Vídeo da Mostra Virtual (E10): abaixo da equipe, com o player do YouTube só depois do clique.
+    def test_video_fica_logo_abaixo_da_equipe(self):
+        html = self.client.get(reverse("home")).content.decode()
+
+        equipe = html.index('id="equipe"')
+        video = html.index('id="video"')
+        chamada_final = html.index("Veja o Conecta Social funcionando.")
+        self.assertLess(equipe, video)
+        self.assertLess(video, chamada_final)
+
+    def test_video_capa_abre_o_youtube_sem_carregar_o_player(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(
+            response,
+            'href="https://www.youtube.com/watch?v=3MQWY35l4Xk" target="_blank" '
+            'rel="noopener noreferrer"',
+        )
+        self.assertContains(response, 'data-testid="video-capa"')
+        self.assertContains(
+            response,
+            'data-embed="https://www.youtube-nocookie.com/embed/3MQWY35l4Xk?autoplay=1&amp;rel=0"',
+        )
+        self.assertContains(response, 'src="/static/js/video.js" defer')
+        self.assertNotContains(response, "<iframe")
+        self.assertNotContains(response, "i.ytimg.com")
+        self.assertNotContains(response, 'src="https://www.youtube')
+
+    def test_video_tem_texto_e_aviso_do_youtube(self):
+        response = self.client.get(reverse("home"))
+
+        for texto in (
+            "Mostra Virtual",
+            "O Conecta Social em menos de 10 minutos.",
+            "9 min 33 s · narrado pela equipe",
+            "Ao reproduzir, o vídeo é carregado do YouTube.",
+            ">Vídeo</a>",
+        ):
+            with self.subTest(texto=texto):
+                self.assertContains(response, texto)
+        self.assertContains(response, 'data-testid="video-link-youtube"')
+        self.assertContains(response, "Assistir no YouTube")
+
+    def test_andamento_e_equipe_com_textos_atualizados(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, "até 20/11")
+        self.assertContains(
+            response,
+            "Bateria final de testes, aceite do cliente, manual do usuário "
+            "e vídeo da Mostra Virtual.",
+        )
+        self.assertContains(response, "Em andamento")
+        self.assertContains(
+            response, "Alexandre é o Product Owner e Antonio, o Scrum Master. Todo mundo programa."
+        )
+        self.assertNotContains(response, "Feira de Projetos")
+        self.assertNotContains(response, "mudam a cada sprint")
 
     def test_visitante_ve_botao_de_entrar(self):
         response = self.client.get(reverse("home"))

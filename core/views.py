@@ -52,6 +52,9 @@ EQUIPE = (
     ("Luiz Henrique Neres", "luiz-Henrique-neres", True),
 )
 
+# Vídeo da Mostra Virtual (E10), não listado no YouTube.
+VIDEO_MOSTRA_ID = "3MQWY35l4Xk"
+
 
 def _parcial(request):
     """O htmx pede só um trecho da página; ao restaurar o histórico, precisa da página inteira."""
@@ -92,7 +95,11 @@ def home(request):
         }
         for nome, login, tem_foto in EQUIPE
     ]
-    return render(request, "core/home.html", {"equipe": equipe})
+    video = {
+        "assistir": f"https://www.youtube.com/watch?v={VIDEO_MOSTRA_ID}",
+        "embed": f"https://www.youtube-nocookie.com/embed/{VIDEO_MOSTRA_ID}?autoplay=1&rel=0",
+    }
+    return render(request, "core/home.html", {"equipe": equipe, "video": video})
 
 
 def health(request):

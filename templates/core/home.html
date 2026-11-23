@@ -10,6 +10,7 @@
     <a class="transition-colors hover:text-primary" href="#perfis">Quem usa</a>
     <a class="transition-colors hover:text-primary" href="#andamento">Andamento</a>
     <a class="transition-colors hover:text-primary" href="#equipe">Equipe</a>
+    <a class="transition-colors hover:text-primary" href="#video">Vídeo</a>
 </nav>
 {% endblock %}
 
@@ -194,19 +195,19 @@
                         <p class="font-bold text-neutral">Entrega final</p>
                         <span class="shrink-0 rounded-full bg-accent/30 px-2.5 py-1 text-[11px] font-semibold text-neutral">Em andamento</span>
                     </div>
-                    <p class="mt-1 text-xs text-conecta-muted">até 13/11</p>
-                    <p class="mt-4 text-sm leading-relaxed text-neutral">Bateria final de testes, aceite do cliente, manual do usuário e apresentação na Feira de Projetos.</p>
+                    <p class="mt-1 text-xs text-conecta-muted">até 20/11</p>
+                    <p class="mt-4 text-sm leading-relaxed text-neutral">Bateria final de testes, aceite do cliente, manual do usuário e vídeo da Mostra Virtual.</p>
                 </li>
             </ol>
         </div>
     </section>
 
     <section id="equipe" class="scroll-mt-16 bg-conecta-form">
-        <div class="mx-auto max-w-6xl px-6 pb-32 pt-20 lg:pb-40 lg:pt-28">
+        <div class="mx-auto max-w-6xl px-6 py-20 lg:py-28">
             <div class="reveal max-w-2xl">
                 <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Equipe</p>
                 <h2 class="mt-4 text-3xl font-bold leading-tight text-neutral sm:text-[2.5rem]">Quem está construindo o Conecta Social.</h2>
-                <p class="mt-5 text-lg leading-relaxed text-conecta-muted">Somos quatro estudantes de Análise e Desenvolvimento de Sistemas da Fatec Ribeirão Preto. Os papéis de facilitação, produto, dados e qualidade mudam a cada sprint, e todo mundo programa.</p>
+                <p class="mt-5 text-lg leading-relaxed text-conecta-muted">Somos quatro estudantes de Análise e Desenvolvimento de Sistemas da Fatec Ribeirão Preto. Alexandre é o Product Owner e Antonio, o Scrum Master. Todo mundo programa.</p>
             </div>
 
             <ul class="mt-14 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
@@ -229,6 +230,37 @@
             </ul>
         </div>
     </section>
+
+    <section id="video" class="scroll-mt-16 bg-base-100">
+        <div class="mx-auto max-w-6xl px-6 pb-32 pt-20 lg:pb-40 lg:pt-28">
+            <div class="reveal max-w-2xl">
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Mostra Virtual</p>
+                <h2 class="mt-4 text-3xl font-bold leading-tight text-neutral sm:text-[2.5rem]">O Conecta Social em menos de 10 minutos.</h2>
+                <p class="mt-5 text-lg leading-relaxed text-conecta-muted">No vídeo da Mostra Virtual, a equipe apresenta o problema, mostra o sistema funcionando no ar e conta como foi construí-lo: da história no backlog ao teste automatizado, sprint a sprint.</p>
+            </div>
+
+            <figure class="reveal mx-auto mt-14 max-w-4xl">
+                {# A capa é um link para o YouTube. Com JavaScript, o clique troca a capa pelo player (static/js/video.js); antes disso, nada do YouTube é carregado. #}
+                <div class="video-moldura relative aspect-video" data-video data-embed="{{ video.embed }}" data-titulo="Vídeo da Mostra Virtual do Conecta Social">
+                    <a href="{{ video.assistir }}" target="_blank" rel="noopener noreferrer" aria-label="Assistir ao vídeo da Mostra Virtual do Conecta Social" data-video-capa data-testid="video-capa"
+                       class="video-capa group absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl bg-primary px-6 text-center text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:gap-5">
+                        {# No celular a capa tem pouca altura: o símbolo some para o título não encostar no selo da duração. #}
+                        {% include "partials/_simbolo.html" with classe="hidden size-14 sm:block" tom="escuro" %}
+                        <span class="video-play grid size-14 place-items-center rounded-full bg-secondary group-hover:bg-accent group-hover:text-primary group-focus-visible:bg-accent group-focus-visible:text-primary sm:size-20">
+                            <svg class="ml-1 size-6 sm:size-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>
+                        </span>
+                        <span class="text-base font-bold sm:text-2xl">Conecta Social · Mostra Virtual</span>
+                        <span class="absolute bottom-3 right-3 rounded bg-black/30 px-2 py-0.5 text-[13px] font-semibold sm:bottom-4 sm:right-4">9:33</span>
+                    </a>
+                </div>
+                <figcaption class="mt-4 flex flex-col gap-1 text-sm text-conecta-muted sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                    <span>9 min 33 s · narrado pela equipe</span>
+                    <span>Ao reproduzir, o vídeo é carregado do YouTube. <a class="font-semibold text-primary underline-offset-4 hover:underline" href="{{ video.assistir }}" target="_blank" rel="noopener noreferrer" data-testid="video-link-youtube">Assistir no YouTube</a></span>
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+    <script src="{% static 'js/video.js' %}" defer></script>
 
     <section class="relative z-10 -mt-10 rounded-t-[2.5rem] bg-primary text-primary-content">
         <div class="reveal mx-auto max-w-3xl px-6 py-20 text-center lg:py-24">
